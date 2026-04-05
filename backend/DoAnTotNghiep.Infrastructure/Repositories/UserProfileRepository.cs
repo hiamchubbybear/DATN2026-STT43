@@ -28,7 +28,6 @@ public class UserProfileRepository : IUserProfileRepository
         var filter = Builders<UserProfile>.Filter.Eq(x => x.Id, profile.Id);
         await _profiles.ReplaceOneAsync(filter, profile);
     }
-
     public async Task<List<UserProfile>> ListAllAsync()
     {
         return await _profiles.Find(_ => true).ToListAsync();

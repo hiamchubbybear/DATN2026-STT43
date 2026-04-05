@@ -303,5 +303,5 @@ const styles = StyleSheet.create({
     color: "#EF4444", // Match the button hue
     fontSize: 14,
     fontWeight: "500",
-  },
+  }
 });

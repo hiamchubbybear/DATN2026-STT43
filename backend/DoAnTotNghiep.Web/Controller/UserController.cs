@@ -22,10 +22,20 @@ public class UserController : ControllerBase
     // Handlers will be mapped later
     private Guid GetUserId()
     {
-        // Mocking user id for now if Authorization is not properly injected
-        // In a real scenario: return Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
-        // Using a hardcoded dev user for now if we can't parse it
-        return Guid.Parse("00000000-0000-0000-0000-000000000000"); // TODO: Update with real JWT Claim parsing
+        var userIdClaim = User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value
+            ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            
+        if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+        {
+            Console.WriteLine("--- CLAIMS DEBUG ---");
+            foreach (var claim in User.Claims)
+            {
+                Console.WriteLine($"Claim: {claim.Type} = {claim.Value}");
+            }
+            Console.WriteLine("--------------------");
+            throw new UnauthorizedAccessException();
+        }
+        return userId;
     }
 
     [HttpGet("discover")]
@@ -35,6 +45,7 @@ public class UserController : ControllerBase
         return Ok(ApiResponse<List<Application.Users.Profile.UserSearchDto>>.Succeeded(result));
     }
 
+    [Authorize]
     [HttpGet("me")]
     public async Task<IActionResult> GetMyProfile()
     {
@@ -42,6 +53,7 @@ public class UserController : ControllerBase
         return Ok(ApiResponse<Application.Users.Profile.UserProfileDto>.Succeeded(result));
     }
 
+    [Authorize]
     [HttpPatch("me/profile")]
     public async Task<IActionResult> UpdateProfile([FromBody] Application.Users.Profile.UpdateProfileCommand command)
     {
@@ -51,6 +63,7 @@ public class UserController : ControllerBase
         return Ok(ApiResponse<string>.Succeeded(string.Empty, "Profile updated"));
     }
 
+    [Authorize]
     [HttpPatch("me/preferences")]
     public async Task<IActionResult> UpdatePreferences([FromBody] Application.Users.Profile.UpdatePreferencesCommand command)
     {
@@ -59,6 +72,7 @@ public class UserController : ControllerBase
         return Ok(ApiResponse<string>.Succeeded(string.Empty, "Preferences updated"));
     }
 
+    [Authorize]
     [HttpPatch("me/location")]
     public async Task<IActionResult> UpdateLocation([FromBody] Application.Users.Profile.UpdateLocationCommand command)
     {
@@ -67,6 +81,7 @@ public class UserController : ControllerBase
         return Ok(ApiResponse<string>.Succeeded(string.Empty, "Location updated"));
     }
 
+    [Authorize]
     [HttpPatch("me/bio")]
     public async Task<IActionResult> UpdateBio([FromBody] Application.Users.Profile.UpdateBioCommand command)
     {
@@ -74,6 +89,7 @@ public class UserController : ControllerBase
         await _mediator.Send(cmdWithUser);
         return Ok(ApiResponse<string>.Succeeded(string.Empty, "Bio updated"));
     }
+
     [Authorize]
     [HttpPost("photos")]
     public async Task<IActionResult> UploadPhoto(IFormFile file)
@@ -82,6 +98,7 @@ public class UserController : ControllerBase
 
         return Ok(result);
     }
+    
     [Authorize]
     [HttpDelete("photos/{photoId}")]
     public async Task<IActionResult> DeletePhoto(Guid photoId)
@@ -89,6 +106,7 @@ public class UserController : ControllerBase
         await _mediator.Send(new DeletePhotoCommand(photoId));
         return NoContent();
     }
+    
     [Authorize]
     [HttpPatch("photos/reorder")]
     public async Task<IActionResult> Reorder(ReoderPhotosCommand command)
@@ -96,5 +114,4 @@ public class UserController : ControllerBase
         await _mediator.Send(command);
         return NoContent();
     }
-
 }
