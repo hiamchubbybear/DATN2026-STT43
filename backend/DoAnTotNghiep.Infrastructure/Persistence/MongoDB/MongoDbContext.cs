@@ -14,17 +14,27 @@ public class MongoDbContext
     {
         try
         {
-            BsonSerializer.RegisterSerializer(new GuidSerializer(GuidRepresentation.Standard));
-
-            BsonClassMap.RegisterClassMap<DoAnTotNghiep.Domain.Common.BaseEntity>(cm =>
+            // For MongoDB Driver 3.0+, we must ensure the global serializer is registered early
+            if (!BsonClassMap.IsClassMapRegistered(typeof(DoAnTotNghiep.Domain.Common.BaseEntity)))
             {
-                cm.AutoMap();
-                cm.MapIdProperty(c => c.Id)
-                    .SetSerializer(new GuidSerializer(GuidRepresentation.Standard));
-            });
+                BsonClassMap.RegisterClassMap<DoAnTotNghiep.Domain.Common.BaseEntity>(cm =>
+                {
+                    cm.AutoMap();
+                    cm.MapIdProperty(c => c.Id)
+                        .SetSerializer(new GuidSerializer(GuidRepresentation.Standard));
+                });
+
+                BsonClassMap.RegisterClassMap<DoAnTotNghiep.Domain.Users.UserProfile>(cm =>
+                {
+                    cm.AutoMap();
+                    cm.MapProperty(c => c.UserId)
+                        .SetSerializer(new GuidSerializer(GuidRepresentation.Standard));
+                });
+            }
         }
-        catch (BsonSerializationException)
+        catch
         {
+            // Ignore if already registered
         }
     }
 

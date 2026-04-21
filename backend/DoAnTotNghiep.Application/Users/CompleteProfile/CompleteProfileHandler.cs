@@ -26,6 +26,26 @@ public class CompleteProfileHandler(
             {
                 profile.UpdateBackground(request.Education ?? string.Empty, request.Occupation ?? string.Empty);
             }
+
+            if (!string.IsNullOrEmpty(request.Bio) || !string.IsNullOrEmpty(request.InterestedIn))
+            {
+                profile.UpdateBio(request.Bio ?? string.Empty, request.Gender, request.InterestedIn ?? string.Empty);
+            }
+
+            profile.UpdateLifestyle(
+                request.Drinking ?? string.Empty,
+                request.Smoking ?? string.Empty,
+                request.SocialLevel ?? string.Empty,
+                request.PersonalityType ?? string.Empty,
+                request.LoveLanguage ?? new List<string>(),
+                request.Hobbies ?? new List<string>(),
+                request.Interests ?? new List<string>()
+            );
+
+            profile.UpdateDatingStyle(
+                request.FreeTimePrefer ?? new List<string>(),
+                request.DateStyle ?? new List<string>()
+            );
             
             await profileRepository.CreateAsync(profile);
         }
@@ -37,6 +57,26 @@ public class CompleteProfileHandler(
             {
                 existingProfile.UpdateBackground(request.Education ?? string.Empty, request.Occupation ?? string.Empty);
             }
+
+            if (!string.IsNullOrEmpty(request.Bio) || !string.IsNullOrEmpty(request.InterestedIn))
+            {
+                existingProfile.UpdateBio(request.Bio ?? string.Empty, request.Gender, request.InterestedIn ?? string.Empty);
+            }
+
+            existingProfile.UpdateLifestyle(
+                request.Drinking ?? string.Empty,
+                request.Smoking ?? string.Empty,
+                request.SocialLevel ?? string.Empty,
+                request.PersonalityType ?? string.Empty,
+                request.LoveLanguage ?? new List<string>(),
+                request.Hobbies ?? new List<string>(),
+                request.Interests ?? new List<string>()
+            );
+
+            existingProfile.UpdateDatingStyle(
+                request.FreeTimePrefer ?? new List<string>(),
+                request.DateStyle ?? new List<string>()
+            );
             
             await profileRepository.UpdateAsync(existingProfile);
         }

@@ -24,6 +24,19 @@ export const HomeScreen = () => {
     );
   }
 
+  if (!data || !Array.isArray(data)) {
+    return (
+      <View style={styles.center}>
+        <Text style={styles.errorText}>
+          Invalid data received from server. Make sure the API endpoint is correct.
+        </Text>
+        <TouchableOpacity style={styles.button} onPress={() => refetch()}>
+          <Text style={styles.buttonText}>Retry</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <FlatList

@@ -10,14 +10,12 @@ import EmailLoginScreen from '../../features/auth/screens/EmailLoginScreen';
 import ForgotPasswordEmailScreen from '../../features/auth/screens/forgot-password/ForgotPasswordEmailScreen';
 import ForgotPasswordVerifyScreen from '../../features/auth/screens/forgot-password/ForgotPasswordVerifyScreen';
 import ResetPasswordScreen from '../../features/auth/screens/forgot-password/ResetPasswordScreen';
-<<<<<<< Updated upstream
+import { useAuthStore } from '../../store/authStore';
+import ProfileSetupScreen from '../../features/auth/screens/ProfileSetupScreen';
 import { HomeScreen } from '../../features/home/screens/HomeScreen';
 import { TestHubScreen } from '../../features/core/screens/TestHubScreen';
 import { MainBottomTabs, MainTabParamList } from './MainBottomTabs';
-=======
-import { useAuthStore } from '../../store/authStore';
-import ProfileSetupScreen from '../../features/auth/screens/ProfileSetupScreen';
->>>>>>> Stashed changes
+import { SettingsScreen } from '../../features/main/screens/SettingsScreen';
 
 export type RootStackParamList = {
   Onboarding: undefined;
@@ -33,6 +31,8 @@ export type RootStackParamList = {
   Home: undefined;
   TestHub: undefined;
   MainTabs: NavigatorScreenParams<MainTabParamList> | undefined;
+  Settings: undefined;
+  EditProfile: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -47,57 +47,6 @@ export const RootNavigator = () => {
           headerShown: false,
         }}
       >
-<<<<<<< Updated upstream
-        <Stack.Screen 
-          name="Onboarding" 
-          component={OnboardingScreen} 
-        />
-        <Stack.Screen 
-          name="Login" 
-          component={LoginScreen} 
-        />
-        <Stack.Screen 
-          name="SignUp" 
-          component={SignUpScreen} 
-        />
-        <Stack.Screen 
-          name="EmailSignUp" 
-          component={EmailSignUpDetailsScreen} 
-        />
-        <Stack.Screen 
-          name="EmailSignUpVerify" 
-          component={EmailSignUpVerifyScreen} 
-        />
-        <Stack.Screen 
-          name="EmailLogin" 
-          component={EmailLoginScreen} 
-        />
-        <Stack.Screen 
-          name="ForgotPasswordEmail" 
-          component={ForgotPasswordEmailScreen} 
-        />
-        <Stack.Screen 
-          name="ForgotPasswordVerify" 
-          component={ForgotPasswordVerifyScreen} 
-        />
-        <Stack.Screen 
-          name="ResetPassword" 
-          component={ResetPasswordScreen} 
-        />
-        <Stack.Screen 
-          name="Home" 
-          component={HomeScreen} 
-          options={{ title: 'Feed', headerShown: true }} 
-        />
-        <Stack.Screen 
-          name="TestHub" 
-          component={TestHubScreen} 
-        />
-        <Stack.Screen 
-          name="MainTabs" 
-          component={MainBottomTabs} 
-        />
-=======
         {!isAuthenticated ? (
           // Auth Stack
           <>
@@ -116,13 +65,30 @@ export const RootNavigator = () => {
           <Stack.Screen name="ProfileSetup" component={ProfileSetupScreen} />
         ) : (
           // App Stack
-          <Stack.Screen 
-            name="Home" 
-            component={HomeScreen} 
-            options={{ title: 'Feed', headerShown: true }} 
-          />
+          <>
+            <Stack.Screen 
+              name="MainTabs" 
+              component={MainBottomTabs} 
+            />
+            <Stack.Screen 
+              name="Home" 
+              component={HomeScreen} 
+              options={{ title: 'Feed', headerShown: true }} 
+            />
+            <Stack.Screen 
+              name="TestHub" 
+              component={TestHubScreen} 
+            />
+            <Stack.Screen 
+              name="Settings" 
+              component={SettingsScreen} 
+            />
+            <Stack.Screen 
+              name="EditProfile" 
+              component={require('../../features/main/screens/EditProfileScreen').EditProfileScreen} 
+            />
+          </>
         )}
->>>>>>> Stashed changes
       </Stack.Navigator>
     </NavigationContainer>
   );

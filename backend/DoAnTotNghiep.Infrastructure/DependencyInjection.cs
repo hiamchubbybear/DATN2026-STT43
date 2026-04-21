@@ -28,7 +28,9 @@ public static class DependencyInjection
         services.AddScoped<IEmailTemplateService, EmailTemplateService>();
         services.AddTransient<IPasswordResetToken, PasswordResetTokenRepository>();
         services.AddTransient<ITokenGenerator, TokenGenerateService>();
-        services.AddScoped<IJwtService, JwtService>();
+        
+        services.AddHttpContextAccessor();
+        services.AddScoped<ICurrentUserService, CurrentUserService>();
         var redisSettings = configuration.GetSection("Redis").Get<RedisSettings>();
         
         services.AddMemoryCache();

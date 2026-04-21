@@ -2,6 +2,7 @@ import React from 'react';
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 
 const profile = {
   basic_info: {
@@ -49,6 +50,7 @@ const getAge = (dob: string) => {
 };
 
 export const ProfileMainScreen = () => {
+  const navigation = useNavigation<any>();
   const habitItems = [
     { key: 'Drinking', value: profile.lifestyle.drinking, icon: 'wine-outline' },
     { key: 'Smoking', value: profile.lifestyle.smoking, icon: 'flame-outline' },
@@ -71,7 +73,7 @@ export const ProfileMainScreen = () => {
         <View style={styles.heroContainer}>
           <Image source={profile.photos[0]} style={styles.heroImage} resizeMode="cover" />
 
-          <TouchableOpacity style={styles.settingsButton} activeOpacity={0.85}>
+          <TouchableOpacity style={styles.settingsButton} activeOpacity={0.85} onPress={() => navigation.navigate('Settings')}>
             <Ionicons name="settings-outline" size={20} color="#FFFFFF" />
           </TouchableOpacity>
 
@@ -91,7 +93,7 @@ export const ProfileMainScreen = () => {
         <View style={styles.detailsCard}>
           <View style={styles.sectionHeaderRow}>
             <Text style={styles.sectionTitle}>Hồ sơ của tôi</Text>
-            <TouchableOpacity style={styles.editButton} activeOpacity={0.9}>
+            <TouchableOpacity style={styles.editButton} activeOpacity={0.9} onPress={() => navigation.navigate('EditProfile')}>
               <Ionicons name="create-outline" size={16} color="#EE3F57" />
               <Text style={styles.editText}>Chỉnh sửa</Text>
             </TouchableOpacity>

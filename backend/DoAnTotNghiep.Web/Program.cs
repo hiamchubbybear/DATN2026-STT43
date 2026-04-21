@@ -6,6 +6,14 @@ using DoAnTotNghiep.Web;
 using FluentValidation;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Serilog;
+using MongoDB.Bson;
+using MongoDB.Bson.Serialization;
+using MongoDB.Bson.Serialization.Serializers;
+
+// Register MongoDB Guid Serializer globally before any other DB operations
+#pragma warning disable CS0618 // Type or member is obsolete
+BsonSerializer.RegisterSerializer(new GuidSerializer(GuidRepresentation.Standard));
+#pragma warning restore CS0618
 
 var builder = WebApplication.CreateBuilder(args);
 

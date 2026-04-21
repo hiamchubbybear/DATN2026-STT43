@@ -51,7 +51,6 @@ export default function VerifyScreen() {
             authData.refreshToken,
             authData.isProfileCompleted
           );
-          navigation.replace('Home');
         } else {
           console.error("❌ [Verify] Invalid structure:", result);
           throw new Error('Verification successful but tokens not received');

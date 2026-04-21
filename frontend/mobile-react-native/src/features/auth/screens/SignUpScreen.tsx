@@ -3,9 +3,9 @@ import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Ionicons } from '@expo/vector-icons';
 import { RootStackParamList } from '../../../app/navigation/RootNavigator';
 import { AuthBackButton } from '../../../shared/components/AuthBackButton';
+import { IconFacebook, IconGoogle, IconApple } from '../../../shared/components/AuthIcons';
 
 export const SignUpScreen = () => {
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -16,7 +16,11 @@ export const SignUpScreen = () => {
                 <AuthBackButton onPress={() => navigation.goBack()} />
 
                 <View style={styles.centerSection}>
-                    <Image source={require('../../../../assets/images/logo.png')} style={styles.logoImage} />
+                    <Image 
+                        source={require('../../../../assets/images/logo.png')} 
+                        style={styles.logoImage} 
+                        resizeMode="contain"
+                    />
 
                     <Text style={styles.title}>Sign up to continue</Text>
 
@@ -24,10 +28,14 @@ export const SignUpScreen = () => {
                         <TouchableOpacity 
                             style={[styles.actionButton, styles.primaryButton]}
                             onPress={() => navigation.navigate('EmailSignUp')}
+                            activeOpacity={0.8}
                         >
                             <Text style={styles.primaryButtonText}>Continue with email</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity style={[styles.actionButton, styles.secondaryButton]}>
+                        <TouchableOpacity 
+                            style={[styles.actionButton, styles.secondaryButton]}
+                            activeOpacity={0.8}
+                        >
                             <Text style={styles.secondaryButtonText}>Use phone number</Text>
                         </TouchableOpacity>
                     </View>
@@ -39,15 +47,14 @@ export const SignUpScreen = () => {
                     </View>
 
                     <View style={styles.socialRow}>
-                        {/* Simplified social icons for now, same as LoginScreen layout but inline */}
-                        <TouchableOpacity style={styles.socialBtn}>
-                           <Ionicons name="logo-facebook" size={28} color="#1877F2" />
+                        <TouchableOpacity style={styles.socialBtn} activeOpacity={0.7}>
+                           <IconFacebook size={28} />
                         </TouchableOpacity>
-                        <TouchableOpacity style={styles.socialBtn}>
-                           <Ionicons name="logo-google" size={28} color="#EA4335" />
+                        <TouchableOpacity style={styles.socialBtn} activeOpacity={0.7}>
+                           <IconGoogle size={28} />
                         </TouchableOpacity>
-                        <TouchableOpacity style={styles.socialBtn}>
-                           <Ionicons name="logo-apple" size={28} color="#000000" />
+                        <TouchableOpacity style={styles.socialBtn} activeOpacity={0.7}>
+                           <IconApple size={28} />
                         </TouchableOpacity>
                     </View>
                 </View>

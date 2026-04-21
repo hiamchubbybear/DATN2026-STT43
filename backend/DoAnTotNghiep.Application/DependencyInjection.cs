@@ -17,16 +17,15 @@ public static class DependencyInjection
         {
             cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly());
             cfg.AddOpenBehavior(typeof(LoggingBehavior<,>));
+            cfg.AddOpenBehavior(typeof(ValidationBehavior<,>));
         });
+
+        services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
         return services;
     }
     
     public static IServiceCollection AddJwtAuthentication(this IServiceCollection services, string secretKey)
     {
-
-        services.AddValidatorsFromAssembly(typeof(AssemblyReference).Assembly);
-
-        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
         services.AddAuthentication(options =>
         {
             options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;

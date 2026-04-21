@@ -205,7 +205,7 @@ export const LoginScreen = () => {
         </View>
 
         {/* Title */}
-        <Text style={styles.title}>Sign in to PsyConnect</Text>
+        <Text style={styles.title}>Sign in to continue</Text>
 
         {/* Email Button */}
         <TouchableOpacity

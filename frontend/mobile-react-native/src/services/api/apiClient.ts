@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { Logger } from '../../shared/utils/logger';
+import { useAuthStore } from '../../store/authStore';
 
 // Normalize errors to a standard format
 export interface ApiError {
@@ -18,6 +19,11 @@ export const apiClient = axios.create({
 // Request Interceptor: Attach Auth tokens, Log Requests
 apiClient.interceptors.request.use(
   (config) => {
+    const token = useAuthStore.getState().accessToken;
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+
     Logger.debug(`[API RQ] ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
     if (config.data) {
       Logger.debug(`[API RQ Data] ${JSON.stringify(config.data, null, 2)}`);

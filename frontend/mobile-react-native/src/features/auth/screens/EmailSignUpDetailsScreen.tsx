@@ -51,7 +51,7 @@ export default function EmailSignUpDetailsScreen() {
           <View style={styles.content}>
             <Text style={styles.title}>Create Account</Text>
             <Text style={styles.description}>
-              Join PsyConnect today. Enter your details to get started.
+              Join our community today. Enter your details to get started.
             </Text>
 
             <View style={styles.inputContainer}>
@@ -105,6 +105,7 @@ export default function EmailSignUpDetailsScreen() {
           <TouchableOpacity 
             style={[styles.button, (!username || !email || !password || loading) && styles.buttonDisabled]} 
             onPress={handleSignUp}
+            activeOpacity={0.8}
             disabled={!username || !email || !password || loading}
           >
             {loading ? <ActivityIndicator color="#FFF" /> : <Text style={styles.buttonText}>Sign Up</Text>}

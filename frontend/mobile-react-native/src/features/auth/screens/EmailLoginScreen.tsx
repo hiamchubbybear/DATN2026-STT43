@@ -36,7 +36,6 @@ export default function EmailLoginScreen() {
           authData.refreshToken,
           authData.isProfileCompleted
         );
-        navigation.replace('Home');
       } else {
         console.error("❌ [Login] Invalid structure:", data);
         throw new Error('Invalid response from server');

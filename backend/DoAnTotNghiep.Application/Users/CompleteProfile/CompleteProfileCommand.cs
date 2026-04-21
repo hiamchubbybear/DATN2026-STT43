@@ -13,4 +13,21 @@ public class CompleteProfileCommand : IRequest<bool>
     // Optional background info for first setup
     public string? Education { get; set; }
     public string? Occupation { get; set; }
+
+    // Bio & Preferences
+    public string? Bio { get; set; }
+    public string? InterestedIn { get; set; }
+
+    // Lifestyle
+    public string? Drinking { get; set; }
+    public string? Smoking { get; set; }
+    public string? SocialLevel { get; set; }
+    public string? PersonalityType { get; set; }
+    public List<string>? LoveLanguage { get; set; }
+    public List<string>? Hobbies { get; set; }
+    public List<string>? Interests { get; set; }
+
+    // Dating Style
+    public List<string>? FreeTimePrefer { get; set; }
+    public List<string>? DateStyle { get; set; }
 }
