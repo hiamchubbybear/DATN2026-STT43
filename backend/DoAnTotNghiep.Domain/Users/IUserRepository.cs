@@ -13,4 +13,5 @@ public interface IUserRepository
     Task UpdateAsync(UserAccount user);
     Task DeleteAccount(string userId);
     Task<UserAccount> GetByIdAsync(Guid userId);
+    Task<List<UserAccount>> ListAllAsync();
 }

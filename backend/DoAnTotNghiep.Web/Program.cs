@@ -3,6 +3,7 @@ using DoAnTotNghiep.Application;
 using DoAnTotNghiep.Infrastructure;
 using DoAnTotNghiep.Infrastructure.Persistence;
 using DoAnTotNghiep.Web;
+using DoAnTotNghiep.Web.Hubs;
 using FluentValidation;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Serilog;
@@ -47,6 +48,31 @@ builder.Services.AddHealthChecks()
     .AddRedis(redisSettings!.ConnectionString, name: "redis");
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddControllers();
+
+try 
+{
+    var redisConfig = StackExchange.Redis.ConfigurationOptions.Parse(redisSettings!.ConnectionString);
+    redisConfig.AbortOnConnectFail = true; // Fail fast for the check
+    redisConfig.ConnectTimeout = 2000;
+    
+    // Ping Redis to see if it's alive
+    using var muxer = StackExchange.Redis.ConnectionMultiplexer.Connect(redisConfig);
+    
+    builder.Services.AddSignalR().AddStackExchangeRedis(options =>
+    {
+        var finalConfig = StackExchange.Redis.ConfigurationOptions.Parse(redisSettings!.ConnectionString);
+        finalConfig.AbortOnConnectFail = false;
+        finalConfig.ChannelPrefix = "PsyConnect";
+        options.Configuration = finalConfig;
+    });
+    Log.Information("Redis is online. SignalR Redis Backplane enabled.");
+}
+catch (Exception ex)
+{
+    Log.Warning("Redis is offline! Falling back to In-Memory SignalR (Single Node Mode). Error: {Msg}", ex.Message);
+    builder.Services.AddSignalR();
+}
+
 // builder.Services.AddValidatorsFromAssemblyContaining<ResetPasswordValidator>();
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
@@ -76,6 +102,7 @@ app.MapHealthChecks("/health", new HealthCheckOptions
     }
 });
 app.MapControllers();
+app.MapHub<AppHub>("/hubs/app");
 app.MapFallbackToFile("index.html");
 app.UseHttpsRedirection();
 

@@ -64,4 +64,9 @@ public class UserRepository : IUserRepository
             .Find(x => x.Id == userId)
             .FirstOrDefaultAsync();
     }
+
+    public async Task<List<UserAccount>> ListAllAsync()
+    {
+        return await _users.Find(_ => true).ToListAsync();
+    }
 }

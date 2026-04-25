@@ -28,6 +28,13 @@ public class UserController : ControllerBase
         return Guid.Parse("00000000-0000-0000-0000-000000000000"); // TODO: Update with real JWT Claim parsing
     }
 
+    [HttpGet("discover")]
+    public async Task<IActionResult> GetAllUsers()
+    {
+        var result = await _mediator.Send(new Application.Users.Profile.SearchUsersQuery());
+        return Ok(ApiResponse<List<Application.Users.Profile.UserSearchDto>>.Succeeded(result));
+    }
+
     [HttpGet("me")]
     public async Task<IActionResult> GetMyProfile()
     {

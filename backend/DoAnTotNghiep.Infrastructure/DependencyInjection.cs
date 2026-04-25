@@ -6,6 +6,8 @@ using DoAnTotNghiep.Infrastructure.Persistence.Email.Template;
 using DoAnTotNghiep.Infrastructure.Persistence.Storage;
 using DoAnTotNghiep.Infrastructure.Repositories;
 using DoAnTotNghiep.Infrastructure.Security;
+using DoAnTotNghiep.Application.Chat;
+using DoAnTotNghiep.Infrastructure.Chat;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -22,6 +24,9 @@ public static class DependencyInjection
         services.AddScoped<Domain.Users.ISessionRepository, Repositories.UserSessionRepository>();
         services.AddScoped<IJwtService, JwtService>();
         services.AddScoped<Domain.Users.IUserProfileRepository, Repositories.UserProfileRepository>();
+        services.AddScoped<IChatMessageRepository, ChatMessageRepository>();
+        services.AddSingleton<IChatMessageQueue, ChatMessageQueue>();
+        services.AddHostedService<ChatPersistenceBackgroundService>();
         services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();
         services.AddScoped<IEmailService, MailKitEmailService>();
         services.AddScoped<IGoogleAuthService, GoogleAuthService>();

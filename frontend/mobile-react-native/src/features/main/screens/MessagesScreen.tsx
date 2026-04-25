@@ -2,24 +2,30 @@ import React from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../../../app/navigation/RootNavigator';
+import { UserDiscoverDto, userService } from '../../../services/api/userService';
+import { Logger } from '../../../shared/utils/logger';
 
-const avatars = [
-  { id: 'a-1', name: 'You', image: require('../../../../assets/images/anh1.jpg') },
-  { id: 'a-2', name: 'Emma', image: require('../../../../assets/images/anh2.jpg') },
-  { id: 'a-3', name: 'Ava', image: require('../../../../assets/images/anh3.jpg') },
-  { id: 'a-4', name: 'Sophia', image: require('../../../../assets/images/anh1.jpg') },
-];
-
-const conversations = [
-  { id: 'c-1', name: 'Emelie', message: 'Sticker 😍', time: '23 min', unread: 1, image: require('../../../../assets/images/anh2.jpg') },
-  { id: 'c-2', name: 'Abigail', message: 'Typing...', time: '27 min', unread: 2, image: require('../../../../assets/images/anh3.jpg') },
-  { id: 'c-3', name: 'Elizabeth', message: 'Ok, see you then.', time: '33 min', unread: 0, image: require('../../../../assets/images/anh1.jpg') },
-  { id: 'c-4', name: 'Penelope', message: "Yo! Hey! What's up, long time...", time: '50 min', unread: 0, image: require('../../../../assets/images/anh2.jpg') },
-  { id: 'c-5', name: 'Chloe', message: 'You: Hello how are you?', time: '55 min', unread: 0, image: require('../../../../assets/images/anh3.jpg') },
-  { id: 'c-6', name: 'Grace', message: 'You: Great! what was your last tr... ', time: '1 hour', unread: 0, image: require('../../../../assets/images/anh1.jpg') },
-];
+const defaultAvatar = require('../../../../assets/images/anh1.jpg');
 
 export const MessagesScreen = () => {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const [users, setUsers] = React.useState<UserDiscoverDto[]>([]);
+
+  React.useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const data = await userService.discoverUsers();
+        setUsers(data);
+      } catch (error) {
+        Logger.error('Failed to fetch users', error);
+      }
+    };
+    fetchUsers();
+  }, []);
+
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <View style={styles.container}>
@@ -37,39 +43,35 @@ export const MessagesScreen = () => {
           <Text style={styles.searchText}>Search</Text>
         </View>
 
-        <Text style={styles.sectionTitle}>Activities</Text>
+        <Text style={styles.sectionTitle}>Discover People (Test Chat)</Text>
         <View style={styles.activityRow}>
-          {avatars.map((item) => (
-            <View key={item.id} style={styles.activityItem}>
+          {users.map((item) => (
+            <TouchableOpacity 
+              key={item.userId} 
+              style={styles.activityItem}
+              activeOpacity={0.7}
+              onPress={() => navigation.navigate('ChatRoom', {
+                conversationId: item.userId, // Use userId as dummy Guid for testing
+                receiverId: item.userId,
+                receiverName: item.displayName
+              })}
+            >
               <View style={styles.activityAvatarRing}>
-                <Image source={item.image} style={styles.activityAvatar} />
+                <Image source={defaultAvatar} style={styles.activityAvatar} />
               </View>
-              <Text style={styles.activityLabel}>{item.name}</Text>
-            </View>
+              <Text style={styles.activityLabel} numberOfLines={1}>{item.displayName}</Text>
+            </TouchableOpacity>
           ))}
+          {users.length === 0 && (
+            <Text style={styles.emptyText}>No users found. Try registering another account!</Text>
+          )}
         </View>
 
-        <Text style={[styles.sectionTitle, styles.messagesTitle]}>Messages</Text>
+        <Text style={[styles.sectionTitle, styles.messagesTitle]}>Recent Chats</Text>
 
-        {conversations.map((item) => (
-          <View key={item.id} style={styles.messageRow}>
-            <Image source={item.image} style={styles.avatar} />
-
-            <View style={styles.messageMeta}>
-              <Text style={styles.name}>{item.name}</Text>
-              <Text style={styles.preview}>{item.message}</Text>
-            </View>
-
-            <View style={styles.trailing}>
-              <Text style={styles.time}>{item.time}</Text>
-              {item.unread > 0 ? (
-                <View style={styles.unreadBubble}>
-                  <Text style={styles.unreadText}>{item.unread}</Text>
-                </View>
-              ) : null}
-            </View>
-          </View>
-        ))}
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyText}>Click a person above to start testing chat!</Text>
+        </View>
 
         <View style={styles.bottomSpacer} />
       </View>
@@ -206,5 +208,17 @@ const styles = StyleSheet.create({
   },
   bottomSpacer: {
     height: 84,
+  },
+  emptyState: {
+    marginTop: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  emptyText: {
+    fontSize: 14,
+    color: '#A1A1AA',
+    textAlign: 'center',
+    lineHeight: 20,
   },
 });

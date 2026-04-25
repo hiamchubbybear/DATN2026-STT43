@@ -14,7 +14,7 @@ public class MongoDbContext
     {
         try
         {
-            // For MongoDB Driver 3.0+, we must ensure the global serializer is registered early
+            
             if (!BsonClassMap.IsClassMapRegistered(typeof(DoAnTotNghiep.Domain.Common.BaseEntity)))
             {
                 BsonClassMap.RegisterClassMap<DoAnTotNghiep.Domain.Common.BaseEntity>(cm =>
@@ -34,7 +34,7 @@ public class MongoDbContext
         }
         catch
         {
-            // Ignore if already registered
+            
         }
     }
 
@@ -53,6 +53,7 @@ public class MongoDbContext
         _database.GetCollection<PasswordResetToken>("password_reset_token");
 
     public IMongoCollection<UserProfile> UserProfiles => _database.GetCollection<UserProfile>("user_profiles");
+    public IMongoCollection<DoAnTotNghiep.Domain.Chat.ChatMessage> ChatMessages => _database.GetCollection<DoAnTotNghiep.Domain.Chat.ChatMessage>("chat_messages");
 }
 
 public class MongoDbInitializer
@@ -82,7 +83,7 @@ public class MongoDbInitializer
             Builders<PasswordResetToken>.IndexKeys.Ascending(u => u.ExpiresAt),
             new CreateIndexOptions { ExpireAfter = TimeSpan.Zero }
         ));
-        
+
         var sessionCollection = _database.GetCollection<Session>("user_sessions");
         await sessionCollection.Indexes.CreateOneAsync(new CreateIndexModel<Session>(
             Builders<Session>.IndexKeys.Ascending(u => u.CreatedAt)));
