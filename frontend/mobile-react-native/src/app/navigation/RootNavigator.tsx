@@ -16,6 +16,12 @@ import { HomeScreen } from '../../features/home/screens/HomeScreen';
 import { TestHubScreen } from '../../features/core/screens/TestHubScreen';
 import { MainBottomTabs, MainTabParamList } from './MainBottomTabs';
 import { SettingsScreen } from '../../features/main/screens/SettingsScreen';
+import { EditProfileScreen } from '../../features/main/screens/EditProfileScreen';
+import { MainScreen } from '../../features/main/screens/MainScreen';
+import { NotificationsMainScreen } from '../../features/main/screens/NotificationsMainScreen';
+import { MessagesScreen } from '../../features/main/screens/MessagesScreen';
+import { MatchesScreen } from '../../features/main/screens/MatchesScreen';
+import { ProfileMainScreen } from '../../features/main/screens/ProfileMainScreen';
 
 export type RootStackParamList = {
   Onboarding: undefined;
@@ -33,6 +39,11 @@ export type RootStackParamList = {
   MainTabs: NavigatorScreenParams<MainTabParamList> | undefined;
   Settings: undefined;
   EditProfile: undefined;
+  DemoDiscover: undefined;
+  DemoNotifications: undefined;
+  DemoMessages: undefined;
+  DemoMatches: undefined;
+  DemoProfile: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -76,19 +87,24 @@ export const RootNavigator = () => {
               options={{ title: 'Feed', headerShown: true }} 
             />
             <Stack.Screen 
-              name="TestHub" 
-              component={TestHubScreen} 
-            />
-            <Stack.Screen 
               name="Settings" 
               component={SettingsScreen} 
             />
             <Stack.Screen 
               name="EditProfile" 
-              component={require('../../features/main/screens/EditProfileScreen').EditProfileScreen} 
+              component={EditProfileScreen} 
             />
           </>
         )}
+        <Stack.Screen 
+          name="TestHub" 
+          component={TestHubScreen} 
+        />
+        <Stack.Screen name="DemoDiscover" component={MainScreen} />
+        <Stack.Screen name="DemoNotifications" component={NotificationsMainScreen} />
+        <Stack.Screen name="DemoMessages" component={MessagesScreen} />
+        <Stack.Screen name="DemoMatches" component={MatchesScreen} />
+        <Stack.Screen name="DemoProfile" component={ProfileMainScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

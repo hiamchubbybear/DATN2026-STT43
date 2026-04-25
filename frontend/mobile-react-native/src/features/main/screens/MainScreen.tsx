@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { StyleSheet, Text, View, TouchableOpacity, Dimensions, Alert, Image } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Dimensions, Image } from 'react-native';
 import Svg, { Path, Circle, Defs, LinearGradient, Stop, Rect } from 'react-native-svg';
-import { useAuthStore } from '../../../store/authStore';
 
 const { width } = Dimensions.get('window');
 
@@ -10,12 +9,6 @@ const { width } = Dimensions.get('window');
 const SvgChevronLeft = () => (
   <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
     <Path d="M15 18L9 12L15 6" stroke="#F43F5E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-  </Svg>
-);
-
-const SvgLogOut = () => (
-  <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-    <Path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" stroke="#F43F5E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
   </Svg>
 );
 
@@ -86,14 +79,6 @@ const SvgGradientOverlay = () => (
 
 export const MainScreen = () => {
   const [showOnboarding, setShowOnboarding] = useState(true);
-  const { logout } = useAuthStore();
-
-  const handleLogout = () => {
-    Alert.alert('Đăng xuất', 'Bạn có chắc chắn muốn đăng xuất?', [
-      { text: 'Hủy', style: 'cancel' },
-      { text: 'Đăng xuất', style: 'destructive', onPress: () => logout() },
-    ]);
-  };
 
   if (showOnboarding) {
     return (
@@ -103,8 +88,8 @@ export const MainScreen = () => {
             <SvgChevronLeft />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Discover</Text>
-          <TouchableOpacity style={styles.iconButton} onPress={handleLogout}>
-            <SvgLogOut />
+          <TouchableOpacity style={styles.iconButton}>
+            <SvgFilter />
           </TouchableOpacity>
         </View>
 
@@ -325,7 +310,7 @@ const styles = StyleSheet.create({
   },
   footer: {
     paddingHorizontal: 32,
-    paddingBottom: 110,
+    paddingBottom: 84,
     alignItems: 'center',
   },
   primaryButton: {
@@ -450,7 +435,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingBottom: 110,
+    paddingBottom: 84,
     paddingTop: 24,
     gap: 24,
   },

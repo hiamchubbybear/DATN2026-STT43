@@ -2,143 +2,105 @@ import React from 'react';
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
 
 const profile = {
-  basic_info: {
-    displayName: 'Minh Anh',
-    dob: '1998-10-15',
-    gender: 'Female',
-    languages: ['Tiếng Việt', 'English', '한국어'],
-  },
-  background: {
-    education: 'Đại học Kinh tế TP.HCM',
-    occupation: 'Product Designer',
-  },
-  lifestyle: {
-    drinking: 'Occasionally',
-    smoking: 'Never',
-    socialLevel: 'Extrovert',
-    personalityType: 'ENFP',
-    loveLanguage: ['Quality Time', 'Words of Affirmation'],
-    hobbies: ['Photography', 'Pilates', 'Travel', 'Coffee Tasting'],
-    interests: ['Design', 'Startup', 'Music Festival', 'Hiking'],
-  },
-  dating_style: {
-    freeTimePrefer: ['Brunch cuối tuần', 'Road trip ngắn', 'Đi triển lãm'],
-    dateStyle: ['Trò chuyện sâu', 'Vui vẻ tự nhiên', 'Tôn trọng không gian cá nhân'],
-  },
-  bio: 'Mình thích cuộc sống cân bằng giữa công việc sáng tạo và những chuyến đi ngắn cuối tuần. Luôn tìm kiếm năng lượng tích cực và sự chân thành.',
-  photos: [
+  name: 'Jessica Parker',
+  age: 23,
+  title: 'Professional model',
+  location: 'Chicago, IL United States',
+  distance: '1 km',
+  about:
+    'My name is Jessica Parker and I enjoy meeting new people and finding ways to help them.',
+  interests: ['Traveling', 'Books', 'Music', 'Dancing', 'Modeling'],
+  gallery: [
     require('../../../../assets/images/anh1.jpg'),
     require('../../../../assets/images/anh2.jpg'),
     require('../../../../assets/images/anh3.jpg'),
+    require('../../../../assets/images/anh1.jpg'),
+    require('../../../../assets/images/anh2.jpg'),
   ],
 };
 
-const getAge = (dob: string) => {
-  const birthDate = new Date(dob);
-  const now = new Date();
-  let age = now.getFullYear() - birthDate.getFullYear();
-  const monthDiff = now.getMonth() - birthDate.getMonth();
-
-  if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < birthDate.getDate())) {
-    age -= 1;
-  }
-
-  return age;
-};
+const ProfileActionButton = ({ icon, primary = false }: { icon: keyof typeof Ionicons.glyphMap; primary?: boolean }) => (
+  <TouchableOpacity style={[styles.actionBtn, primary && styles.actionBtnPrimary]} activeOpacity={0.88}>
+    <Ionicons name={icon} size={22} color={primary ? '#FFFFFF' : icon === 'close' ? '#F97316' : '#9333EA'} />
+  </TouchableOpacity>
+);
 
 export const ProfileMainScreen = () => {
-  const navigation = useNavigation<any>();
-  const habitItems = [
-    { key: 'Drinking', value: profile.lifestyle.drinking, icon: 'wine-outline' },
-    { key: 'Smoking', value: profile.lifestyle.smoking, icon: 'flame-outline' },
-    { key: 'Social', value: profile.lifestyle.socialLevel, icon: 'people-outline' },
-    { key: 'Personality', value: profile.lifestyle.personalityType, icon: 'sparkles-outline' },
-  ];
-
-  const aboutChips = [
-    ...profile.basic_info.languages,
-    ...profile.lifestyle.loveLanguage,
-    ...profile.lifestyle.hobbies,
-    ...profile.lifestyle.interests,
-    ...profile.dating_style.freeTimePrefer,
-    ...profile.dating_style.dateStyle,
-  ];
-
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        <View style={styles.heroContainer}>
-          <Image source={profile.photos[0]} style={styles.heroImage} resizeMode="cover" />
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <View style={styles.heroWrap}>
+          <Image source={require('../../../../assets/images/anh2.jpg')} style={styles.heroImage} resizeMode="cover" />
 
-          <TouchableOpacity style={styles.settingsButton} activeOpacity={0.85} onPress={() => navigation.navigate('Settings')}>
-            <Ionicons name="settings-outline" size={20} color="#FFFFFF" />
+          <TouchableOpacity style={styles.backBtn} activeOpacity={0.85}>
+            <Ionicons name="chevron-back" size={20} color="#FFFFFF" />
           </TouchableOpacity>
 
-          <View style={styles.heroOverlay}>
-            <View style={styles.avatarWrapper}>
-              <Image source={profile.photos[1]} style={styles.avatar} />
-            </View>
-            <View style={styles.profileIdentity}>
-              <Text style={styles.nameText}>
-                {profile.basic_info.displayName}, {getAge(profile.basic_info.dob)}
-              </Text>
-              <Text style={styles.genderText}>{profile.basic_info.gender}</Text>
-            </View>
+          <View style={styles.actionRowFloat}>
+            <ProfileActionButton icon="close" />
+            <ProfileActionButton icon="heart" primary />
+            <ProfileActionButton icon="star" />
           </View>
         </View>
 
-        <View style={styles.detailsCard}>
-          <View style={styles.sectionHeaderRow}>
-            <Text style={styles.sectionTitle}>Hồ sơ của tôi</Text>
-            <TouchableOpacity style={styles.editButton} activeOpacity={0.9} onPress={() => navigation.navigate('EditProfile')}>
-              <Ionicons name="create-outline" size={16} color="#EE3F57" />
-              <Text style={styles.editText}>Chỉnh sửa</Text>
+        <View style={styles.contentCard}>
+          <View style={styles.identityRow}>
+            <View>
+              <Text style={styles.nameText}>
+                {profile.name}, {profile.age}
+              </Text>
+              <Text style={styles.titleText}>{profile.title}</Text>
+            </View>
+            <TouchableOpacity style={styles.sendBtn} activeOpacity={0.85}>
+              <Ionicons name="paper-plane-outline" size={16} color="#EE3F57" />
             </TouchableOpacity>
           </View>
 
-          <Text style={styles.bioText}>{profile.bio}</Text>
+          <View style={styles.sectionRow}>
+            <Text style={styles.sectionTitle}>Location</Text>
+            <View style={styles.distanceChip}>
+              <Ionicons name="location-outline" size={12} color="#EE3F57" />
+              <Text style={styles.distanceText}>{profile.distance}</Text>
+            </View>
+          </View>
+          <Text style={styles.locationText}>{profile.location}</Text>
 
-          <View style={styles.infoRow}>
-            <Ionicons name="briefcase-outline" size={18} color="#EE3F57" />
-            <Text style={styles.infoLabel}>Nghề nghiệp</Text>
-            <Text style={styles.infoValue}>{profile.background.occupation}</Text>
+          <Text style={[styles.sectionTitle, styles.sectionSpacing]}>About</Text>
+          <Text style={styles.aboutText}>{profile.about}</Text>
+          <TouchableOpacity activeOpacity={0.8}>
+            <Text style={styles.readMore}>Read more</Text>
+          </TouchableOpacity>
+
+          <View style={styles.interestHeader}>
+            <Text style={styles.sectionTitle}>Interests</Text>
+            <TouchableOpacity style={styles.showMoreBtn} activeOpacity={0.85}>
+              <Text style={styles.showMoreText}>Show more</Text>
+              <Ionicons name="chevron-down" size={12} color="#71717A" />
+            </TouchableOpacity>
           </View>
 
-          <View style={styles.infoRow}>
-            <Ionicons name="school-outline" size={18} color="#EE3F57" />
-            <Text style={styles.infoLabel}>Học vấn</Text>
-            <Text style={styles.infoValue}>{profile.background.education}</Text>
-          </View>
-
-          <Text style={[styles.sectionTitle, styles.sectionSpacing]}>Sở thích & phong cách</Text>
-          <View style={styles.chipsWrap}>
-            {aboutChips.map((chip) => (
-              <View key={chip} style={styles.chip}>
-                <Text style={styles.chipText}>{chip}</Text>
+          <View style={styles.interestWrap}>
+            {profile.interests.map((item, index) => (
+              <View key={item} style={[styles.interestChip, index < 2 && styles.interestChipActive]}>
+                <Text style={[styles.interestText, index < 2 && styles.interestTextActive]}>
+                  {index < 2 ? `✓ ${item}` : item}
+                </Text>
               </View>
             ))}
           </View>
 
-          <Text style={[styles.sectionTitle, styles.sectionSpacing]}>Thói quen</Text>
-          <View style={styles.habitGrid}>
-            {habitItems.map((item) => (
-              <View key={item.key} style={styles.habitCard}>
-                <View style={styles.habitIconWrap}>
-                  <Ionicons name={item.icon as any} size={18} color="#EE3F57" />
-                </View>
-                <Text style={styles.habitKey}>{item.key}</Text>
-                <Text style={styles.habitValue}>{item.value}</Text>
-              </View>
-            ))}
+          <View style={styles.galleryHead}>
+            <Text style={styles.sectionTitle}>Gallery</Text>
+            <TouchableOpacity activeOpacity={0.85}>
+              <Text style={styles.seeAll}>See all</Text>
+            </TouchableOpacity>
           </View>
 
-          <Text style={[styles.sectionTitle, styles.sectionSpacing]}>Ảnh của tôi</Text>
-          <View style={styles.photoGrid}>
-            {profile.photos.map((photo, index) => (
-              <Image key={`${index}`} source={photo} style={styles.gridPhoto} resizeMode="cover" />
+          <View style={styles.galleryGrid}>
+            {profile.gallery.map((photo, index) => (
+              <Image key={`${index}`} source={photo} style={styles.galleryItem} />
             ))}
           </View>
         </View>
@@ -150,205 +112,205 @@ export const ProfileMainScreen = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F3F3F3',
+    backgroundColor: '#F7F7F8',
   },
   scroll: {
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 110,
+    paddingBottom: 92,
   },
-  heroContainer: {
-    height: 290,
-    backgroundColor: '#111111',
+  heroWrap: {
+    height: 360,
+    position: 'relative',
   },
   heroImage: {
     width: '100%',
     height: '100%',
   },
-  settingsButton: {
+  backBtn: {
     position: 'absolute',
-    top: 14,
-    right: 16,
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: 'rgba(0,0,0,0.3)',
+    top: 16,
+    left: 16,
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.22)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  heroOverlay: {
+  actionRowFloat: {
     position: 'absolute',
     left: 0,
     right: 0,
-    bottom: -46,
+    bottom: -34,
     flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 20,
     gap: 14,
+    zIndex: 2,
   },
-  avatarWrapper: {
-    width: 92,
-    height: 92,
-    borderRadius: 46,
-    padding: 3,
+  actionBtn: {
+    width: 62,
+    height: 62,
+    borderRadius: 31,
     backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#111111',
+    shadowOpacity: 0.08,
+    shadowOffset: { width: 0, height: 6 },
+    shadowRadius: 14,
+    elevation: 4,
   },
-  avatar: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 44,
+  actionBtnPrimary: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    backgroundColor: '#EE3F57',
   },
-  profileIdentity: {
-    paddingTop: 30,
-  },
-  detailsCard: {
-    marginTop: 56,
-    marginHorizontal: 12,
-    marginBottom: 16,
+  contentCard: {
+    marginTop: 0,
+    marginHorizontal: 10,
     borderRadius: 24,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
     backgroundColor: '#FFFFFF',
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 28,
+    paddingTop: 48,
+    paddingBottom: 24,
+    paddingHorizontal: 16,
+  },
+  identityRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  nameText: {
+    fontSize: 30,
+    fontWeight: '800',
+    color: '#18181B',
+  },
+  titleText: {
+    marginTop: 4,
+    fontSize: 13,
+    color: '#A1A1AA',
+  },
+  sendBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 11,
+    borderWidth: 1,
+    borderColor: '#FECBD3',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sectionRow: {
+    marginTop: 18,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '700',
-    color: '#333333',
+    color: '#18181B',
   },
-  sectionHeaderRow: {
+  sectionSpacing: {
+    marginTop: 16,
+  },
+  distanceChip: {
+    borderRadius: 10,
+    backgroundColor: '#FFF0F3',
+    borderWidth: 1,
+    borderColor: '#FECBD3',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: 3,
   },
-  editButton: {
+  distanceText: {
+    fontSize: 11,
+    color: '#EE3F57',
+    fontWeight: '700',
+  },
+  locationText: {
+    marginTop: 6,
+    fontSize: 13,
+    color: '#71717A',
+  },
+  aboutText: {
+    marginTop: 8,
+    fontSize: 13,
+    color: '#52525B',
+    lineHeight: 19,
+  },
+  readMore: {
+    marginTop: 4,
+    fontSize: 13,
+    color: '#EE3F57',
+    fontWeight: '700',
+  },
+  interestHeader: {
+    marginTop: 14,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  showMoreBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    borderWidth: 1,
-    borderColor: '#FDE0E5',
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    backgroundColor: '#FFF5F7',
   },
-  editText: {
-    color: '#EE3F57',
+  showMoreText: {
     fontSize: 12,
-    fontWeight: '600',
+    color: '#71717A',
   },
-  bioText: {
+  interestWrap: {
     marginTop: 10,
-    fontSize: 14,
-    lineHeight: 21,
-    color: '#4B5563',
-  },
-  nameText: {
-    color: '#111111',
-    fontSize: 28,
-    fontWeight: '700',
-  },
-  genderText: {
-    marginTop: 2,
-    color: '#6B7280',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  sectionSpacing: {
-    marginTop: 20,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 12,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#F3F3F3',
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 12,
-    paddingVertical: 11,
-  },
-  infoLabel: {
-    marginLeft: 8,
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#ADAFBB',
-  },
-  infoValue: {
-    marginLeft: 'auto',
-    maxWidth: '55%',
-    textAlign: 'right',
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333333',
-  },
-  chipsWrap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
-    marginTop: 12,
-  },
-  chip: {
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: '#EE3F57',
-    backgroundColor: '#FFF1F4',
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-  },
-  chipText: {
-    fontSize: 13,
-    color: '#EE3F57',
-    fontWeight: '600',
-  },
-  habitGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    rowGap: 12,
-    marginTop: 12,
-  },
-  habitCard: {
-    width: '48.5%',
-    borderRadius: 16,
-    backgroundColor: '#F9FAFB',
-    borderWidth: 1,
-    borderColor: '#F3F4F6',
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-  },
-  habitIconWrap: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: '#FFF1F4',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 8,
-  },
-  habitKey: {
-    fontSize: 12,
-    color: '#ADAFBB',
-    fontWeight: '500',
-  },
-  habitValue: {
-    marginTop: 2,
-    fontSize: 14,
-    color: '#333333',
-    fontWeight: '600',
-  },
-  photoGrid: {
-    marginTop: 12,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     gap: 8,
   },
-  gridPhoto: {
-    flex: 1,
-    height: 112,
-    borderRadius: 14,
+  interestChip: {
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: '#FFFFFF',
+  },
+  interestChipActive: {
+    borderColor: '#F8B4C2',
+    backgroundColor: '#FFF2F5',
+  },
+  interestText: {
+    fontSize: 12,
+    color: '#3F3F46',
+  },
+  interestTextActive: {
+    color: '#EE3F57',
+    fontWeight: '600',
+  },
+  galleryHead: {
+    marginTop: 18,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  seeAll: {
+    fontSize: 13,
+    color: '#EE3F57',
+    fontWeight: '700',
+  },
+  galleryGrid: {
+    marginTop: 10,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    rowGap: 8,
+  },
+  galleryItem: {
+    width: '32%',
+    aspectRatio: 0.82,
+    borderRadius: 10,
   },
 });

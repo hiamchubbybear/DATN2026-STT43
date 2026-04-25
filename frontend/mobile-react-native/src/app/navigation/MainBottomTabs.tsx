@@ -1,6 +1,6 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { MainScreen } from '../../features/main/screens/MainScreen';
 import { MatchesScreen } from '../../features/main/screens/MatchesScreen';
@@ -26,14 +26,6 @@ const ICONS: Record<keyof MainTabParamList, keyof typeof Ionicons.glyphMap> = {
   Profile: 'person-outline',
 };
 
-const LABELS: Record<keyof MainTabParamList, string> = {
-  Main: 'Cards',
-  Matches: 'Matches',
-  Messages: 'Messages',
-  Notifications: 'Notifications',
-  Profile: 'Profile',
-};
-
 export const MainBottomTabs = () => {
   return (
     <Tab.Navigator
@@ -41,15 +33,7 @@ export const MainBottomTabs = () => {
         headerShown: false,
         tabBarStyle: styles.tabBar,
         tabBarItemStyle: styles.tabButton,
-        tabBarLabel: ({ focused }) => {
-          const routeName = route.name as keyof MainTabParamList;
-
-          return (
-            <Text style={[styles.tabLabel, focused && styles.tabLabelActive]}>
-              {LABELS[routeName]}
-            </Text>
-          );
-        },
+        tabBarLabel: () => null,
         tabBarIcon: ({ focused }) => {
           const routeName = route.name as keyof MainTabParamList;
           const iconColor = focused ? '#EE3F57' : '#ADAFBB';
@@ -61,6 +45,7 @@ export const MainBottomTabs = () => {
             </View>
           );
         },
+        tabBarShowLabel: false,
       })}
     >
       <Tab.Screen name="Main" component={MainScreen} />
@@ -75,41 +60,38 @@ export const MainBottomTabs = () => {
 const styles = StyleSheet.create({
   tabBar: {
     position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    height: 78,
-    backgroundColor: 'rgba(255,255,255,0.95)',
+    left: 10,
+    right: 10,
+    bottom: 10,
+    height: 64,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
     borderTopWidth: 0,
-    elevation: 8,
+    elevation: 10,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
   },
   tabButton: {
     alignItems: 'center',
     justifyContent: 'center',
+    paddingTop: 5,
   },
   tabInner: {
     width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingTop: 4,
+    paddingTop: 0,
   },
   topLine: {
-    width: '100%',
+    width: 16,
     height: 3,
-    marginBottom: 8,
+    borderRadius: 999,
+    marginBottom: 6,
     backgroundColor: 'transparent',
   },
   topLineActive: {
     backgroundColor: '#EE3F57',
-  },
-  tabLabel: {
-    marginTop: 2,
-    fontSize: 11,
-    color: '#ADAFBB',
-    fontWeight: '500',
-  },
-  tabLabelActive: {
-    color: '#EE3F57',
-    fontWeight: '700',
   },
 });
