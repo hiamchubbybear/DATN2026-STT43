@@ -20,11 +20,13 @@ export const TestHubScreen = () => {
         <Text style={styles.title}>Test Navigation Hub</Text>
         <Text style={styles.subtitle}>
           {isInAppFlow
-            ? 'Bạn đang ở app flow. Dùng các nút dưới để test tab chính.'
+            ? 'Bạn đang ở app flow. Các nút bên dưới mở tab có kèm thanh navigation bar.'
             : 'Bạn đang ở auth/setup flow. Dùng các nút dưới để test đăng nhập/đăng ký.'}
         </Text>
 
         <View style={styles.buttons}>
+          <PrimaryButton title="Xem Main (Preview)" onPress={() => navigation.navigate('PreviewMainTabs', { screen: 'Main' })} />
+
           {isInAppFlow ? (
             <>
               <PrimaryButton title="Main" onPress={() => navigation.navigate('MainTabs', { screen: 'Main' })} />
@@ -44,13 +46,6 @@ export const TestHubScreen = () => {
               <PrimaryButton title="Forgot Password" onPress={() => navigation.navigate('ForgotPasswordEmail')} />
             </>
           )}
-
-          <Text style={styles.groupTitle}>UI Demo Screens</Text>
-          <PrimaryButton title="Discover + Tutorial" onPress={() => navigation.navigate('DemoDiscover')} />
-          <PrimaryButton title="Notifications" onPress={() => navigation.navigate('DemoNotifications')} />
-          <PrimaryButton title="Messages" onPress={() => navigation.navigate('DemoMessages')} />
-          <PrimaryButton title="Matches" onPress={() => navigation.navigate('DemoMatches')} />
-          <PrimaryButton title="Profile" onPress={() => navigation.navigate('DemoProfile')} />
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -63,5 +58,4 @@ const styles = StyleSheet.create({
   title: { fontSize: 28, fontWeight: '700', color: '#111111', marginTop: 8 },
   subtitle: { fontSize: 14, color: '#6B7280', marginTop: 8, marginBottom: 16 },
   buttons: { gap: 10 },
-  groupTitle: { marginTop: 8, marginBottom: 2, fontSize: 16, fontWeight: '700', color: '#111111' },
 });
