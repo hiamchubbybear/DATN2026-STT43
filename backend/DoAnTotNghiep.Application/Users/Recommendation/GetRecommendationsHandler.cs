@@ -95,12 +95,42 @@ namespace DoAnTotNghiep.Application.Users.Recommendation
         }
         private UserProfileDto Map(UserProfile p)
         {
-            return new UserProfileDto
-            {
-                UserId = p.UserId,
-                Name = p.BasicInfo.DisplayName,
-                Photo = p.Photos.FirstOrDefault()?.ThumbnailUrl
-            };
+            return new UserProfileDto(
+                p.UserId,
+                new BasicInfoDto(
+                    p.BasicInfo.DisplayName,
+                    p.BasicInfo.Dob,
+                    p.BasicInfo.Gender,
+                    p.BasicInfo.Languages),
+                new BackgroundDto(
+                    p.Background.Education,
+                    p.Background.Occupation),
+                new LifestyleDto(
+                    p.Lifestyle.Drinking,
+                    p.Lifestyle.Smoking,
+                    p.Lifestyle.SocialLevel,
+                    p.Lifestyle.PersonalityType,
+                    p.Lifestyle.LoveLanguage,
+                    p.Lifestyle.Hobbies,
+                    p.Lifestyle.Interests),
+                new DatingStyleDto(
+                    p.DatingStyle.FreeTimePrefer,
+                    p.DatingStyle.DateStyle),
+                new List<PhotoDto>(
+                    p.Photos.Select(photo => new PhotoDto(
+                        photo.Id,
+                        photo.Url,
+                        photo.Order,
+                        photo.IsPrimary))),
+                p.Bio ?? string.Empty,
+                p.InterestedIn ?? string.Empty,
+                p.Latitude,
+                p.Longitude,
+                p.LocationName ?? string.Empty,
+                p.MinAgePreference,
+                p.MaxAgePreference,
+                p.MaxDistanceKm
+                );
         }
     }
 }

@@ -25,7 +25,7 @@ public class SearchUsersHandler(IUserRepository userRepository, IUserProfileRepo
                 var avatarUrl = profile?.Photos.OrderBy(p => p.Order).FirstOrDefault(p => p.IsPrimary)?.Url 
                                 ?? profile?.Photos.OrderBy(p => p.Order).FirstOrDefault()?.Url;
                 
-                return new UserSearchDto(u.Id, displayName, u.Email, avatarUrl);
+                return new UserSearchDto(u.Id, displayName, u.Email);
             }).ToList();
     }
 }

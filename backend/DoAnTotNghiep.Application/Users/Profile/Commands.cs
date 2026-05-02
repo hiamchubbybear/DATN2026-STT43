@@ -9,12 +9,12 @@ public record UpdateLocationCommand(Guid UserId, double Latitude, double Longitu
 
 public record UpdatePreferencesCommand(Guid UserId, int MinAgePreference, int MaxAgePreference, int MaxDistanceKm, GenderPreference lookingFor) : IRequest<bool>;
 
-<<<<<<< HEAD
+
 public record UpdateProfileCommand(
     Guid UserId, 
     string DisplayName, 
     string Bio, 
-    string Gender, 
+    Gender Gender, 
     string InterestedIn, 
     string Occupation, 
     string Education, 
@@ -24,6 +24,7 @@ public record UpdateProfileCommand(
     int MinAgePreference, 
     int MaxAgePreference, 
     int MaxDistanceKm,
+    GenderPreference lookingFor,
     // Lifestyle
     string Drinking,
     string Smoking,
@@ -36,6 +37,5 @@ public record UpdateProfileCommand(
     List<string> FreeTimePrefer,
     List<string> DateStyle
 ) : IRequest<bool>;
-=======
-public record UpdateProfileCommand(Guid UserId, string Bio, Gender Gender, string InterestedIn, double Latitude, double Longitude, string LocationName, int MinAgePreference, int MaxAgePreference, int MaxDistanceKm, GenderPreference lookingFor) : IRequest<bool>;
->>>>>>> 0e47320 (feat(backend): implement recommendation)
+
+

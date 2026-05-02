@@ -85,7 +85,7 @@ public class ProfileHandlers(IUserProfileRepository profileRepository) :
         profile.UpdateBackground(request.Education, request.Occupation);
         profile.UpdateBio(request.Bio, request.Gender, request.InterestedIn);
         profile.UpdateLocation(request.Latitude, request.Longitude, request.LocationName);
-        profile.UpdatePreferences(request.MinAgePreference, request.MaxAgePreference, request.MaxDistanceKm);
+        profile.UpdatePreferences(request.MinAgePreference, request.MaxAgePreference, request.MaxDistanceKm, request.lookingFor);
         await profileRepository.UpdateAsync(profile);
         return true;
     }

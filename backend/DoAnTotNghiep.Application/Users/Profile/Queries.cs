@@ -3,7 +3,7 @@ using MediatR;
 
 namespace DoAnTotNghiep.Application.Users.Profile;
 
-public record BasicInfoDto(string DisplayName, DateTime Dob, string Gender, List<string> Languages);
+public record BasicInfoDto(string DisplayName, DateTime Dob, Gender Gender, List<string> Languages);
 public record BackgroundDto(string Education, string Occupation);
 public record LifestyleDto(string Drinking, string Smoking, string SocialLevel, string PersonalityType, List<string> LoveLanguage, List<string> Hobbies, List<string> Interests);
 public record DatingStyleDto(List<string> FreeTimePrefer, List<string> DateStyle);
