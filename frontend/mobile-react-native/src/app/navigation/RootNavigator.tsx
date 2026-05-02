@@ -40,6 +40,7 @@ export type RootStackParamList = {
   Home: undefined;
   TestHub: undefined;
   MainTabs: NavigatorScreenParams<MainTabParamList> | undefined;
+  PreviewMainTabs: NavigatorScreenParams<MainTabParamList> | undefined;
   Settings: undefined;
   EditProfile: undefined;
   EditGallery: undefined;
