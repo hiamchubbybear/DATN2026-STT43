@@ -17,6 +17,8 @@ import { TestHubScreen } from '../../features/core/screens/TestHubScreen';
 import { MainBottomTabs, MainTabParamList } from './MainBottomTabs';
 import { SettingsScreen } from '../../features/main/screens/SettingsScreen';
 import { EditProfileScreen } from '../../features/main/screens/EditProfileScreen';
+import { EditGalleryScreen } from '../../features/main/screens/EditGalleryScreen';
+import { DiscoverySettingsScreen } from '../../features/main/screens/DiscoverySettingsScreen';
 import { MainScreen } from '../../features/main/screens/MainScreen';
 import { NotificationsMainScreen } from '../../features/main/screens/NotificationsMainScreen';
 import { MessagesScreen } from '../../features/main/screens/MessagesScreen';
@@ -40,6 +42,8 @@ export type RootStackParamList = {
   MainTabs: NavigatorScreenParams<MainTabParamList> | undefined;
   Settings: undefined;
   EditProfile: undefined;
+  EditGallery: undefined;
+  DiscoverySettings: undefined;
   DemoDiscover: undefined;
   DemoNotifications: undefined;
   DemoMessages: undefined;
@@ -95,6 +99,14 @@ export const RootNavigator = () => {
             <Stack.Screen 
               name="EditProfile" 
               component={EditProfileScreen} 
+            />
+            <Stack.Screen 
+              name="EditGallery" 
+              component={EditGalleryScreen} 
+            />
+            <Stack.Screen 
+              name="DiscoverySettings" 
+              component={DiscoverySettingsScreen} 
             />
           </>
         )}

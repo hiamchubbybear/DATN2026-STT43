@@ -6,6 +6,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../../../app/navigation/RootNavigator';
 import Svg, { Path } from 'react-native-svg';
 import { authService } from '../../../../services/api/authService';
+import { useToast } from '../../../../shared/components/ToastProvider';
 
 export default function ResetPasswordScreen() {
   const [password, setPassword] = useState('');
@@ -14,21 +15,33 @@ export default function ResetPasswordScreen() {
   const route = useRoute<RouteProp<RootStackParamList, 'ResetPassword'>>();
   const { email, token } = route.params;
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { showToast } = useToast();
 
   const handleReset = async () => {
     if (password !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match');
+      showToast({
+        title: 'Lỗi',
+        message: 'Mật khẩu không khớp',
+        type: 'error'
+      });
       return;
     }
     
     try {
       setLoading(true);
       await authService.resetPassword(email, token, password);
-      Alert.alert('Success', 'Your password has been successfully reset.', [
-        { text: 'OK', onPress: () => navigation.navigate('Login') }
-      ]);
+      showToast({
+        title: 'Thành công',
+        message: 'Mật khẩu của bạn đã được đặt lại thành công.',
+        type: 'success'
+      });
+      navigation.navigate('Login');
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to reset password');
+      showToast({
+        title: 'Lỗi',
+        message: error.message || 'Không thể đặt lại mật khẩu',
+        type: 'error'
+      });
     } finally {
       setLoading(false);
     }

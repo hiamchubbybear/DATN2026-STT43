@@ -6,12 +6,14 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../../../app/navigation/RootNavigator';
 import Svg, { Path } from 'react-native-svg';
 import { authService } from '../../../../services/api/authService';
-import { Alert, ActivityIndicator } from 'react-native';
+import { useToast } from '../../../../shared/components/ToastProvider';
+import { ActivityIndicator } from 'react-native';
 
 export default function ForgotPasswordEmailScreen() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { showToast } = useToast();
 
   const handleContinue = async () => {
     if (!email) return;
@@ -20,7 +22,11 @@ export default function ForgotPasswordEmailScreen() {
       await authService.forgotPassword(email);
       navigation.navigate('ForgotPasswordVerify', { email });
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to send reset code');
+      showToast({
+        title: 'Lỗi',
+        message: error.message || 'Không thể gửi mã khôi phục',
+        type: 'error'
+      });
     } finally {
       setLoading(false);
     }

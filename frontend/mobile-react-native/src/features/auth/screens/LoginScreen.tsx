@@ -20,6 +20,7 @@ import Svg, { Path } from "react-native-svg";
 import { RootStackParamList } from "../../../app/navigation/RootNavigator";
 import { useAuthStore } from "../../../store/authStore";
 import { AuthBackButton } from "../../../shared/components/AuthBackButton";
+import { useToast } from "../../../shared/components/ToastProvider";
 
 const GOOGLE_WEB_CLIENT_ID =
   process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ||
@@ -56,6 +57,7 @@ export const LoginScreen = () => {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [loading, setLoading] = React.useState(false);
+  const { showToast } = useToast();
   const isExpoGo = Constants.executionEnvironment === "storeClient";
 
   const redirectUriOptions = React.useMemo(
@@ -106,7 +108,11 @@ export const LoginScreen = () => {
     } catch (error: any) {
       setLoading(false);
       console.error("❌ [Google] Lỗi mở Google Auth:", error);
-      Alert.alert("Lỗi Đăng Nhập", error.message || "Không thể đăng nhập bằng Google");
+      showToast({
+        title: "Lỗi Đăng Nhập",
+        message: error.message || "Không thể đăng nhập bằng Google",
+        type: "error"
+      });
     }
   };
 
@@ -133,7 +139,11 @@ export const LoginScreen = () => {
       console.log("🔍 [Google] Parsed authData:", JSON.stringify(authData, null, 2));
 
       if (res.ok && authData && authData.accessToken) {
-        Alert.alert('Success', 'Google login successful!');
+        showToast({
+          title: 'Thành công',
+          message: 'Đăng nhập bằng Google thành công!',
+          type: 'success'
+        });
         setAuth(
           authData.user || { id: authData.userId || '', email: '', username: '' },
           authData.accessToken, 
@@ -143,14 +153,19 @@ export const LoginScreen = () => {
         console.log("✅ [API] Đăng nhập thành công! Điều hướng về Home...");
         navigation.replace("MainTabs");
       } else {
-        Alert.alert("Lỗi", data.message || "Đăng nhập thất bại (Invalid structure)");
+        showToast({
+          title: "Lỗi",
+          message: data.message || "Đăng nhập thất bại (Invalid structure)",
+          type: "error"
+        });
       }
     } catch (error) {
       console.error("❌ [API] Network error:", error);
-      Alert.alert(
-        "Lỗi Kết Nối",
-        "Không thể kết nối đến Server. Kiểm tra IP và cổng Backend."
-      );
+      showToast({
+        title: "Lỗi Kết Nối",
+        message: "Không thể kết nối đến Server. Kiểm tra IP và cổng Backend.",
+        type: "error"
+      });
     } finally {
       setLoading(false);
     }
@@ -175,57 +190,71 @@ export const LoginScreen = () => {
         handleBackendLogin(idToken, accessToken);
       } else {
         setLoading(false);
-        Alert.alert("Lỗi Đăng Nhập", "Không nhận được token từ Google.");
+        showToast({
+          title: "Lỗi Đăng Nhập",
+          message: "Không nhận được token từ Google.",
+          type: "error"
+        });
       }
     } else if (response.type === "error") {
       setLoading(false);
       const message =
         (response as any)?.error?.message || "Không thể đăng nhập bằng Google";
-      Alert.alert("Lỗi Đăng Nhập", message);
+      showToast({
+        title: "Lỗi Đăng Nhập",
+        message: message,
+        type: "error"
+      });
     }
   }, [handleBackendLogin, response]);
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <Path d="M15 18l-6-6 6-6" stroke="#111111" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          </Svg>
-        </TouchableOpacity>
+        <AuthBackButton onPress={() => navigation.goBack()} />
       </View>
+
       <View style={styles.content}>
-        <View style={styles.backButtonWrapper}>
-          <AuthBackButton onPress={() => navigation.goBack()} />
+        {/* Logo Section */}
+        <View style={styles.logoWrapper}>
+          <View style={styles.logoContainer}>
+            <Image 
+              source={require('../../../../assets/images/logo.png')} 
+              style={styles.logoImage} 
+              resizeMode="contain"
+            />
+          </View>
         </View>
 
-        {/* Logo */}
-        <View style={styles.logoContainer}>
-          <Image source={require('../../../../assets/images/logo.png')} style={styles.logoImage} />
+        {/* Welcome Text */}
+        <View style={styles.welcomeContainer}>
+          <Text style={styles.title}>Sign in to continue</Text>
+          <Text style={styles.subtitle}>Welcome back! Please enter your details to continue your journey.</Text>
         </View>
 
-        {/* Title */}
-        <Text style={styles.title}>Sign in to continue</Text>
+        {/* Action Buttons */}
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity
+            style={styles.primaryBtn}
+            onPress={() => navigation.navigate("EmailLogin")}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.primaryBtnText}>Continue with email</Text>
+          </TouchableOpacity>
 
-        {/* Email Button */}
-        <TouchableOpacity
-          style={styles.primaryBtn}
-          onPress={() => navigation.navigate("EmailLogin")}
-        >
-          <Text style={styles.primaryBtnText}>Continue with email</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.testBtn}
-          onPress={() => navigation.navigate('TestHub')}
-        >
-          <Text style={styles.testBtnText}>Test</Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.testBtn}
+            onPress={() => navigation.navigate('TestHub')}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.testBtnText}>Enter Developer Mode</Text>
+          </TouchableOpacity>
+        </View>
 
         {/* Divider */}
         <View style={styles.dividerContainer}>
           <View style={styles.line} />
-          <Text style={styles.orText}>or</Text>
+          <Text style={styles.orText}>or sign in with</Text>
           <View style={styles.line} />
         </View>
 
@@ -235,22 +264,33 @@ export const LoginScreen = () => {
             style={[styles.socialBtn, loading && styles.socialBtnDisabled]}
             disabled={loading}
             onPress={handleGoogleSignIn}
+            activeOpacity={0.8}
           >
-            {loading ? <ActivityIndicator color="#4285F4" /> : <GoogleIcon />}
+            {loading ? (
+              <ActivityIndicator color="#4285F4" />
+            ) : (
+              <View style={styles.socialBtnContent}>
+                <GoogleIcon />
+                <Text style={styles.socialBtnText}>Google</Text>
+              </View>
+            )}
           </TouchableOpacity>
         </View>
       </View>
 
       {/* Footer */}
       <View style={styles.footer}>
-        <TouchableOpacity onPress={() => navigation.navigate("SignUp")}>
-          <Text style={styles.footerLink}>Create Account</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => navigation.navigate("ForgotPasswordEmail")}>
-          <Text style={styles.footerLink}>Forgot Password?</Text>
-        </TouchableOpacity>
-        <TouchableOpacity>
-          <Text style={styles.footerLink}>Privacy Policy</Text>
+        <View style={styles.footerRow}>
+          <TouchableOpacity onPress={() => navigation.navigate("SignUp")}>
+            <Text style={styles.footerLink}>Create Account</Text>
+          </TouchableOpacity>
+          <View style={styles.footerDivider} />
+          <TouchableOpacity onPress={() => navigation.navigate("ForgotPasswordEmail")}>
+            <Text style={styles.footerLink}>Forgot Password?</Text>
+          </TouchableOpacity>
+        </View>
+        <TouchableOpacity style={styles.privacyLink}>
+          <Text style={styles.privacyText}>By continuing, you agree to our Privacy Policy</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -258,98 +298,172 @@ export const LoginScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#FFFFFF" },
+  container: { 
+    flex: 1, 
+    backgroundColor: "#FFFFFF" 
+  },
   header: {
     paddingHorizontal: 24,
-    paddingTop: Platform.OS === "ios" ? 10 : 20,
-    paddingBottom: 10,
-  },
-  backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    alignItems: 'center',
+    paddingTop: 12,
+    height: 60,
     justifyContent: 'center',
   },
   content: {
     flex: 1,
-    alignItems: "center",
-    paddingHorizontal: 24,
-    paddingTop: Platform.OS === "ios" ? 20 : 40,
+    paddingHorizontal: 32,
+    alignItems: 'center',
   },
-  backButtonWrapper: {
-    position: "absolute",
-    top: 16,
-    left: 24,
-    zIndex: 10,
+  logoWrapper: {
+    marginTop: 20,
+    marginBottom: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  logoContainer: { marginBottom: 40 },
+  logoContainer: {
+    width: 110,
+    height: 110,
+    borderRadius: 30,
+    backgroundColor: '#FFFFFF',
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 8,
+    padding: 2,
+    overflow: 'hidden',
+  },
   logoImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 24,
+    width: '100%',
+    height: '100%',
+    borderRadius: 28,
+  },
+  welcomeContainer: {
+    width: '100%',
+    alignItems: 'center',
+    marginBottom: 40,
   },
   title: {
-    fontSize: 22,
-    fontWeight: "700",
-    color: "#000000",
-    marginBottom: 30,
+    fontSize: 28,
+    fontWeight: "800",
+    color: "#18181B",
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  subtitle: {
+    fontSize: 15,
+    color: "#71717A",
+    textAlign: 'center',
+    lineHeight: 22,
+    paddingHorizontal: 20,
+  },
+  buttonContainer: {
+    width: '100%',
+    gap: 12,
   },
   primaryBtn: {
     width: "100%",
-    backgroundColor: "#EF4444",
-    paddingVertical: 16,
-    borderRadius: 16,
+    backgroundColor: "#EE3F57",
+    paddingVertical: 18,
+    borderRadius: 20,
     alignItems: "center",
-    marginBottom: 12,
+    shadowColor: "#EE3F57",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 6,
   },
-  primaryBtnText: { color: "#FFFFFF", fontSize: 16, fontWeight: "600" },
+  primaryBtnText: { 
+    color: "#FFFFFF", 
+    fontSize: 17, 
+    fontWeight: "700" 
+  },
   testBtn: {
     width: '100%',
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#EE3F57',
-    paddingVertical: 14,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: '#F4F4F5',
+    paddingVertical: 16,
     alignItems: 'center',
-    marginBottom: 26,
   },
   testBtnText: {
-    color: '#EE3F57',
-    fontSize: 16,
+    color: '#71717A',
+    fontSize: 15,
     fontWeight: '600',
   },
   dividerContainer: {
     flexDirection: "row",
     alignItems: "center",
     width: "100%",
-    marginBottom: 30,
+    marginVertical: 32,
   },
-  line: { flex: 1, height: 1, backgroundColor: "#E5E7EB" },
-  orText: { paddingHorizontal: 16, color: "#374151", fontSize: 14 },
+  line: { 
+    flex: 1, 
+    height: 1, 
+    backgroundColor: "#F4F4F5" 
+  },
+  orText: { 
+    paddingHorizontal: 16, 
+    color: "#A1A1AA", 
+    fontSize: 13,
+    fontWeight: '500',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
   socialContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
     width: "100%",
   },
   socialBtn: {
-    width: 72,
-    height: 72,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
+    width: '100%',
+    height: 60,
+    borderWidth: 1.5,
+    borderColor: "#F4F4F5",
     borderRadius: 20,
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#FFFFFF",
   },
-  socialBtnDisabled: { opacity: 0.5 },
-  footer: {
-    flexDirection: "row",
-    justifyContent: "space-evenly",
-    paddingBottom: Platform.OS === "ios" ? 40 : 20,
-    width: "100%",
+  socialBtnContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
-  footerLink: { color: "#EF4444", fontSize: 14, fontWeight: "500" },
+  socialBtnText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#18181B',
+  },
+  socialBtnDisabled: { 
+    opacity: 0.5 
+  },
+  footer: {
+    paddingHorizontal: 24,
+    paddingBottom: Platform.OS === "ios" ? 40 : 30,
+    alignItems: 'center',
+  },
+  footerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    marginBottom: 20,
+  },
+  footerLink: { 
+    color: "#EE3F57", 
+    fontSize: 15, 
+    fontWeight: "700" 
+  },
+  footerDivider: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#D1D5DB',
+  },
+  privacyLink: {
+    marginTop: 4,
+  },
+  privacyText: {
+    fontSize: 12,
+    color: '#A1A1AA',
+    textAlign: 'center',
+  }
 });
