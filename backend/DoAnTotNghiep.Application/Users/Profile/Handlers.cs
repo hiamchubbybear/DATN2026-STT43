@@ -66,7 +66,7 @@ public class ProfileHandlers(IUserProfileRepository profileRepository) :
     public async Task<bool> Handle(UpdatePreferencesCommand request, CancellationToken cancellationToken)
     {
         var profile = await EnsureProfileExists(request.UserId);
-        profile.UpdatePreferences(request.MinAgePreference, request.MaxAgePreference, request.MaxDistanceKm);
+        profile.UpdatePreferences(request.MinAgePreference, request.MaxAgePreference, request.MaxDistanceKm, request.lookingFor);
         await profileRepository.UpdateAsync(profile);
         return true;
     }
@@ -86,18 +86,6 @@ public class ProfileHandlers(IUserProfileRepository profileRepository) :
         profile.UpdateBio(request.Bio, request.Gender, request.InterestedIn);
         profile.UpdateLocation(request.Latitude, request.Longitude, request.LocationName);
         profile.UpdatePreferences(request.MinAgePreference, request.MaxAgePreference, request.MaxDistanceKm);
-        profile.UpdateLifestyle(
-            request.Drinking, 
-            request.Smoking, 
-            request.SocialLevel, 
-            request.PersonalityType, 
-            request.LoveLanguage, 
-            request.Hobbies, 
-            request.Interests
-        );
-        
-        profile.UpdateDatingStyle(request.FreeTimePrefer, request.DateStyle);
-        
         await profileRepository.UpdateAsync(profile);
         return true;
     }

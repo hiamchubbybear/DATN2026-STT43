@@ -1,4 +1,5 @@
-using DoAnTotNghiep.Domain.Common;
+﻿using DoAnTotNghiep.Domain.Common;
+using DoAnTotNghiep.Domain.Enum;
 
 namespace DoAnTotNghiep.Domain.Users;
 
@@ -11,78 +12,53 @@ public class UserProfile(Guid userId) : BaseEntity
     public Lifestyle Lifestyle { get; private set; } = new();
     public DatingStyle DatingStyle { get; private set; } = new();
 
-    public List<Photo> Photos { get; set; } = [];
+
+    private readonly List<Photo> _photos = [];
+    public IReadOnlyCollection<Photo> Photos => _photos.AsReadOnly();
 
     // Existing fields for ProfileHandlers
+
     public string Bio { get; private set; } = string.Empty;
-    public string Gender => BasicInfo.Gender;
+    public Gender Gender => BasicInfo.Gender;
     public string InterestedIn { get; private set; } = string.Empty;
+
     public double Latitude { get; private set; } = 0;
     public double Longitude { get; private set; } = 0;
     public string LocationName { get; private set; } = string.Empty;
+
+    public GenderPreference LookingFor { get; private set; } = GenderPreference.Everyone;
     public int MinAgePreference { get; private set; } = 18;
     public int MaxAgePreference { get; private set; } = 100;
     public int MaxDistanceKm { get; private set; } = 50;
 
 
-    public void UpdateBasicInfo(string displayName, DateTime dob, string gender, List<string> languages)
+    public void UpdateBasicInfo(string displayName, DateTime dob, Gender gender, List<string> languages)
     {
-        BasicInfo = new BasicInfo
-        {
-            DisplayName = displayName,
-            Dob = dob,
-            Gender = gender,
-            Languages = languages
-        };
+        BasicInfo.Update(displayName, dob, gender, languages);
         SetUpdated();
     }
 
     public void UpdateBackground(string education, string occupation)
     {
-        Background = new Background
-        {
-            Education = education,
-            Occupation = occupation
-        };
+        Background.Update(education, occupation);
         SetUpdated();
     }
 
     public void UpdateLifestyle(string drinking, string smoking, string socialLevel, string personalityType, List<string> loveLanguage, List<string> hobbies, List<string> interests)
     {
-        Lifestyle = new Lifestyle
-        {
-            Drinking = drinking,
-            Smoking = smoking,
-            SocialLevel = socialLevel,
-            PersonalityType = personalityType,
-            LoveLanguage = loveLanguage,
-            Hobbies = hobbies,
-            Interests = interests
-        };
+        Lifestyle.Update(drinking, smoking, socialLevel, personalityType, loveLanguage, hobbies, interests);
         SetUpdated();
     }
 
     public void UpdateDatingStyle(List<string> freeTimePrefer, List<string> dateStyle)
     {
-        DatingStyle = new DatingStyle
-        {
-            FreeTimePrefer = freeTimePrefer,
-            DateStyle = dateStyle
-        };
+        DatingStyle.Update(freeTimePrefer, dateStyle);
         SetUpdated();
     }
 
-    public void UpdateBio(string bio, string gender, string interestedIn)
+    public void UpdateBio(string bio, Gender gender, string interestedIn)
     {
-        Bio = bio;
-        BasicInfo = new BasicInfo
-        {
-            DisplayName = BasicInfo.DisplayName,
-            Dob = BasicInfo.Dob,
-            Gender = gender,
-            Languages = BasicInfo.Languages
-        };
-        InterestedIn = interestedIn;
+        Bio = bio?.Trim() ?? string.Empty;
         SetUpdated();
     }
 
@@ -90,46 +66,204 @@ public class UserProfile(Guid userId) : BaseEntity
     {
         Latitude = latitude;
         Longitude = longitude;
-        LocationName = locationName;
+        LocationName = locationName?.Trim() ?? string.Empty;
         SetUpdated();
     }
 
-    public void UpdatePreferences(int minAge, int maxAge, int distance)
+    public void UpdatePreferences(int minAge, int maxAge, int distance, GenderPreference lookingFor)
     {
+        if (minAge < 18)
+            throw new ArgumentException("Min age must >= 18");
+        if (maxAge < minAge)
+            throw new ArgumentException("Invalid age range");
+        if (distance <= 0)
+            throw new ArgumentException("Distance must > 0");
+        LookingFor = lookingFor;
         MinAgePreference = minAge;
         MaxAgePreference = maxAge;
         MaxDistanceKm = distance;
+        SetUpdated();
+    }
+
+    public void AddPhoto(Photo photo)
+    {
+        if (!_photos.Any())
+        {
+            photo.SetPrimary(true);
+        }
+
+        photo.SetOrder(_photos.Count);
+        _photos.Add(photo);
+        SetUpdated();
+    }
+
+    public void RemovePhoto(Guid photoId)
+    {
+        var photo = _photos.FirstOrDefault(x => x.Id == photoId);
+        if (photo == null)
+            throw new Exception("Photo not found");
+
+        if (_photos.Count == 1)
+            throw new Exception("Cannot delete last photo");
+
+        var wasPrimary = photo.IsPrimary;
+
+        _photos.Remove(photo);
+
+        // nếu xoá primary → set lại
+        if (wasPrimary)
+        {
+            _photos[0].SetPrimary(true);
+        }
+        ReorderInternal();
+        SetUpdated();
+    }
+
+    public void ReorderPhotos(List<Guid> orderedIds)
+    {
+        if (orderedIds.Count != _photos.Count)
+            throw new Exception("Invalid reorder data");
+
+        var map = _photos.ToDictionary(x => x.Id);
+
+        var sorted = new List<Photo>();
+
+        for (int i = 0; i < orderedIds.Count; i++)
+        {
+            if (!map.ContainsKey(orderedIds[i]))
+                throw new Exception("Invalid photo");
+
+            var photo = map[orderedIds[i]];
+            photo.SetOrder(i);
+            photo.SetPrimary(i == 0);
+
+            sorted.Add(photo);
+        }
+
+        _photos.Clear();
+        _photos.AddRange(sorted);
+
+        SetUpdated();
+    }
+
+    private void ReorderInternal()
+    {
+        for (int i = 0; i < _photos.Count; i++)
+        {
+            _photos[i].SetOrder(i);
+        }
+    }
+
+    public void SetPrimaryPhoto(Guid photoId)
+    {
+        var target = _photos.FirstOrDefault(x => x.Id == photoId);
+        if (target == null)
+            throw new Exception("Photo not found");
+
+        if (target.IsPrimary) return;
+
+        foreach (var p in _photos)
+        {
+            p.SetPrimary(false);
+        }
+
+        target.SetPrimary(true);
+        _photos.Remove(target);
+        _photos.Insert(0, target);
+        ReorderInternal();
         SetUpdated();
     }
 }
 
 public class BasicInfo
 {
-    public string DisplayName { get; set; } = string.Empty;
-    public DateTime Dob { get; set; }
-    public string Gender { get; set; } = string.Empty; // 'Male', 'Female', 'Other'
-    public List<string> Languages { get; set; } = new();
+    public string DisplayName { get; private set; } = string.Empty;
+    public DateTime Dob { get; private set; }
+    public Gender Gender { get; private set; } = Gender.Other;
+    public List<string> Languages { get; private set; } = new();
+
+    public void Update(string name, DateTime dob, Gender gender, List<string> languages)
+    {
+        DisplayName = name?.Trim() ?? "";
+        Dob = dob;
+        Gender = gender;
+
+        Languages = (languages ?? [])
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Select(x => x.Trim().ToLower())
+            .Distinct()
+            .ToList();
+    }
 }
 
 public class Background
 {
-    public string Education { get; set; } = string.Empty;
-    public string Occupation { get; set; } = string.Empty;
-}
+    public string Education { get; private set; } = string.Empty;
+    public string Occupation { get; private set; } = string.Empty;
 
+    public void Update(string education, string occupation)
+    {
+        Education = education?.Trim() ?? "";
+        Occupation = occupation?.Trim() ?? "";
+    }
+}
 public class Lifestyle
 {
-    public string Drinking { get; set; } = string.Empty;
-    public string Smoking { get; set; } = string.Empty;
-    public string SocialLevel { get; set; } = string.Empty;
-    public string PersonalityType { get; set; } = string.Empty;
-    public List<string> LoveLanguage { get; set; } = new();
-    public List<string> Hobbies { get; set; } = new();
-    public List<string> Interests { get; set; } = new();
+    public string Drinking { get; private set; } = string.Empty;
+    public string Smoking { get; private set; } = string.Empty;
+    public string SocialLevel { get; private set; } = string.Empty;
+    public string PersonalityType { get; private set; } = string.Empty;
+
+    public List<string> LoveLanguage { get; private set; } = new();
+    public List<string> Hobbies { get; private set; } = new();
+    public List<string> Interests { get; private set; } = new();
+
+    public void Update(
+        string drinking,
+        string smoking,
+        string socialLevel,
+        string personalityType,
+        List<string> loveLanguage,
+        List<string> hobbies,
+        List<string> interests)
+    {
+        Drinking = drinking ?? "";
+        Smoking = smoking ?? "";
+        SocialLevel = socialLevel ?? "";
+        PersonalityType = personalityType ?? "";
+
+        LoveLanguage = Normalize(loveLanguage);
+        Hobbies = Normalize(hobbies);
+        Interests = Normalize(interests);
+    }
+
+    private static List<string> Normalize(List<string>? list)
+    {
+        return (list ?? [])
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Select(x => x.Trim().ToLower())
+            .Distinct()
+            .ToList();
+    }
 }
 
 public class DatingStyle
 {
-    public List<string> FreeTimePrefer { get; set; } = new();
-    public List<string> DateStyle { get; set; } = new();
+    public List<string> FreeTimePrefer { get; private set; } = new();
+    public List<string> DateStyle { get; private set; } = new();
+
+    public void Update(List<string> freeTimePrefer, List<string> dateStyle)
+    {
+        FreeTimePrefer = Normalize(freeTimePrefer);
+        DateStyle = Normalize(dateStyle);
+    }
+
+    private static List<string> Normalize(List<string>? list)
+    {
+        return (list ?? [])
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Select(x => x.Trim().ToLower())
+            .Distinct()
+            .ToList();
+    }
 }

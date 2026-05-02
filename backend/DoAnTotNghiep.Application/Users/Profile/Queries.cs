@@ -1,3 +1,4 @@
+using DoAnTotNghiep.Domain.Enum;
 using MediatR;
 
 namespace DoAnTotNghiep.Application.Users.Profile;
@@ -26,5 +27,5 @@ public record UserProfileDto(
 
 public record GetMyProfileQuery(Guid UserId) : IRequest<UserProfileDto>;
 
-public record UserSearchDto(Guid UserId, string DisplayName, string Email, string? AvatarUrl);
+public record UserSearchDto(Guid UserId, string DisplayName, string Email);
 public record SearchUsersQuery() : IRequest<List<UserSearchDto>>;

@@ -55,7 +55,7 @@ namespace DoAnTotNghiep.Application.Users.Photos
                 IsPrimary = profile.Photos.Count == 0
             };
 
-            profile.Photos.Add(photo);
+            profile.AddPhoto(photo);
 
             await _repo.UpdateAsync(profile);
 
