@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Dimensions, TextInput } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Dimensions, TextInput, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../../app/navigation/RootNavigator';
 import Svg, { Path } from 'react-native-svg';
 import { authService } from '../../../services/api/authService';
-import { Alert, ActivityIndicator } from 'react-native';
 import { useAuthStore } from '../../../store/authStore';
+import { useToast } from '../../../shared/components/ToastProvider';
 
 const { width } = Dimensions.get('window');
 
@@ -16,6 +16,7 @@ export default function VerifyScreen() {
   const { email } = route.params;
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const setAuth = useAuthStore(state => state.setAuth);
+  const { showToast } = useToast();
   
   const [code, setCode] = useState<string>('');
   const [timer, setTimer] = useState(42);
@@ -44,7 +45,11 @@ export default function VerifyScreen() {
         console.log("🔍 [Verify] Parsed authData:", JSON.stringify(authData, null, 2));
 
         if (authData && authData.accessToken) {
-          Alert.alert('Success', 'Verification successful!');
+          showToast({
+            title: 'Thành công',
+            message: 'Xác thực email thành công!',
+            type: 'success'
+          });
           setAuth(
             authData.user || { id: '', email: email, username: '' },
             authData.accessToken,
@@ -56,7 +61,11 @@ export default function VerifyScreen() {
           throw new Error('Verification successful but tokens not received');
         }
       } catch (error: any) {
-        Alert.alert('Verification Failed', error.message || 'Invalid code');
+        showToast({
+          title: 'Xác thực thất bại',
+          message: error.message || 'Mã xác thực không chính xác',
+          type: 'error'
+        });
         setCode(''); // Clear code on failure
       } finally {
         setLoading(false);
@@ -69,9 +78,17 @@ export default function VerifyScreen() {
       setLoading(true);
       await authService.resendVerification(email);
       setTimer(42);
-      Alert.alert('Success', 'Verification code resent');
+      showToast({
+        title: 'Thành công',
+        message: 'Mã xác thực đã được gửi lại',
+        type: 'success'
+      });
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to resend code');
+      showToast({
+        title: 'Lỗi',
+        message: error.message || 'Không thể gửi lại mã',
+        type: 'error'
+      });
     } finally {
       setLoading(false);
     }

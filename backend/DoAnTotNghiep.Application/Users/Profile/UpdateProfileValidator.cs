@@ -6,6 +6,11 @@ namespace DoAnTotNghiep.Application.Users.Profile
     {
         public UpdateProfileValidator()
         {
+            // Basic Info rules
+            RuleFor(x => x.DisplayName)
+                .NotEmpty().WithMessage("Display name is required.")
+                .MaximumLength(50).WithMessage("Display name must not exceed 50 characters.");
+
             // Bio rules
             RuleFor(x => x.Bio)
                 .MaximumLength(500).WithMessage("Bio must not exceed 500 characters.");

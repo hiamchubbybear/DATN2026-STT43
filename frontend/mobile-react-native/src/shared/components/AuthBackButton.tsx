@@ -1,6 +1,6 @@
 import React from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 type AuthBackButtonProps = {
   onPress: () => void;
@@ -10,30 +10,37 @@ export const AuthBackButton: React.FC<AuthBackButtonProps> = ({ onPress }) => {
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [styles.backButton, pressed && styles.backButtonPressed]}
+      style={({ pressed }) => [styles.container, pressed && styles.pressed]}
     >
-      <Ionicons name="chevron-back" size={22} color="#111111" />
-      <Text style={styles.backText}>Back</Text>
+      <View style={styles.button}>
+        <Ionicons name="chevron-back" size={20} color="#18181B" />
+      </View>
     </Pressable>
   );
 };
 
 const styles = StyleSheet.create({
-  backButton: {
+  container: {
     alignSelf: 'flex-start',
-    flexDirection: 'row',
+  },
+  button: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#F4F4F5',
     alignItems: 'center',
-    gap: 2,
-    borderRadius: 999,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
+    justifyContent: 'center',
+    // Subtle shadow
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  backButtonPressed: {
+  pressed: {
     opacity: 0.7,
-  },
-  backText: {
-    fontSize: 16,
-    color: '#111111',
-    fontWeight: '500',
+    transform: [{ scale: 0.96 }],
   },
 });

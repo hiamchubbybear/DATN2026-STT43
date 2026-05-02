@@ -15,6 +15,7 @@ using MongoDB.Bson.Serialization.Serializers;
 #pragma warning disable CS0618 // Type or member is obsolete
 BsonSerializer.RegisterSerializer(new GuidSerializer(GuidRepresentation.Standard));
 #pragma warning restore CS0618
+System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,14 +30,10 @@ builder.Host.UseSerilog();
 
 var mongoSettings = builder.Configuration.GetSection("MongoDb").Get<MongoSettings>();
 var redisSettings = builder.Configuration.GetSection("Redis").Get<RedisSettings>();
-var secretKey = builder.Configuration["Key:SecretKey"];
+var secretKey = builder.Configuration["Key:SecretKey"] ?? throw new InvalidOperationException("SecretKey is missing in configuration");
 builder.Services.Configure<KeySettings>(builder.Configuration.GetSection("Key"));
 builder.Services.AddJwtAuthentication(secretKey);
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
-WebApplication.CreateBuilder(new WebApplicationOptions
-{
-    EnvironmentName = "Development"
-});
 builder.Services.AddProblemDetails();
 builder.Services.AddApplication();
 builder.Services.AddSingleton(mongoSettings!);
@@ -82,9 +79,30 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 Log.Information("Environment: {Env}", builder.Environment.EnvironmentName);
 var app = builder.Build();
 app.UseExceptionHandler();
+if (app.Environment.IsDevelopment())
+{
+    // app.UseDeveloperExceptionPage();
+}
+else 
+{
+    app.UseHttpsRedirection();
+}
+
 app.UseSerilogRequestLogging();
 app.UseDefaultFiles();
 app.UseStaticFiles();
+
+app.UseRouting();
+
+// CORS should be before Auth
+app.UseCors(x => x
+    .AllowAnyOrigin()
+    .AllowAnyMethod()
+    .AllowAnyHeader());
+
+app.UseAuthentication();
+app.UseAuthorization();
+
 app.MapHealthChecks("/health", new HealthCheckOptions
 {
     ResponseWriter = async (context, report) =>
@@ -104,7 +122,6 @@ app.MapHealthChecks("/health", new HealthCheckOptions
 app.MapControllers();
 app.MapHub<AppHub>("/hubs/app");
 app.MapFallbackToFile("index.html");
-app.UseHttpsRedirection();
 
 
 using (var scope = app.Services.CreateScope())

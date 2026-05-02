@@ -95,6 +95,5 @@ public class GoogleLoginHandler : IRequestHandler<GoogleLoginCommand, AuthRespon
             Username = user.Username,
             Email = user.Email
         };
-        };
     }
 }

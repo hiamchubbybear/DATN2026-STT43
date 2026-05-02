@@ -1,6 +1,6 @@
 import React from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -13,14 +13,21 @@ const defaultAvatar = require('../../../../assets/images/anh1.jpg');
 export const MessagesScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [users, setUsers] = React.useState<UserDiscoverDto[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     const fetchUsers = async () => {
+      setLoading(true);
+      setError(null);
       try {
         const data = await userService.discoverUsers();
         setUsers(data);
-      } catch (error) {
-        Logger.error('Failed to fetch users', error);
+      } catch (err: any) {
+        Logger.error('Failed to fetch users', err);
+        setError(err.message || 'Failed to fetch users');
+      } finally {
+        setLoading(false);
       }
     };
     fetchUsers();
@@ -43,26 +50,35 @@ export const MessagesScreen = () => {
           <Text style={styles.searchText}>Search</Text>
         </View>
 
-        <Text style={styles.sectionTitle}>Discover People (Test Chat)</Text>
+         <Text style={styles.sectionTitle}>Discover People (Test Chat)</Text>
         <View style={styles.activityRow}>
-          {users.map((item) => (
-            <TouchableOpacity 
-              key={item.userId} 
-              style={styles.activityItem}
-              activeOpacity={0.7}
-              onPress={() => navigation.navigate('ChatRoom', {
-                conversationId: item.userId, // Use userId as dummy Guid for testing
-                receiverId: item.userId,
-                receiverName: item.displayName
-              })}
-            >
-              <View style={styles.activityAvatarRing}>
-                <Image source={defaultAvatar} style={styles.activityAvatar} />
-              </View>
-              <Text style={styles.activityLabel} numberOfLines={1}>{item.displayName}</Text>
-            </TouchableOpacity>
-          ))}
-          {users.length === 0 && (
+          {loading ? (
+            <ActivityIndicator size="small" color="#EE3F57" />
+          ) : error ? (
+            <Text style={styles.errorText}>{error}</Text>
+          ) : (
+            users.map((item) => (
+              <TouchableOpacity 
+                key={item.userId} 
+                style={styles.activityItem}
+                activeOpacity={0.7}
+                onPress={() => navigation.navigate('ChatRoom', {
+                  conversationId: item.userId, 
+                  receiverId: item.userId,
+                  receiverName: item.displayName
+                })}
+              >
+                <View style={styles.activityAvatarRing}>
+                  <Image 
+                    source={item.avatarUrl ? { uri: item.avatarUrl } : defaultAvatar} 
+                    style={styles.activityAvatar} 
+                  />
+                </View>
+                <Text style={styles.activityLabel} numberOfLines={1}>{item.displayName}</Text>
+              </TouchableOpacity>
+            ))
+          )}
+          {!loading && !error && users.length === 0 && (
             <Text style={styles.emptyText}>No users found. Try registering another account!</Text>
           )}
         </View>
@@ -220,5 +236,11 @@ const styles = StyleSheet.create({
     color: '#A1A1AA',
     textAlign: 'center',
     lineHeight: 20,
+  },
+  errorText: {
+    fontSize: 12,
+    color: '#F87171',
+    textAlign: 'center',
+    flex: 1,
   },
 });

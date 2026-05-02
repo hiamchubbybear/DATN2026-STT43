@@ -6,7 +6,6 @@ public class UserProfile(Guid userId) : BaseEntity
 {
     public Guid UserId { get; private set; } = userId;
 
-<<<<<<< HEAD
     public BasicInfo BasicInfo { get; private set; } = new();
     public Background Background { get; private set; } = new();
     public Lifestyle Lifestyle { get; private set; } = new();
@@ -21,24 +20,11 @@ public class UserProfile(Guid userId) : BaseEntity
     public double Latitude { get; private set; } = 0;
     public double Longitude { get; private set; } = 0;
     public string LocationName { get; private set; } = string.Empty;
-=======
-    
-    public string Bio { get; private set; } = string.Empty;
-    public string Gender { get; private set; } = string.Empty;
-    public string InterestedIn { get; private set; } = string.Empty;
-
-
-    public double Latitude { get; private set; } = 0;
-    public double Longitude { get; private set; } = 0;
-    public string LocationName { get; private set; } = string.Empty;
-
-
->>>>>>> 519e2eb (feat(backend): implement google login, user profile, and verification flow)
     public int MinAgePreference { get; private set; } = 18;
     public int MaxAgePreference { get; private set; } = 100;
     public int MaxDistanceKm { get; private set; } = 50;
 
-<<<<<<< HEAD
+
     public void UpdateBasicInfo(string displayName, DateTime dob, string gender, List<string> languages)
     {
         BasicInfo = new BasicInfo
@@ -147,13 +133,3 @@ public class DatingStyle
     public List<string> FreeTimePrefer { get; set; } = new();
     public List<string> DateStyle { get; set; } = new();
 }
-=======
-    public void UpdatePreferences(int minAge, int maxAge, int maxDistance)
-    {
-        MinAgePreference = minAge;
-        MaxAgePreference = maxAge;
-        MaxDistanceKm = maxDistance;
-        SetUpdated();
-    }
-}
->>>>>>> 519e2eb (feat(backend): implement google login, user profile, and verification flow)
