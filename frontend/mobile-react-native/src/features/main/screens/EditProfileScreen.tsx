@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import Svg, { Path, Circle } from 'react-native-svg';
+import { normalizeFont, radius, scale, spacing, verticalScale } from '../../../shared/utils/responsive';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const PHOTO_WIDTH = (SCREEN_WIDTH - 40 - 24) / 3; // 3 columns, 20px padding each side, 12px gap
@@ -148,17 +149,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    height: 56,
+    paddingHorizontal: spacing(16),
+    height: scale(56),
     backgroundColor: '#F3F4F6',
   },
   backButton: {
-    width: 44,
-    height: 44,
+    width: scale(44),
+    height: scale(44),
     justifyContent: 'center',
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: normalizeFont(20),
     fontWeight: '600',
     color: '#111827',
   },
@@ -166,55 +167,55 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 40,
+    paddingHorizontal: spacing(20),
+    paddingTop: spacing(16),
+    paddingBottom: spacing(40),
   },
   photoGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    gap: 12,
+    gap: spacing(12),
   },
   photoSlotContainer: {
     width: PHOTO_WIDTH,
     height: PHOTO_WIDTH * 1.4,
-    marginBottom: 8,
+    marginBottom: spacing(8),
   },
   photoPlaceholder: {
     width: '100%',
     height: '100%',
     backgroundColor: '#E5E7EB',
-    borderRadius: 12,
-    borderWidth: 2,
+    borderRadius: radius(12),
+    borderWidth: scale(2),
     borderColor: '#D1D5DB',
     borderStyle: 'dashed',
   },
   photoImage: {
     width: '100%',
     height: '100%',
-    borderRadius: 12,
+    borderRadius: radius(12),
     backgroundColor: '#E5E7EB',
   },
   photoBadge: {
     position: 'absolute',
-    bottom: -8,
-    right: -8,
+    bottom: -spacing(8),
+    right: -spacing(8),
     backgroundColor: '#F3F4F6',
-    borderRadius: 14,
+    borderRadius: radius(14),
   },
   helperText: {
     textAlign: 'center',
     color: '#6B7280',
-    fontSize: 14,
-    lineHeight: 20,
-    marginTop: 24,
-    marginBottom: 24,
-    paddingHorizontal: 16,
+    fontSize: normalizeFont(14),
+    lineHeight: verticalScale(20),
+    marginTop: spacing(24),
+    marginBottom: spacing(24),
+    paddingHorizontal: spacing(16),
   },
   addMediaButton: {
-    height: 56,
-    borderRadius: 28,
+    height: scale(56),
+    borderRadius: radius(28),
     backgroundColor: '#F43F5E', // Gradient can be added later if needed
     alignItems: 'center',
     justifyContent: 'center',
@@ -223,11 +224,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 4,
-    marginBottom: 40,
+    marginBottom: spacing(40),
   },
   addMediaText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: normalizeFont(16),
     fontWeight: '700',
     letterSpacing: 1,
   },

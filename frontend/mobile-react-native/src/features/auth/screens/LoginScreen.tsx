@@ -20,6 +20,7 @@ import Svg, { Path } from "react-native-svg";
 import { RootStackParamList } from "../../../app/navigation/RootNavigator";
 import { useAuthStore } from "../../../store/authStore";
 import { AuthBackButton } from "../../../shared/components/AuthBackButton";
+import { normalizeFont, radius, scale, spacing, verticalScale } from "../../../shared/utils/responsive";
 
 const GOOGLE_WEB_CLIENT_ID =
   process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ||
@@ -260,14 +261,14 @@ export const LoginScreen = () => {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#FFFFFF" },
   header: {
-    paddingHorizontal: 24,
-    paddingTop: Platform.OS === "ios" ? 10 : 20,
-    paddingBottom: 10,
+    paddingHorizontal: spacing(24),
+    paddingTop: Platform.OS === "ios" ? spacing(10) : spacing(20),
+    paddingBottom: spacing(10),
   },
   backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
+    width: scale(44),
+    height: scale(44),
+    borderRadius: radius(12),
     borderWidth: 1,
     borderColor: '#E5E7EB',
     alignItems: 'center',
@@ -276,70 +277,70 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     alignItems: "center",
-    paddingHorizontal: 24,
-    paddingTop: Platform.OS === "ios" ? 20 : 40,
+    paddingHorizontal: spacing(24),
+    paddingTop: Platform.OS === "ios" ? spacing(20) : spacing(40),
   },
   backButtonWrapper: {
     position: "absolute",
-    top: 16,
-    left: 24,
+    top: spacing(16),
+    left: spacing(24),
     zIndex: 10,
   },
-  logoContainer: { marginBottom: 40 },
+  logoContainer: { marginBottom: spacing(40) },
   logoImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 24,
+    width: scale(100),
+    height: scale(100),
+    borderRadius: radius(24),
   },
   title: {
-    fontSize: 22,
+    fontSize: normalizeFont(22),
     fontWeight: "700",
     color: "#000000",
-    marginBottom: 30,
+    marginBottom: spacing(30),
   },
   primaryBtn: {
     width: "100%",
     backgroundColor: "#EF4444",
-    paddingVertical: 16,
-    borderRadius: 16,
+    paddingVertical: spacing(16),
+    borderRadius: radius(16),
     alignItems: "center",
-    marginBottom: 12,
+    marginBottom: spacing(12),
   },
-  primaryBtnText: { color: "#FFFFFF", fontSize: 16, fontWeight: "600" },
+  primaryBtnText: { color: "#FFFFFF", fontSize: normalizeFont(16), fontWeight: "600" },
   testBtn: {
     width: '100%',
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    borderRadius: radius(16),
     borderWidth: 1,
     borderColor: '#EE3F57',
-    paddingVertical: 14,
+    paddingVertical: spacing(14),
     alignItems: 'center',
-    marginBottom: 26,
+    marginBottom: spacing(26),
   },
   testBtnText: {
     color: '#EE3F57',
-    fontSize: 16,
+    fontSize: normalizeFont(16),
     fontWeight: '600',
   },
   dividerContainer: {
     flexDirection: "row",
     alignItems: "center",
     width: "100%",
-    marginBottom: 30,
+    marginBottom: spacing(30),
   },
   line: { flex: 1, height: 1, backgroundColor: "#E5E7EB" },
-  orText: { paddingHorizontal: 16, color: "#374151", fontSize: 14 },
+  orText: { paddingHorizontal: spacing(16), color: "#374151", fontSize: normalizeFont(14) },
   socialContainer: {
     flexDirection: "row",
     justifyContent: "center",
     width: "100%",
   },
   socialBtn: {
-    width: 72,
-    height: 72,
+    width: scale(72),
+    height: scale(72),
     borderWidth: 1,
     borderColor: "#E5E7EB",
-    borderRadius: 20,
+    borderRadius: radius(20),
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#FFFFFF",
@@ -348,8 +349,8 @@ const styles = StyleSheet.create({
   footer: {
     flexDirection: "row",
     justifyContent: "space-evenly",
-    paddingBottom: Platform.OS === "ios" ? 40 : 20,
+    paddingBottom: Platform.OS === "ios" ? spacing(40) : spacing(20),
     width: "100%",
   },
-  footerLink: { color: "#EF4444", fontSize: 14, fontWeight: "500" },
+  footerLink: { color: "#EF4444", fontSize: normalizeFont(14), fontWeight: "500" },
 });

@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   ViewStyle,
 } from "react-native";
+import { normalizeFont, radius, spacing } from "../utils/responsive";
 
 interface PrimaryButtonProps {
   title: string;
@@ -45,9 +46,9 @@ export const PrimaryButton: React.FC<PrimaryButtonProps> = ({
 const styles = StyleSheet.create({
   button: {
     backgroundColor: "#E84C60",
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    borderRadius: 16,
+    paddingVertical: spacing(16),
+    paddingHorizontal: spacing(28),
+    borderRadius: radius(16),
     alignItems: "center",
     justifyContent: "center",
     width: "100%",
@@ -58,7 +59,7 @@ const styles = StyleSheet.create({
   },
   text: {
     color: "#ffffff",
-    fontSize: 16,
+    fontSize: normalizeFont(16),
     fontWeight: "600",
   },
 });

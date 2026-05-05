@@ -133,19 +133,19 @@ export default function ReportsPage() {
     <div className="space-y-6 bg-[#F3F3F3]">
       <section className="grid gap-4 xl:grid-cols-5">
         <article className="relative overflow-hidden rounded-2xl bg-white p-5 shadow-[0_16px_34px_-24px_rgba(0,0,0,0.16)] xl:col-span-3">
-          <h3 className="text-lg font-semibold text-slate-800">Pending Flags</h3>
-          <p className="mt-2 max-w-2xl text-sm text-slate-500">
+          <h3 className="text-fluid-base font-semibold text-slate-800">Pending Flags</h3>
+          <p className="mt-2 max-w-2xl text-fluid-sm text-slate-500">
             Cases that require moderation review are currently queued with anomaly signals and priority scoring.
           </p>
 
           <div className="mt-4 flex items-center gap-8">
             <div>
-              <p className="text-xs text-slate-500">Resolution Speed</p>
-              <p className="text-2xl font-bold text-[#EE3F57]">12m avg</p>
+              <p className="text-fluid-xs text-slate-500">Resolution Speed</p>
+              <p className="text-fluid-lg font-bold text-[#EE3F57]">12m avg</p>
             </div>
             <div>
-              <p className="text-xs text-slate-500">Accuracy</p>
-              <p className="text-2xl font-bold text-slate-800">94.2%</p>
+              <p className="text-fluid-xs text-slate-500">Accuracy</p>
+              <p className="text-fluid-lg font-bold text-slate-800">94.2%</p>
             </div>
           </div>
 
@@ -159,8 +159,8 @@ export default function ReportsPage() {
         <article className="rounded-2xl bg-[#EE3F57] p-5 text-white shadow-[0_16px_34px_-24px_rgba(0,0,0,0.24)] xl:col-span-2">
           <div className="flex items-start justify-between">
             <div>
-              <h3 className="text-lg font-semibold">Urgent Queue</h3>
-              <p className="mt-1 text-sm text-white/85">High-risk reports waiting for immediate action.</p>
+              <h3 className="text-fluid-base font-semibold">Urgent Queue</h3>
+              <p className="mt-1 text-fluid-sm text-white/85">High-risk reports waiting for immediate action.</p>
             </div>
             <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white/20">
               <img src={monthlyActiveIcon} alt="Urgent" className="h-5 w-5 object-contain brightness-0 invert" />
@@ -169,7 +169,7 @@ export default function ReportsPage() {
 
           <button
             type="button"
-            className="mt-6 rounded-xl bg-white px-4 py-2 text-sm font-semibold text-[#EE3F57] transition hover:bg-white/90"
+            className="mt-6 rounded-xl bg-white px-4 py-2 text-fluid-sm font-semibold text-[#EE3F57] transition hover:bg-white/90"
           >
             Review Now
           </button>
@@ -179,14 +179,14 @@ export default function ReportsPage() {
       <section className="rounded-2xl bg-white p-5 shadow-[0_16px_34px_-24px_rgba(0,0,0,0.16)]">
         <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="mr-2 text-lg font-semibold text-slate-800">Activity Log</h3>
+            <h3 className="mr-2 text-fluid-base font-semibold text-slate-800">Activity Log</h3>
             <button
               type="button"
               onClick={() => {
                 setActiveTab('ALL');
                 setPage(1);
               }}
-              className={`rounded-full px-3 py-1 text-xs font-semibold ${
+              className={`rounded-full px-3 py-1 text-fluid-xs font-semibold ${
                 activeTab === 'ALL' ? 'bg-slate-100 text-slate-700' : 'bg-slate-50 text-slate-400'
               }`}
             >
@@ -198,7 +198,7 @@ export default function ReportsPage() {
                 setActiveTab('HIGH');
                 setPage(1);
               }}
-              className={`rounded-full px-3 py-1 text-xs font-semibold ${
+              className={`rounded-full px-3 py-1 text-fluid-xs font-semibold ${
                 activeTab === 'HIGH' ? 'bg-[#FEE4E2] text-[#EE3F57]' : 'bg-slate-50 text-slate-400'
               }`}
             >

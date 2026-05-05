@@ -1,6 +1,7 @@
 import React from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text } from 'react-native';
+import { normalizeFont, radius, spacing } from '../utils/responsive';
 
 type AuthBackButtonProps = {
   onPress: () => void;
@@ -12,7 +13,7 @@ export const AuthBackButton: React.FC<AuthBackButtonProps> = ({ onPress }) => {
       onPress={onPress}
       style={({ pressed }) => [styles.backButton, pressed && styles.backButtonPressed]}
     >
-      <Ionicons name="chevron-back" size={22} color="#111111" />
+      <Ionicons name="chevron-back" size={normalizeFont(20)} color="#111111" />
       <Text style={styles.backText}>Back</Text>
     </Pressable>
   );
@@ -23,16 +24,16 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 2,
-    borderRadius: 999,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
+    gap: spacing(4),
+    borderRadius: radius(999),
+    paddingHorizontal: spacing(8),
+    paddingVertical: spacing(6),
   },
   backButtonPressed: {
     opacity: 0.7,
   },
   backText: {
-    fontSize: 16,
+    fontSize: normalizeFont(16),
     color: '#111111',
     fontWeight: '500',
   },

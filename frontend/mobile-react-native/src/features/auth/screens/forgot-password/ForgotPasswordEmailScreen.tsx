@@ -7,6 +7,7 @@ import { RootStackParamList } from '../../../../app/navigation/RootNavigator';
 import Svg, { Path } from 'react-native-svg';
 import { authService } from '../../../../services/api/authService';
 import { Alert, ActivityIndicator } from 'react-native';
+import { normalizeFont, radius, scale, spacing, verticalScale } from '../../../../shared/utils/responsive';
 
 export default function ForgotPasswordEmailScreen() {
   const [email, setEmail] = useState('');
@@ -85,18 +86,18 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    paddingHorizontal: 24,
+    paddingHorizontal: spacing(24),
     justifyContent: 'space-between',
-    paddingBottom: 20,
+    paddingBottom: spacing(20),
   },
   header: {
-    paddingTop: 10,
-    paddingBottom: 20,
+    paddingTop: spacing(10),
+    paddingBottom: spacing(20),
   },
   backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
+    width: scale(44),
+    height: scale(44),
+    borderRadius: radius(12),
     borderWidth: 1,
     borderColor: '#E5E7EB',
     alignItems: 'center',
@@ -106,39 +107,39 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    fontSize: 32,
+    fontSize: normalizeFont(32),
     fontWeight: '700',
     color: '#111111',
-    marginBottom: 12,
+    marginBottom: spacing(12),
   },
   description: {
-    fontSize: 15,
+    fontSize: normalizeFont(15),
     color: '#6B7280',
-    lineHeight: 22,
-    marginBottom: 32,
+    lineHeight: verticalScale(22),
+    marginBottom: spacing(32),
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#E5E7EB',
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    height: 56,
+    borderRadius: radius(16),
+    paddingHorizontal: spacing(16),
+    height: scale(56),
   },
   icon: {
-    marginRight: 12,
+    marginRight: spacing(12),
   },
   input: {
     flex: 1,
-    fontSize: 16,
+    fontSize: normalizeFont(16),
     color: '#111111',
     height: '100%',
   },
   button: {
     backgroundColor: '#EF4444',
-    height: 56,
-    borderRadius: 16,
+    height: scale(56),
+    borderRadius: radius(16),
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#EF4444',
@@ -154,7 +155,7 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: normalizeFont(16),
     fontWeight: '600',
   },
 });

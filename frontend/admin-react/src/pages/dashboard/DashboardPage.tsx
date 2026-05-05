@@ -31,8 +31,8 @@ export default function DashboardPage() {
     <div className="space-y-6">
       <section className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
-          <h2 className="text-3xl font-bold text-slate-800">System Performance</h2>
-          <p className="mt-1 text-sm text-slate-500">Real-time data orchestration across growth, safety and engagement indicators.</p>
+          <h2 className="text-fluid-xl font-bold text-slate-800">System Performance</h2>
+          <p className="mt-1 text-fluid-sm text-slate-500">Real-time data orchestration across growth, safety and engagement indicators.</p>
         </div>
 
         <div className="flex flex-wrap gap-2">
@@ -58,13 +58,13 @@ export default function DashboardPage() {
         {kpis.map((item) => (
           <article key={item.title} className="rounded-2xl bg-white p-5 shadow-[0_16px_34px_-24px_rgba(0,0,0,0.16)]">
             <div className="mb-4 flex items-center justify-between">
-              <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[#E1306C]/10">
-                <img src={item.icon} alt={item.title} className="h-5 w-5 object-contain" />
+              <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[#E1306C]/10">
+                <img src={item.icon} alt={item.title} className="h-7 w-7 object-contain" />
               </span>
               <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">{item.delta}</span>
             </div>
-            <p className="text-sm text-slate-500">{item.title}</p>
-            <p className="mt-1 text-2xl font-bold text-slate-800">{item.value}</p>
+            <p className="text-fluid-sm text-slate-500">{item.title}</p>
+            <p className="mt-1 text-fluid-lg font-bold text-slate-800">{item.value}</p>
           </article>
         ))}
       </section>
@@ -72,8 +72,8 @@ export default function DashboardPage() {
       <section className="grid gap-4 xl:grid-cols-5">
         <article className="rounded-2xl bg-white p-5 shadow-[0_16px_34px_-24px_rgba(0,0,0,0.16)] xl:col-span-3">
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-slate-800">User Growth Momentum</h3>
-            <span className="rounded-full bg-[#E1306C]/10 px-3 py-1 text-xs font-semibold text-[#E1306C]">2024 Year to Date</span>
+            <h3 className="text-fluid-base font-semibold text-slate-800">User Growth Momentum</h3>
+            <span className="rounded-full bg-[#E1306C]/10 px-3 py-1 text-fluid-xs font-semibold text-[#E1306C]">2024 Year to Date</span>
           </div>
           <div className="rounded-xl bg-gradient-to-b from-[#E1306C]/10 to-white p-3">
             <svg viewBox="0 0 600 260" className="h-56 w-full">
@@ -104,15 +104,15 @@ export default function DashboardPage() {
         </article>
 
         <article className="rounded-2xl bg-white p-5 shadow-[0_16px_34px_-24px_rgba(0,0,0,0.16)] xl:col-span-2">
-          <h3 className="mb-4 text-lg font-semibold text-slate-800">Safety Report Distribution</h3>
+          <h3 className="mb-4 text-fluid-base font-semibold text-slate-800">Safety Report Distribution</h3>
           <div className="flex flex-col items-center">
             <div className="relative h-48 w-48 rounded-full bg-[conic-gradient(#E1306C_0_65%,#F970A9_65%_90%,#F2F4F7_90%_100%)] p-7">
               <div className="flex h-full w-full flex-col items-center justify-center rounded-full bg-white text-center">
-                <p className="text-xs text-slate-500">2.4k</p>
-                <p className="text-sm font-semibold text-slate-700">TOTAL REPORTS</p>
+                <p className="text-fluid-xs text-slate-500">2.4k</p>
+                <p className="text-fluid-sm font-semibold text-slate-700">TOTAL REPORTS</p>
               </div>
             </div>
-            <div className="mt-5 grid w-full gap-2 text-sm text-slate-600">
+            <div className="mt-5 grid w-full gap-2 text-fluid-sm text-slate-600">
               <p className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-[#E1306C]" />Harassment (65%)</p>
               <p className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-[#F970A9]" />Fake Profile (25%)</p>
               <p className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-[#D0D5DD]" />Other (10%)</p>
@@ -122,7 +122,7 @@ export default function DashboardPage() {
       </section>
 
       <section className="rounded-2xl bg-white p-5 shadow-[0_16px_34px_-24px_rgba(0,0,0,0.16)]">
-        <h3 className="mb-4 text-lg font-semibold text-slate-800">Age Demographics</h3>
+        <h3 className="mb-4 text-fluid-base font-semibold text-slate-800">Age Demographics</h3>
         <div className="grid grid-cols-3 gap-3 md:grid-cols-6">
           {ageDemographics.map((item) => (
             <div key={item.label} className="flex flex-col items-center">
@@ -130,11 +130,11 @@ export default function DashboardPage() {
                 <div className="w-1/2 rounded-t bg-[#D92D20]" style={{ height: `${item.male}%` }} />
                 <div className="w-1/2 rounded-t bg-[#F970A9]" style={{ height: `${item.female}%` }} />
               </div>
-              <span className="text-xs font-medium text-slate-500">{item.label}</span>
+              <span className="text-fluid-xs font-medium text-slate-500">{item.label}</span>
             </div>
           ))}
         </div>
-        <div className="mt-4 flex items-center gap-5 text-sm text-slate-600">
+        <div className="mt-4 flex items-center gap-5 text-fluid-sm text-slate-600">
           <span className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-[#D92D20]" />Male</span>
           <span className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-[#F970A9]" />Female</span>
         </div>
@@ -142,15 +142,15 @@ export default function DashboardPage() {
 
       <section className="grid gap-4 md:grid-cols-2">
         <article className="rounded-2xl bg-white p-5 shadow-[0_16px_34px_-24px_rgba(0,0,0,0.16)]">
-          <h3 className="text-lg font-semibold text-slate-800">Insights of the Day</h3>
-          <p className="mt-2 text-sm leading-6 text-slate-600">
+          <h3 className="text-fluid-base font-semibold text-slate-800">Insights of the Day</h3>
+          <p className="mt-2 text-fluid-sm leading-6 text-slate-600">
             Peak user sessions appear between 20:00 and 22:00, with profile-complete users showing 1.8x higher engagement and faster first-match conversion.
           </p>
         </article>
 
         <article className="rounded-2xl bg-white p-5 shadow-[0_16px_34px_-24px_rgba(0,0,0,0.16)]">
-          <h3 className="text-lg font-semibold text-slate-800">Moderation Health</h3>
-          <p className="mt-2 text-sm leading-6 text-slate-600">
+          <h3 className="text-fluid-base font-semibold text-slate-800">Moderation Health</h3>
+          <p className="mt-2 text-fluid-sm leading-6 text-slate-600">
             AI moderation currently auto-resolves 82% of flagged cases with low false-positive rates, while manual escalation SLA remains under 2 hours.
           </p>
         </article>

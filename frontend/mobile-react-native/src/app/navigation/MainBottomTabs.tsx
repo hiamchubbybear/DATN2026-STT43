@@ -8,6 +8,7 @@ import { MatchesScreen } from '../../features/main/screens/MatchesScreen';
 import { NotificationsMainScreen } from '../../features/main/screens/NotificationsMainScreen';
 import { MessagesScreen } from '../../features/main/screens/MessagesScreen';
 import { ProfileMainScreen } from '../../features/main/screens/ProfileMainScreen';
+import { normalizeFont, radius, scale, spacing } from '../../shared/utils/responsive';
 
 export type MainTabParamList = {
   Main: undefined;
@@ -49,7 +50,7 @@ export const MainBottomTabs = () => {
 
           return (
             <View style={styles.tabInner}>
-              <Ionicons name={iconName} size={22} color={color} />
+              <Ionicons name={iconName} size={normalizeFont(22)} color={color} />
               {focused ? <View style={styles.activeDot} /> : null}
             </View>
           );
@@ -72,7 +73,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    height: 58,
+    height: scale(58),
     borderRadius: 0,
     backgroundColor: '#ECEFF3',
     borderTopWidth: 0,
@@ -85,20 +86,20 @@ const styles = StyleSheet.create({
     paddingTop: 0,
   },
   tabInner: {
-    width: 28,
-    height: 28,
+    width: scale(28),
+    height: scale(28),
     alignItems: 'center',
     justifyContent: 'center',
   },
   activeDot: {
     position: 'absolute',
-    top: 2,
+    top: spacing(2),
     right: 0,
-    width: 8,
-    height: 8,
-    borderRadius: 999,
+    width: scale(8),
+    height: scale(8),
+    borderRadius: radius(999),
     backgroundColor: '#EE3F57',
-    borderWidth: 1.5,
+    borderWidth: scale(1.5),
     borderColor: '#ECEFF3',
   },
 });

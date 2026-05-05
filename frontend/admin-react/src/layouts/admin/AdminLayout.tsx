@@ -74,48 +74,50 @@ export default function AdminLayout({ activeItem, onLogout, onMenuSelect, childr
       </aside>
 
       <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">
-        <header className="mb-6 flex flex-col gap-4 rounded-2xl bg-white px-5 py-4 shadow-[0_16px_34px_-24px_rgba(0,0,0,0.2)] md:flex-row md:items-center md:justify-between">
-          <h1 className="text-2xl font-bold text-[#E1306C]">
-            Mixer Admin
-          </h1>
+        <div className="mx-auto w-full max-w-[var(--app-max-width)]">
+          <header className="mb-6 flex flex-col gap-4 rounded-2xl bg-white px-5 py-4 shadow-[0_16px_34px_-24px_rgba(0,0,0,0.2)] md:flex-row md:items-center md:justify-between">
+            <h1 className="text-2xl font-bold text-[#E1306C]">
+              Mixer Admin
+            </h1>
 
-          <div className="w-full md:max-w-md">
-            <input
-              type="text"
-              placeholder="Search analytics..."
-              className="w-full rounded-full border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm outline-none transition focus:border-[#EE3F57] focus:ring-4 focus:ring-[#EE3F57]/15"
-            />
-          </div>
-
-          <div className="flex items-center gap-3">
-            <button type="button" className="rounded-full bg-[#F3F3F3] p-2.5">
-              <img src={notificationIcon} alt="Notifications" className="h-5 w-5 object-contain" />
-            </button>
-            <div ref={menuRef} className="relative">
-              <button
-                type="button"
-                onClick={() => setShowUserMenu((prev) => !prev)}
-                className="overflow-hidden rounded-full border-2 border-[#EE3F57]/30"
-              >
-                <img src={avatarImage} alt="Admin Avatar" className="h-10 w-10 object-cover" />
-              </button>
-
-              {showUserMenu && (
-                <div className="absolute right-0 top-12 z-20 w-32 rounded-xl bg-white p-2 shadow-[0_12px_28px_-16px_rgba(0,0,0,0.35)]">
-                  <button
-                    type="button"
-                    onClick={onLogout}
-                    className="w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-[#EE3F57] transition hover:bg-[#F3F3F3]"
-                  >
-                    Logout
-                  </button>
-                </div>
-              )}
+            <div className="w-full md:max-w-md">
+              <input
+                type="text"
+                placeholder="Search analytics..."
+                className="w-full rounded-full border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm outline-none transition focus:border-[#EE3F57] focus:ring-4 focus:ring-[#EE3F57]/15"
+              />
             </div>
-          </div>
-        </header>
 
-        {children}
+            <div className="flex items-center gap-3">
+              <button type="button" className="rounded-full bg-[#F3F3F3] p-2.5">
+                <img src={notificationIcon} alt="Notifications" className="h-5 w-5 object-contain" />
+              </button>
+              <div ref={menuRef} className="relative">
+                <button
+                  type="button"
+                  onClick={() => setShowUserMenu((prev) => !prev)}
+                  className="overflow-hidden rounded-full border-2 border-[#EE3F57]/30"
+                >
+                  <img src={avatarImage} alt="Admin Avatar" className="h-10 w-10 object-cover" />
+                </button>
+
+                {showUserMenu && (
+                  <div className="absolute right-0 top-12 z-20 w-32 rounded-xl bg-white p-2 shadow-[0_12px_28px_-16px_rgba(0,0,0,0.35)]">
+                    <button
+                      type="button"
+                      onClick={onLogout}
+                      className="w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-[#EE3F57] transition hover:bg-[#F3F3F3]"
+                    >
+                      Logout
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </header>
+
+          {children}
+        </div>
       </main>
     </div>
   );

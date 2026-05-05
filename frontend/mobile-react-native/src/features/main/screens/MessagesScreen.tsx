@@ -7,6 +7,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../../app/navigation/RootNavigator';
 import { UserDiscoverDto, userService } from '../../../services/api/userService';
 import { Logger } from '../../../shared/utils/logger';
+import { normalizeFont, radius, scale, spacing, verticalScale } from '../../../shared/utils/responsive';
 
 const defaultAvatar = require('../../../../assets/images/anh1.jpg');
 
@@ -32,14 +33,14 @@ export const MessagesScreen = () => {
         <View style={styles.headTop}>
           <Text style={styles.clock}>4:20</Text>
           <TouchableOpacity style={styles.filterBtn} activeOpacity={0.85}>
-            <Ionicons name="options-outline" size={18} color="#EE3F57" />
+            <Ionicons name="options-outline" size={normalizeFont(18)} color="#EE3F57" />
           </TouchableOpacity>
         </View>
 
         <Text style={styles.title}>Messages</Text>
 
         <View style={styles.searchWrap}>
-          <Ionicons name="search-outline" size={16} color="#A1A1AA" />
+          <Ionicons name="search-outline" size={normalizeFont(16)} color="#A1A1AA" />
           <Text style={styles.searchText}>Search</Text>
         </View>
 
@@ -81,144 +82,144 @@ export const MessagesScreen = () => {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#F7F7F8' },
-  container: { flex: 1, paddingHorizontal: 20, paddingTop: 2 },
+  container: { flex: 1, paddingHorizontal: spacing(20), paddingTop: spacing(2) },
   headTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 6,
+    marginBottom: spacing(6),
   },
   clock: {
     color: '#111111',
-    fontSize: 13,
+    fontSize: normalizeFont(13),
     fontWeight: '700',
   },
   filterBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 12,
+    width: scale(34),
+    height: scale(34),
+    borderRadius: radius(12),
     borderWidth: 1,
     borderColor: '#ECECF1',
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  title: { fontSize: 34, fontWeight: '800', color: '#111111' },
+  title: { fontSize: normalizeFont(34), fontWeight: '800', color: '#111111' },
   searchWrap: {
-    marginTop: 12,
-    borderRadius: 12,
+    marginTop: spacing(12),
+    borderRadius: radius(12),
     borderWidth: 1,
     borderColor: '#ECECF1',
     backgroundColor: '#FFFFFF',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    gap: spacing(8),
+    paddingHorizontal: spacing(12),
+    paddingVertical: spacing(10),
   },
   searchText: {
-    fontSize: 13,
+    fontSize: normalizeFont(13),
     color: '#A1A1AA',
   },
   sectionTitle: {
-    marginTop: 16,
-    fontSize: 15,
+    marginTop: spacing(16),
+    fontSize: normalizeFont(15),
     color: '#111111',
     fontWeight: '700',
   },
   activityRow: {
-    marginTop: 10,
+    marginTop: spacing(10),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
   activityItem: {
     alignItems: 'center',
-    width: 68,
+    width: scale(68),
   },
   activityAvatarRing: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: scale(56),
+    height: scale(56),
+    borderRadius: radius(28),
     borderWidth: 2,
     borderColor: '#FF7A8B',
-    padding: 2,
+    padding: spacing(2),
   },
   activityAvatar: {
     width: '100%',
     height: '100%',
-    borderRadius: 26,
+    borderRadius: radius(26),
   },
   activityLabel: {
-    marginTop: 6,
-    fontSize: 12,
+    marginTop: spacing(6),
+    fontSize: normalizeFont(12),
     color: '#18181B',
     fontWeight: '500',
   },
   messagesTitle: {
-    marginTop: 18,
+    marginTop: spacing(18),
   },
   messageRow: {
-    marginTop: 12,
+    marginTop: spacing(12),
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: spacing(10),
   },
   avatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: scale(50),
+    height: scale(50),
+    borderRadius: radius(25),
   },
   messageMeta: {
     flex: 1,
   },
   name: {
-    fontSize: 15,
+    fontSize: normalizeFont(15),
     color: '#111111',
     fontWeight: '700',
   },
   preview: {
-    marginTop: 2,
-    fontSize: 13,
+    marginTop: spacing(2),
+    fontSize: normalizeFont(13),
     color: '#71717A',
   },
   trailing: {
     alignItems: 'flex-end',
-    minWidth: 48,
-    gap: 5,
+    minWidth: scale(48),
+    gap: spacing(5),
   },
   time: {
-    fontSize: 11,
+    fontSize: normalizeFont(11),
     color: '#A1A1AA',
     fontWeight: '600',
   },
   unreadBubble: {
-    minWidth: 20,
-    height: 20,
-    borderRadius: 10,
+    minWidth: scale(20),
+    height: scale(20),
+    borderRadius: radius(10),
     backgroundColor: '#EE3F57',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 6,
+    paddingHorizontal: spacing(6),
   },
   unreadText: {
-    fontSize: 11,
+    fontSize: normalizeFont(11),
     color: '#FFFFFF',
     fontWeight: '700',
   },
   bottomSpacer: {
-    height: 84,
+    height: verticalScale(84),
   },
   emptyState: {
-    marginTop: 40,
+    marginTop: spacing(40),
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 20,
+    padding: spacing(20),
   },
   emptyText: {
-    fontSize: 14,
+    fontSize: normalizeFont(14),
     color: '#A1A1AA',
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: verticalScale(20),
   },
 });

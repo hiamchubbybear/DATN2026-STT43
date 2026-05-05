@@ -156,7 +156,7 @@ export default function LoginScreen() {
 
         <TouchableOpacity
           style={styles.primaryBtn}
-          onPress={() => router.push("/login/email")}
+          onPress={() => router.push("/signup" as never)}
         >
           <Text style={styles.primaryBtnText}>Continue with email</Text>
         </TouchableOpacity>

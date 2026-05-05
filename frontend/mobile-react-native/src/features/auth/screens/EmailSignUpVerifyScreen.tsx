@@ -8,6 +8,7 @@ import Svg, { Path } from 'react-native-svg';
 import { authService } from '../../../services/api/authService';
 import { Alert, ActivityIndicator } from 'react-native';
 import { useAuthStore } from '../../../store/authStore';
+import { normalizeFont, radius, scale, spacing, verticalScale } from '../../../shared/utils/responsive';
 
 const { width } = Dimensions.get('window');
 
@@ -162,53 +163,47 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    paddingHorizontal: 24,
-    paddingBottom: 40,
+    paddingHorizontal: spacing(24),
+    paddingBottom: spacing(40),
   },
   header: {
-    paddingTop: 10,
-    paddingBottom: 40,
+    paddingTop: spacing(10),
+    paddingBottom: spacing(40),
   },
   backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
+    width: scale(44),
+    height: scale(44),
+    borderRadius: radius(12),
     borderWidth: 1,
     borderColor: '#E5E7EB',
     alignItems: 'center',
     justifyContent: 'center',
   },
   content: {
-    alignItems: 'center',
+    flex: 1,
   },
   timerTitle: {
-    fontSize: 32,
+    marginBottom: spacing(16),
     fontWeight: '700',
     color: '#111111',
-    marginBottom: 16,
+    fontSize: normalizeFont(15),
   },
   description: {
-    fontSize: 15,
-    color: '#6B7280',
-    textAlign: 'center',
-    marginBottom: 40,
-    paddingHorizontal: 20,
-    lineHeight: 22,
+    marginBottom: spacing(40),
+    paddingHorizontal: spacing(20),
+    lineHeight: verticalScale(22),
   },
   codeContainer: {
+    gap: spacing(8),
     flexDirection: 'row',
     justifyContent: 'center',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 40,
   },
   codeBox: {
-    width: 44,
-    height: 56,
-    borderRadius: 12,
+    width: scale(48),
+    height: verticalScale(56),
+    borderRadius: radius(12),
     borderWidth: 2,
     borderColor: '#E5E7EB',
-    alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#FFFFFF',
   },
@@ -220,7 +215,7 @@ const styles = StyleSheet.create({
     borderColor: '#F43F5E',
   },
   codeText: {
-    fontSize: 24,
+    fontSize: normalizeFont(18),
     fontWeight: '600',
     color: '#111111',
   },

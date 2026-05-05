@@ -140,22 +140,22 @@ export default function ReviewsPage() {
     <div className="space-y-6 bg-[#F3F3F3]">
       <section className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
         <div>
-          <h2 className="text-3xl font-bold text-slate-800">Review Management</h2>
-          <p className="mt-1 text-sm text-[#ADAFBB]">Track user sentiment, reply faster, and improve service quality in real time.</p>
+          <h2 className="text-fluid-xl font-bold text-slate-800">Review Management</h2>
+          <p className="mt-1 text-fluid-sm text-[#ADAFBB]">Track user sentiment, reply faster, and improve service quality in real time.</p>
         </div>
 
         <article className="w-full max-w-xl rounded-2xl bg-white p-4 shadow-[0_16px_34px_-24px_rgba(0,0,0,0.16)]">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <p className="text-xs font-semibold tracking-[0.14em] text-[#ADAFBB]">GLOBAL RATING</p>
+              <p className="text-fluid-xs font-semibold tracking-[0.14em] text-[#ADAFBB]">GLOBAL RATING</p>
               <div className="mt-1 flex items-end gap-2">
-                <p className="text-3xl font-bold text-slate-800">4.8</p>
+                <p className="text-fluid-xl font-bold text-slate-800">4.8</p>
                 <div className="mb-1 text-[#EE3F57]">★★★★★</div>
               </div>
             </div>
             <div className="text-right">
-              <p className="text-xs font-semibold tracking-[0.14em] text-[#ADAFBB]">TOTAL REVIEWS</p>
-              <p className="mt-1 text-3xl font-bold text-slate-800">1,284</p>
+              <p className="text-fluid-xs font-semibold tracking-[0.14em] text-[#ADAFBB]">TOTAL REVIEWS</p>
+              <p className="mt-1 text-fluid-xl font-bold text-slate-800">1,284</p>
             </div>
           </div>
         </article>
@@ -165,7 +165,7 @@ export default function ReviewsPage() {
         <select
           value={draftFilters.rating}
           onChange={(event) => setDraftFilters((prev) => ({ ...prev, rating: event.target.value as FilterState['rating'] }))}
-          className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-600 outline-none focus:border-[#EE3F57]"
+          className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-fluid-sm text-slate-600 outline-none focus:border-[#EE3F57]"
         >
           <option value="all">Rating: All Stars</option>
           <option value="5">Rating: 5 Stars</option>
@@ -174,7 +174,7 @@ export default function ReviewsPage() {
         <select
           value={draftFilters.sortDate}
           onChange={(event) => setDraftFilters((prev) => ({ ...prev, sortDate: event.target.value as FilterState['sortDate'] }))}
-          className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-600 outline-none focus:border-[#EE3F57]"
+          className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-fluid-sm text-slate-600 outline-none focus:border-[#EE3F57]"
         >
           <option value="new">Sort by Date: New</option>
           <option value="old">Sort by Date: Old</option>
@@ -182,7 +182,7 @@ export default function ReviewsPage() {
         <select
           value={draftFilters.status}
           onChange={(event) => setDraftFilters((prev) => ({ ...prev, status: event.target.value as FilterState['status'] }))}
-          className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-600 outline-none focus:border-[#EE3F57]"
+          className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-fluid-sm text-slate-600 outline-none focus:border-[#EE3F57]"
         >
           <option value="all">Status: All</option>
           <option value="pending">Status: Pending Reply</option>
@@ -194,7 +194,7 @@ export default function ReviewsPage() {
             setAppliedFilters(draftFilters);
             setPage(1);
           }}
-          className="rounded-xl bg-[linear-gradient(135deg,#F27121_10%,#E94057_60%,#8A2387_100%)] px-4 py-2.5 text-sm font-semibold text-white"
+          className="rounded-xl bg-[linear-gradient(135deg,#F27121_10%,#E94057_60%,#8A2387_100%)] px-4 py-2.5 text-fluid-sm font-semibold text-white"
         >
           Apply Filters
         </button>

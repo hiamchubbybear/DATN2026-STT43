@@ -7,6 +7,7 @@ import { RootStackParamList } from '../../../app/navigation/RootNavigator';
 import { AuthBackButton } from '../../../shared/components/AuthBackButton';
 import { PrimaryButton } from '../../../shared/components/PrimaryButton';
 import { useAuthStore } from '../../../store/authStore';
+import { normalizeFont, spacing, verticalScale } from '../../../shared/utils/responsive';
 
 export const TestHubScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -54,8 +55,8 @@ export const TestHubScreen = () => {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#F3F3F3' },
-  container: { paddingHorizontal: 24, paddingTop: 16, paddingBottom: 120 },
-  title: { fontSize: 28, fontWeight: '700', color: '#111111', marginTop: 8 },
-  subtitle: { fontSize: 14, color: '#6B7280', marginTop: 8, marginBottom: 16 },
-  buttons: { gap: 10 },
+  container: { paddingHorizontal: spacing(24), paddingTop: spacing(16), paddingBottom: verticalScale(120) },
+  title: { fontSize: normalizeFont(28), fontWeight: '700', color: '#111111', marginTop: spacing(8) },
+  subtitle: { fontSize: normalizeFont(14), color: '#6B7280', marginTop: spacing(8), marginBottom: spacing(16) },
+  buttons: { gap: spacing(10) },
 });

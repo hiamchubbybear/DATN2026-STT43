@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthStore } from '../../../store/authStore';
 import { useNavigation } from '@react-navigation/native';
 import Svg, { Path } from 'react-native-svg';
+import { normalizeFont, radius, scale, spacing, verticalScale } from '../../../shared/utils/responsive';
 
 const SvgChevronLeft = () => (
   <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -77,69 +78,69 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
+    paddingHorizontal: spacing(20),
+    paddingVertical: spacing(12),
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
     borderBottomColor: '#F3F4F6',
   },
   backButton: {
-    padding: 8,
-    marginLeft: -8,
+    padding: spacing(8),
+    marginLeft: -spacing(8),
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: normalizeFont(18),
     fontWeight: '700',
     color: '#111827',
   },
   container: {
     flex: 1,
-    paddingTop: 20,
+    paddingTop: spacing(20),
   },
   section: {
-    marginBottom: 24,
+    marginBottom: spacing(24),
     backgroundColor: '#FFFFFF',
     borderTopWidth: 1,
     borderBottomWidth: 1,
     borderColor: '#F3F4F6',
   },
   sectionTitle: {
-    fontSize: 13,
+    fontSize: normalizeFont(13),
     fontWeight: '600',
     color: '#6B7280',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 8,
+    paddingHorizontal: spacing(20),
+    paddingTop: spacing(16),
+    paddingBottom: spacing(8),
     backgroundColor: '#FAFAFA',
   },
   row: {
-    paddingVertical: 16,
-    paddingHorizontal: 20,
+    paddingVertical: spacing(16),
+    paddingHorizontal: spacing(20),
     borderBottomWidth: 1,
     borderBottomColor: '#F3F4F6',
   },
   rowText: {
-    fontSize: 16,
+    fontSize: normalizeFont(16),
     color: '#111827',
   },
   logoutButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 20,
-    marginHorizontal: 20,
-    paddingVertical: 16,
+    marginTop: spacing(20),
+    marginHorizontal: spacing(20),
+    paddingVertical: spacing(16),
     backgroundColor: '#FEF2F2',
-    borderRadius: 16,
+    borderRadius: radius(16),
     borderWidth: 1,
     borderColor: '#FCA5A5',
   },
   logoutText: {
-    fontSize: 16,
+    fontSize: normalizeFont(16),
     fontWeight: '700',
     color: '#EF4444',
-    marginLeft: 8,
+    marginLeft: spacing(8),
   },
 });
