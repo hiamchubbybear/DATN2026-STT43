@@ -1,4 +1,4 @@
-﻿using Amazon.S3;
+using Amazon.S3;
 using Amazon.S3.Model;
 using DoAnTotNghiep.Application.Common;
 
@@ -64,7 +64,8 @@ namespace DoAnTotNghiep.Infrastructure.Persistence.Storage
                 BucketName = _settings.BucketName,
                 Key = key,
                 InputStream = stream,
-                ContentType = contentType
+                ContentType = contentType,
+                DisablePayloadSigning = true
             };
 
             await _s3.PutObjectAsync(request);

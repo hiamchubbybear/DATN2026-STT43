@@ -23,8 +23,8 @@ namespace DoAnTotNghiep.Application.Users.Photos.DeletePhoto
 
         public async Task Handle(DeletePhotoCommand request, CancellationToken cancellationToken)
         {
-            var userId = _current.UserId;
-            var profile = await _repo.GetByUserIdAsync(Guid.TryParse(userId, out var guid) ? guid : throw new ArgumentNullException());
+            var userId = Guid.Parse(_current.UserId!);
+            var profile = await _repo.GetByUserIdAsync(userId);
 
             if (profile == null)
                 throw new NotFoundException("Profile not found");
@@ -37,22 +37,18 @@ namespace DoAnTotNghiep.Application.Users.Photos.DeletePhoto
 
             await _storage.DeleteAsync(photo.Url);
 
-            profile.Photos.Remove(photo);
+            profile.RemovePhoto(photo.Id);
 
-            if (photo.IsPrimary && profile.Photos.Any())
+            if (!string.IsNullOrEmpty(photo.ThumbnailUrl))
             {
-                profile.Photos[0].IsPrimary = true;
+                await _storage.DeleteAsync(photo.ThumbnailUrl);
             }
 
-            for (int i = 0; i < profile.Photos.Count; i++)
-            {
-                profile.Photos[i].Order = i;
-            }
+            profile.RemovePhoto(photo.Id);
 
             await _repo.UpdateAsync(profile);
 
-            await _cache.RemoveAsync(
-                $"user:{userId}:photos");
+            await _cache.RemoveAsync($"user:{userId}:photos");
         }
     }
 }

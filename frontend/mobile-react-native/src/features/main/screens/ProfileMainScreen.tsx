@@ -1,146 +1,157 @@
-import React, { useState } from 'react';
-import { Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import React from 'react';
+import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
-import { normalizeFont, radius, scale, spacing, verticalScale } from '../../../shared/utils/responsive';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../../../app/navigation/RootNavigator';
+import { profileService } from '../../../services/api/profileService';
+import { Logger } from '../../../shared/utils/logger';
 
-const profileSeed = {
-  fullName: 'Jessica Parker',
-  age: '23',
-  jobTitle: 'Professional model',
-  location: 'Chicago, IL United States',
-  bio: 'My name is Jessica Parker and I enjoy meeting new people and finding ways to help them.',
-  interests: 'Traveling, Books, Music, Dancing, Modeling',
-  phone: '+1 202-555-0148',
-  email: 'jessica.parker@example.com',
-};
+type ProfileNavigation = NativeStackNavigationProp<RootStackParamList>;
+
+const defaultAvatar = require('../../../../assets/images/anh2.jpg');
+
+function calculateAge(dob?: string) {
+  if (!dob) return null;
+
+  const birthDate = new Date(dob);
+  if (Number.isNaN(birthDate.getTime())) return null;
+
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDelta = today.getMonth() - birthDate.getMonth();
+
+  if (monthDelta < 0 || (monthDelta === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+
+  return age;
+}
 
 export const ProfileMainScreen = () => {
-  const [form, setForm] = useState(profileSeed);
-  const [extraPhotoUri, setExtraPhotoUri] = useState<string | null>(null);
+  const navigation = useNavigation<ProfileNavigation>();
+  const insets = useSafeAreaInsets();
+  const [profile, setProfile] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
 
-  const updateField = (field: keyof typeof profileSeed, value: string) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const onSave = () => {
-    Alert.alert('Đã lưu', 'Thông tin cá nhân của bạn đã được cập nhật.');
-  };
-
-  const onPickExtraPhoto = async () => {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-    if (!permission.granted) {
-      Alert.alert('Quyền truy cập bị từ chối', 'Vui lòng cho phép ứng dụng truy cập thư viện ảnh để tải ảnh lên.');
-      return;
+  const loadProfile = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await profileService.getMyProfile();
+      setProfile(data);
+    } catch (err: any) {
+      Logger.error('Failed to fetch profile', err);
+      setError(err?.message || 'Failed to load profile');
+    } finally {
+      setLoading(false);
     }
+  }, []);
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsEditing: true,
-      aspect: [4, 5],
-      quality: 0.9,
-    });
+  React.useEffect(() => {
+    loadProfile();
+  }, [loadProfile]);
 
-    if (!result.canceled && result.assets.length > 0) {
-      setExtraPhotoUri(result.assets[0].uri);
-    }
-  };
+  if (loading) {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color="#EE3F57" />
+      </View>
+    );
+  }
+
+  if (error || !profile) {
+    return (
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
+        <View style={styles.centered}>
+          <Ionicons name="cloud-offline-outline" size={56} color="#D1D5DB" />
+          <Text style={styles.errorTitle}>Profile unavailable</Text>
+          <Text style={styles.errorMessage}>{error || 'No profile data found.'}</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={loadProfile} activeOpacity={0.85}>
+            <Text style={styles.retryText}>Try again</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  const displayName = profile?.basicInfo?.displayName || 'Your profile';
+  const age = calculateAge(profile?.basicInfo?.dob);
+  const occupation = profile?.background?.occupation || 'No occupation set';
+  const location = profile?.locationName || 'No location set';
+  const bio = profile?.bio || 'Add a short bio to help people get to know you.';
+  const photos = profile?.photos || [];
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <View style={styles.heroWrap}>
-          <Image source={require('../../../../assets/images/anh2.jpg')} style={styles.heroImage} resizeMode="cover" />
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 32 }]}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.hero}>
+          <Image
+            source={photos[0]?.url ? { uri: photos[0].url } : defaultAvatar}
+            style={styles.heroImage}
+            resizeMode="cover"
+          />
 
-          <TouchableOpacity style={styles.changeAvatarBtn} activeOpacity={0.9}>
-            <Ionicons name="camera-outline" size={16} color="#FFFFFF" />
-            <Text style={styles.changeAvatarText}>Đổi ảnh</Text>
+          <TouchableOpacity style={[styles.fab, styles.fabLeft]} onPress={() => navigation.navigate('Settings')} activeOpacity={0.85}>
+            <Ionicons name="settings-outline" size={18} color="#FFFFFF" />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={[styles.fab, styles.fabRight]} onPress={() => navigation.navigate('EditProfile')} activeOpacity={0.85}>
+            <Ionicons name="pencil" size={18} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
 
-        <View style={styles.contentCard}>
-          <Text style={styles.screenTitle}>Hồ sơ của tôi</Text>
-          <Text style={styles.screenSubtitle}>Bạn có thể chỉnh sửa các thông tin cá nhân ở đây.</Text>
-
-          <View style={styles.formGroup}>
-            <Text style={styles.fieldLabel}>Họ và tên</Text>
-            <TextInput style={styles.input} value={form.fullName} onChangeText={(text) => updateField('fullName', text)} placeholder="Nhập họ và tên" placeholderTextColor="#A1A1AA" />
-          </View>
-
-          <View style={styles.rowFields}>
-            <View style={styles.rowFieldItem}>
-              <Text style={styles.fieldLabel}>Tuổi</Text>
-              <TextInput style={styles.input} value={form.age} onChangeText={(text) => updateField('age', text)} placeholder="Tuổi" keyboardType="number-pad" placeholderTextColor="#A1A1AA" />
+        <View style={styles.card}>
+          <View style={styles.nameRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.nameText}>{displayName}{age ? `, ${age}` : ''}</Text>
+              <Text style={styles.subText}>{occupation}</Text>
             </View>
-            <View style={styles.rowFieldItem}>
-              <Text style={styles.fieldLabel}>Nghề nghiệp</Text>
-              <TextInput style={styles.input} value={form.jobTitle} onChangeText={(text) => updateField('jobTitle', text)} placeholder="Nghề nghiệp" placeholderTextColor="#A1A1AA" />
-            </View>
-          </View>
-
-          <View style={styles.formGroup}>
-            <Text style={styles.fieldLabel}>Email</Text>
-            <TextInput style={styles.input} value={form.email} onChangeText={(text) => updateField('email', text)} placeholder="Email" keyboardType="email-address" autoCapitalize="none" placeholderTextColor="#A1A1AA" />
-          </View>
-
-          <View style={styles.formGroup}>
-            <Text style={styles.fieldLabel}>Số điện thoại</Text>
-            <TextInput style={styles.input} value={form.phone} onChangeText={(text) => updateField('phone', text)} placeholder="Số điện thoại" keyboardType="phone-pad" placeholderTextColor="#A1A1AA" />
-          </View>
-
-          <View style={styles.formGroup}>
-            <Text style={styles.fieldLabel}>Địa điểm</Text>
-            <TextInput style={styles.input} value={form.location} onChangeText={(text) => updateField('location', text)} placeholder="Địa điểm" placeholderTextColor="#A1A1AA" />
-          </View>
-
-          <View style={styles.formGroup}>
-            <Text style={styles.fieldLabel}>Giới thiệu</Text>
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              value={form.bio}
-              onChangeText={(text) => updateField('bio', text)}
-              placeholder="Viết giới thiệu ngắn"
-              multiline
-              textAlignVertical="top"
-              placeholderTextColor="#A1A1AA"
-            />
-          </View>
-
-          <View style={styles.formGroup}>
-            <Text style={styles.fieldLabel}>Sở thích (ngăn cách bởi dấu phẩy)</Text>
-            <TextInput
-              style={[styles.input, styles.textAreaSmall]}
-              value={form.interests}
-              onChangeText={(text) => updateField('interests', text)}
-              placeholder="Ví dụ: Music, Travel, Fitness"
-              multiline
-              textAlignVertical="top"
-              placeholderTextColor="#A1A1AA"
-            />
-          </View>
-
-          <View style={styles.formGroup}>
-            <Text style={styles.fieldLabel}>Ảnh bổ sung</Text>
-
-            {extraPhotoUri ? (
-              <View style={styles.extraPhotoPreviewWrap}>
-                <Image source={{ uri: extraPhotoUri }} style={styles.extraPhotoPreview} resizeMode="cover" />
-                <TouchableOpacity style={styles.removePhotoBtn} activeOpacity={0.9} onPress={() => setExtraPhotoUri(null)}>
-                  <Ionicons name="close" size={16} color="#FFFFFF" />
-                </TouchableOpacity>
-              </View>
-            ) : null}
-
-            <TouchableOpacity style={styles.uploadPhotoBtn} activeOpacity={0.9} onPress={onPickExtraPhoto}>
-              <Ionicons name="image-outline" size={18} color="#EE3F57" />
-              <Text style={styles.uploadPhotoText}>{extraPhotoUri ? 'Chọn lại ảnh' : 'Tải ảnh lên'}</Text>
+            <TouchableOpacity style={styles.editChip} onPress={() => navigation.navigate('EditProfile')} activeOpacity={0.85}>
+              <Text style={styles.editChipText}>Edit</Text>
+              <Ionicons name="chevron-forward" size={14} color="#EE3F57" />
             </TouchableOpacity>
           </View>
 
-          <TouchableOpacity style={styles.saveButton} activeOpacity={0.9} onPress={onSave}>
-            <Text style={styles.saveButtonText}>Lưu thay đổi</Text>
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Location</Text>
+            <Text style={styles.bodyText}>{location}</Text>
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>About</Text>
+            <Text style={styles.bodyText}>{bio}</Text>
+          </View>
+
+          <View style={styles.section}>
+            <View style={styles.sectionHeaderRow}>
+              <Text style={styles.sectionTitle}>Gallery</Text>
+              <TouchableOpacity onPress={() => navigation.navigate('EditGallery')} activeOpacity={0.85}>
+                <Text style={styles.linkText}>Edit gallery</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.galleryGrid}>
+              {photos.length > 0 ? photos.slice(0, 6).map((photo: any, index: number) => (
+                <Image key={photo.id || index} source={{ uri: photo.url }} style={styles.galleryItem} resizeMode="cover" />
+              )) : (
+                <View style={styles.emptyGallery}>
+                  <Ionicons name="images-outline" size={20} color="#D1D5DB" />
+                  <Text style={styles.emptyGalleryText}>No photos yet</Text>
+                </View>
+              )}
+            </View>
+          </View>
+
+          <TouchableOpacity style={styles.primaryButton} onPress={() => navigation.navigate('DiscoverySettings')} activeOpacity={0.88}>
+            <Ionicons name="options-outline" size={18} color="#FFFFFF" />
+            <Text style={styles.primaryButtonText}>Discovery Settings</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -157,139 +168,168 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: spacing(96),
+    paddingBottom: 24,
   },
-  heroWrap: {
-    height: verticalScale(260),
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+    backgroundColor: '#F7F7F8',
+  },
+  errorTitle: {
+    marginTop: 16,
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#111827',
+  },
+  errorMessage: {
+    marginTop: 8,
+    fontSize: 14,
+    color: '#6B7280',
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  retryButton: {
+    marginTop: 20,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 999,
+    backgroundColor: '#EE3F57',
+  },
+  retryText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  hero: {
+    height: 320,
     position: 'relative',
   },
   heroImage: {
     width: '100%',
     height: '100%',
   },
-  changeAvatarBtn: {
+  fab: {
     position: 'absolute',
-    bottom: spacing(14),
-    right: spacing(14),
-    paddingHorizontal: spacing(12),
-    height: scale(34),
-    borderRadius: radius(12),
-    backgroundColor: 'rgba(17,24,39,0.65)',
-    flexDirection: 'row',
-    gap: spacing(4),
+    top: 16,
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.22)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  changeAvatarText: {
-    color: '#FFFFFF',
-    fontSize: normalizeFont(12),
-    fontWeight: '700',
+  fabLeft: {
+    left: 16,
   },
-  contentCard: {
-    marginTop: -spacing(18),
-    marginHorizontal: spacing(10),
-    borderRadius: radius(24),
+  fabRight: {
+    right: 16,
+  },
+  card: {
+    marginTop: -24,
+    marginHorizontal: 10,
+    borderRadius: 24,
     backgroundColor: '#FFFFFF',
-    paddingTop: spacing(24),
-    paddingBottom: spacing(24),
-    paddingHorizontal: spacing(16),
+    paddingHorizontal: 16,
+    paddingTop: 22,
+    paddingBottom: 20,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 2,
   },
-  screenTitle: {
-    fontSize: normalizeFont(28),
-    fontWeight: '700',
-    color: '#18181B',
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
-  screenSubtitle: {
-    marginTop: spacing(6),
-    fontSize: normalizeFont(13),
+  nameText: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#111827',
+  },
+  subText: {
+    marginTop: 4,
+    fontSize: 13,
     color: '#71717A',
   },
-  formGroup: {
-    marginTop: spacing(18),
-  },
-  rowFields: {
-    marginTop: spacing(18),
-    flexDirection: 'row',
-    gap: spacing(10),
-  },
-  rowFieldItem: {
-    flex: 1,
-  },
-  fieldLabel: {
-    marginBottom: spacing(8),
-    fontSize: normalizeFont(13),
-    fontWeight: '600',
-    color: '#3F3F46',
-  },
-  input: {
-    height: scale(46),
-    borderRadius: radius(12),
-    borderWidth: 1,
-    borderColor: '#E4E4E7',
-    backgroundColor: '#FAFAFA',
-    paddingHorizontal: spacing(12),
-    fontSize: normalizeFont(13),
-    color: '#18181B',
-  },
-  textArea: {
-    height: verticalScale(96),
-    paddingTop: spacing(10),
-  },
-  textAreaSmall: {
-    height: verticalScale(72),
-    paddingTop: spacing(10),
-  },
-  uploadPhotoBtn: {
-    marginTop: spacing(6),
-    height: scale(46),
-    borderRadius: radius(12),
-    borderWidth: 1,
-    borderColor: '#F8C7CF',
-    backgroundColor: '#FFF4F6',
+  editChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing(8),
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+    backgroundColor: '#FFF0F3',
+    gap: 4,
   },
-  uploadPhotoText: {
+  editChipText: {
     color: '#EE3F57',
-    fontSize: normalizeFont(13),
     fontWeight: '700',
   },
-  extraPhotoPreviewWrap: {
-    marginBottom: spacing(10),
-    width: scale(112),
-    height: verticalScale(140),
-    borderRadius: radius(14),
-    overflow: 'hidden',
-    position: 'relative',
+  section: {
+    marginTop: 20,
   },
-  extraPhotoPreview: {
+  sectionTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#18181B',
+    marginBottom: 8,
+  },
+  bodyText: {
+    fontSize: 14,
+    color: '#52525B',
+    lineHeight: 20,
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  linkText: {
+    color: '#EE3F57',
+    fontWeight: '700',
+  },
+  galleryGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  galleryItem: {
+    width: '31.8%',
+    aspectRatio: 0.78,
+    borderRadius: 16,
+    backgroundColor: '#F3F4F6',
+  },
+  emptyGallery: {
     width: '100%',
-    height: '100%',
-  },
-  removePhotoBtn: {
-    position: 'absolute',
-    top: spacing(6),
-    right: spacing(6),
-    width: scale(24),
-    height: scale(24),
-    borderRadius: radius(999),
-    backgroundColor: 'rgba(17,24,39,0.72)',
+    paddingVertical: 28,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: '#E5E7EB',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  saveButton: {
-    marginTop: spacing(22),
-    height: scale(48),
-    borderRadius: radius(14),
+  emptyGalleryText: {
+    marginTop: 8,
+    color: '#9CA3AF',
+    fontSize: 13,
+  },
+  primaryButton: {
+    marginTop: 24,
+    height: 54,
+    borderRadius: 16,
     backgroundColor: '#EE3F57',
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 8,
   },
-  saveButtonText: {
+  primaryButtonText: {
     color: '#FFFFFF',
-    fontSize: normalizeFont(15),
+    fontSize: 15,
     fontWeight: '700',
   },
 });

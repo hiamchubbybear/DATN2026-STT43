@@ -30,6 +30,7 @@ public class Handler(
             throw new BadRequestException("User is already verified.");
 
         user.MarkAsVerified();
+        await userRepository.UpdateAsync(user);
         
         // Generate tokens for auto-login
         var accessToken = jwtService.GenerateAccessToken(user);

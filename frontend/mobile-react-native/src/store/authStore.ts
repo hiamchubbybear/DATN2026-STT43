@@ -16,6 +16,7 @@ interface AuthState {
   isProfileCompleted: boolean;
   setAuth: (user: User, accessToken: string, refreshToken: string, isProfileCompleted?: boolean) => void;
   setProfileStatus: (isCompleted: boolean) => void;
+  updateTokens: (accessToken: string, refreshToken: string) => void;
   logout: () => void;
 }
 
@@ -35,6 +36,7 @@ export const useAuthStore = create<AuthState>()(
         isProfileCompleted
       }),
       setProfileStatus: (isCompleted) => set({ isProfileCompleted: isCompleted }),
+      updateTokens: (accessToken, refreshToken) => set({ accessToken, refreshToken }),
       logout: () => set({ 
         user: null, 
         accessToken: null, 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StyleSheet, Text, View, TouchableOpacity, Dimensions, Image } from 'react-native';
 import Svg, { Path, Circle, Defs, LinearGradient, Stop, Rect } from 'react-native-svg';
 import { normalizeFont, radius, scale, spacing, verticalScale } from '../../../shared/utils/responsive';
@@ -80,14 +80,13 @@ const SvgGradientOverlay = () => (
 
 export const MainScreen = () => {
   const [showOnboarding, setShowOnboarding] = useState(true);
+  const insets = useSafeAreaInsets();
 
   if (showOnboarding) {
     return (
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.header}>
-          <TouchableOpacity style={styles.iconButton}>
-            <SvgChevronLeft />
-          </TouchableOpacity>
+          <View style={styles.placeholder} />
           <Text style={styles.headerTitle}>Discover</Text>
           <TouchableOpacity style={styles.iconButton}>
             <SvgFilter />
@@ -136,9 +135,7 @@ export const MainScreen = () => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.iconButton}>
-          <SvgChevronLeft />
-        </TouchableOpacity>
+        <View style={styles.placeholder} />
         <View style={styles.titleWrap}>
           <Text style={styles.headerTitle}>Discover</Text>
           <Text style={styles.headerSubtitle}>Chicago, Il</Text>
@@ -179,7 +176,10 @@ export const MainScreen = () => {
         </View>
       </View>
 
-      <View style={styles.actionButtons}>
+      <View style={[
+        styles.actionButtons, 
+        { paddingBottom: insets.bottom + 84 } // Adjust for bottom tab bar and safe area
+      ]}>
         <TouchableOpacity style={styles.actionButtonSmall}>
           <SvgCross />
         </TouchableOpacity>
@@ -234,6 +234,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 2,
+  },
+  placeholder: {
+    width: 48,
   },
   // --- ONBOARDING STYLES ---
   content: {

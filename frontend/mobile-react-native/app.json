@@ -14,7 +14,9 @@
       "bundleIdentifier": "com.tranvanhuy16032004.datn2026",
       "scheme": "datn2026",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSPhotoLibraryUsageDescription": "This app requires access to your photo library to let you upload and share profile photos.",
+        "NSCameraUsageDescription": "This app requires access to your camera to let you take and upload profile photos."
       }
     },
     "android": {
@@ -38,7 +40,12 @@
         "monochromeImage": "./assets/images/logo.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
+      ]
     },
     "web": {
       "output": "static",
@@ -63,6 +70,12 @@
         "@react-native-google-signin/google-signin",
         {
           "iosUrlScheme": "com.googleusercontent.apps.792593212502-gtpc459mcq4qe1gqm4q4b57m1e0ouq26"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app accesses your photos to let you share them with your profile."
         }
       ]
     ],

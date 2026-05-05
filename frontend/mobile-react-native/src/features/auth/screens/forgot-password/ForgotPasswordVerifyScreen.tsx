@@ -6,8 +6,8 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../../../app/navigation/RootNavigator';
 import Svg, { Path } from 'react-native-svg';
 import { authService } from '../../../../services/api/authService';
-import { Alert, ActivityIndicator } from 'react-native';
-import { normalizeFont, radius, scale, spacing, verticalScale } from '../../../../shared/utils/responsive';
+import { useToast } from '../../../../shared/components/ToastProvider';
+import { ActivityIndicator } from 'react-native';
 
 const { width } = Dimensions.get('window');
 
@@ -15,6 +15,7 @@ export default function ForgotPasswordVerifyScreen() {
   const route = useRoute<RouteProp<RootStackParamList, 'ForgotPasswordVerify'>>();
   const { email } = route.params;
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { showToast } = useToast();
   
   const [code, setCode] = useState<string>('');
   const [timer, setTimer] = useState(42);
@@ -37,7 +38,11 @@ export default function ForgotPasswordVerifyScreen() {
         await authService.verifyResetToken(email, newCode);
         navigation.navigate('ResetPassword', { email, token: newCode });
       } catch (error: any) {
-        Alert.alert('Verification Failed', error.message || 'Invalid or expired token');
+        showToast({
+          title: 'Xác thực thất bại',
+          message: error.message || 'Mã xác thực không hợp lệ hoặc đã hết hạn',
+          type: 'error'
+        });
         setCode(''); // Clear code on failure
       } finally {
         setLoading(false);

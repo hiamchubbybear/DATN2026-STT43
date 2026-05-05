@@ -19,6 +19,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useAuthStore } from '../../../store/authStore';
 import { profileService } from '../../../services/api/profileService';
 import { normalizeFont, radius, scale, spacing, verticalScale } from '../../../shared/utils/responsive';
+import { useToast } from '../../../shared/components/ToastProvider';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const PHOTO_WIDTH = (SCREEN_WIDTH - 64 - 24) / 3; // 3 columns, 32px padding each side, 12px gap between
@@ -45,6 +46,7 @@ const SvgMinus = () => (
 
 export default function ProfileSetupScreen() {
   const { setProfileStatus, logout } = useAuthStore();
+  const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1);
   const totalSteps = 9;
@@ -65,15 +67,27 @@ export default function ProfileSetupScreen() {
 
   const handleNext = async () => {
     if (step === 1 && !displayName.trim()) {
-      Alert.alert('Required', 'Please enter your first name.');
+      showToast({
+        title: 'Thông tin bắt buộc',
+        message: 'Vui lòng nhập tên của bạn.',
+        type: 'error'
+      });
       return;
     }
     if (step === 2 && !/^\d{4}-\d{2}-\d{2}$/.test(dob)) {
-      Alert.alert('Required', 'Please use YYYY-MM-DD format.');
+      showToast({
+        title: 'Định dạng sai',
+        message: 'Vui lòng nhập ngày sinh theo định dạng YYYY-MM-DD.',
+        type: 'error'
+      });
       return;
     }
     if (step === 9 && photos.length === 0) {
-      Alert.alert('Required', 'Please add at least one photo.');
+      showToast({
+        title: 'Thiếu ảnh',
+        message: 'Vui lòng thêm ít nhất một ảnh đại diện.',
+        type: 'error'
+      });
       return;
     }
 
@@ -112,7 +126,11 @@ export default function ProfileSetupScreen() {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     
     if (permissionResult.granted === false) {
-      Alert.alert("Permission to access camera roll is required!");
+      showToast({
+        title: 'Quyền truy cập',
+        message: 'Ứng dụng cần quyền truy cập thư viện ảnh để tải ảnh lên!',
+        type: 'info'
+      });
       return;
     }
 
@@ -127,7 +145,11 @@ export default function ProfileSetupScreen() {
       if (photos.length < 6) {
         setPhotos([...photos, result.assets[0].uri]);
       } else {
-        Alert.alert("Limit reached", "You can only upload up to 6 photos.");
+        showToast({
+          title: 'Giới hạn ảnh',
+          message: 'Bạn chỉ có thể tải lên tối đa 6 ảnh.',
+          type: 'info'
+        });
       }
     }
   };
@@ -169,10 +191,18 @@ export default function ProfileSetupScreen() {
         }
       }
 
-      Alert.alert('Success', 'Profile completed!');
+      showToast({
+        title: 'Thành công',
+        message: 'Hồ sơ của bạn đã được hoàn tất!',
+        type: 'success'
+      });
       setProfileStatus(true);
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Something went wrong');
+      showToast({
+        title: 'Lỗi',
+        message: error.message || 'Đã có lỗi xảy ra khi lưu hồ sơ',
+        type: 'error'
+      });
     } finally {
       setLoading(false);
     }

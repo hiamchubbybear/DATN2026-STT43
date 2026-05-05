@@ -33,13 +33,26 @@ const ICONS: Record<
 
 export const MainBottomTabs = () => {
   const insets = useSafeAreaInsets();
+<<<<<<< HEAD
+=======
   const tabBottomOffset = Platform.OS === 'android' ? Math.max(insets.bottom, 10) : insets.bottom;
+>>>>>>> 81d8ce28e536fd697b66cc3f7ff98d9c2b60e7a0
 
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
+<<<<<<< HEAD
+        tabBarStyle: [
+          styles.tabBar,
+          { 
+            height: 60 + (insets.bottom > 0 ? insets.bottom - 10 : 0),
+            paddingBottom: insets.bottom > 0 ? insets.bottom - 15 : 0,
+          }
+        ],
+=======
         tabBarStyle: [styles.tabBar, { bottom: tabBottomOffset }],
+>>>>>>> 81d8ce28e536fd697b66cc3f7ff98d9c2b60e7a0
         tabBarItemStyle: styles.tabButton,
         tabBarLabel: () => null,
         tabBarActiveTintColor: '#EE3F57',
@@ -52,6 +65,7 @@ export const MainBottomTabs = () => {
             <View style={styles.tabInner}>
               <Ionicons name={iconName} size={normalizeFont(22)} color={color} />
               {focused ? <View style={styles.activeDot} /> : null}
+>>>>>>> 81d8ce28e536fd697b66cc3f7ff98d9c2b60e7a0
             </View>
           );
         },
@@ -69,6 +83,16 @@ export const MainBottomTabs = () => {
 
 const styles = StyleSheet.create({
   tabBar: {
+<<<<<<< HEAD
+    backgroundColor: '#FFFFFF',
+    borderTopWidth: 1,
+    borderTopColor: '#F3F4F6',
+    elevation: 8,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+=======
     position: 'absolute',
     left: 0,
     right: 0,
@@ -79,10 +103,26 @@ const styles = StyleSheet.create({
     borderTopWidth: 0,
     elevation: 0,
     shadowOpacity: 0,
+>>>>>>> 81d8ce28e536fd697b66cc3f7ff98d9c2b60e7a0
   },
   tabButton: {
     alignItems: 'center',
     justifyContent: 'center',
+<<<<<<< HEAD
+  },
+  tabInner: {
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: 10,
+  },
+  topLine: {
+    width: 12,
+    height: 3,
+    borderRadius: 2,
+    marginBottom: 6,
+    backgroundColor: 'transparent',
+=======
     paddingTop: 0,
   },
   tabInner: {
@@ -90,6 +130,7 @@ const styles = StyleSheet.create({
     height: scale(28),
     alignItems: 'center',
     justifyContent: 'center',
+>>>>>>> 81d8ce28e536fd697b66cc3f7ff98d9c2b60e7a0
   },
   activeDot: {
     position: 'absolute',
@@ -103,3 +144,5 @@ const styles = StyleSheet.create({
     borderColor: '#ECEFF3',
   },
 });
+
+

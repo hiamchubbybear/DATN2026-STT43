@@ -22,6 +22,10 @@
     <string>1.0.0</string>
     <key>CFBundleSignature</key>
     <string>????</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>App need access photo library to select and upload profile photos.</string>
+    <key>NSCameraUsageDescription</key>
+    <string>App need access camera to take and upload profile photos.</string>
     <key>CFBundleURLTypes</key>
     <array>
       <dict>

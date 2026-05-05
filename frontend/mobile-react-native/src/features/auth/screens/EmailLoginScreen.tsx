@@ -16,17 +16,21 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../../app/navigation/RootNavigator';
-import Svg, { Path } from 'react-native-svg';
+import { Ionicons } from '@expo/vector-icons';
 import { authService } from '../../../services/api/authService';
 import { useAuthStore } from '../../../store/authStore';
 import { normalizeFont, radius, scale, spacing, verticalScale } from '../../../shared/utils/responsive';
+import { useToast } from '../../../shared/components/ToastProvider';
 
 export default function EmailLoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [focusedInput, setFocusedInput] = useState<string | null>(null);
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const setAuth = useAuthStore(state => state.setAuth);
+  const { showToast } = useToast();
 
   const handleLogin = async () => {
     if (!email || !password || loading) {
@@ -50,7 +54,11 @@ export default function EmailLoginScreen() {
         throw new Error('Invalid response from server');
       }
     } catch (error: any) {
-      Alert.alert('Login Failed', error.message || 'Invalid email or password');
+      showToast({
+        title: 'Đăng nhập thất bại',
+        message: error.message || 'Email hoặc mật khẩu không chính xác',
+        type: 'error'
+      });
     } finally {
       setLoading(false);
     }
@@ -156,9 +164,14 @@ const styles = StyleSheet.create({
     borderColor: '#E5E7EB',
     alignItems: 'center',
     justifyContent: 'center',
+    marginLeft: -16, // Adjust for AuthBackButton padding
   },
   content: {
     flex: 1,
+    paddingTop: 40,
+  },
+  welcomeContainer: {
+    marginBottom: 44,
   },
   title: {
     fontSize: normalizeFont(32),
@@ -172,7 +185,7 @@ const styles = StyleSheet.create({
     lineHeight: verticalScale(22),
     marginBottom: spacing(32),
   },
-  inputContainer: {
+  inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
@@ -187,11 +200,17 @@ const styles = StyleSheet.create({
   icon: {
     marginRight: spacing(12),
   },
+  iconContainerFocused: {
+    backgroundColor: '#FFF1F2',
+  },
   input: {
     flex: 1,
     fontSize: normalizeFont(16),
     color: '#111111',
     height: '100%',
+  },
+  eyeIcon: {
+    padding: 8,
   },
   forgotPassword: {
     alignSelf: 'flex-end',
@@ -208,14 +227,14 @@ const styles = StyleSheet.create({
     borderRadius: radius(16),
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#EF4444',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowColor: '#EE3F57',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 6,
   },
   buttonDisabled: {
-    backgroundColor: '#FDA4AF',
+    backgroundColor: '#F4F4F5',
     shadowOpacity: 0,
     elevation: 0,
   },

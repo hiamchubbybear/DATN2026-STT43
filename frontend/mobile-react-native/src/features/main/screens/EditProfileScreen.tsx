@@ -1,235 +1,226 @@
-import React, { useState } from 'react';
-import {
-  StyleSheet,
-  Text,
-  View,
-  TouchableOpacity,
-  ScrollView,
-  Image,
-  Dimensions,
-  Platform,
-} from 'react-native';
+import React from 'react';
+import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import * as ImagePicker from 'expo-image-picker';
-import Svg, { Path, Circle } from 'react-native-svg';
-import { normalizeFont, radius, scale, spacing, verticalScale } from '../../../shared/utils/responsive';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { Ionicons } from '@expo/vector-icons';
+import { RootStackParamList } from '../../../app/navigation/RootNavigator';
+import { profileService } from '../../../services/api/profileService';
+import { useToast } from '../../../shared/components/ToastProvider';
+import { Logger } from '../../../shared/utils/logger';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const PHOTO_WIDTH = (SCREEN_WIDTH - 40 - 24) / 3; // 3 columns, 20px padding each side, 12px gap
-
-const SvgChevronLeft = () => (
-  <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-    <Path d="M15 18L9 12L15 6" stroke="#F43F5E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-  </Svg>
-);
-
-const SvgPlus = () => (
-  <Svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-    <Circle cx="14" cy="14" r="14" fill="#F43F5E" />
-    <Path d="M14 8V20M8 14H20" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-  </Svg>
-);
-
-const SvgMinus = () => (
-  <Svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-    <Circle cx="14" cy="14" r="14" fill="#FFFFFF" stroke="#E5E7EB" />
-    <Path d="M10 10L18 18M18 10L10 18" stroke="#F43F5E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-  </Svg>
-);
+type ProfileNavigation = NativeStackNavigationProp<RootStackParamList>;
 
 export const EditProfileScreen = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<ProfileNavigation>();
+  const { showToast } = useToast();
+  const [loading, setLoading] = React.useState(true);
+  const [saving, setSaving] = React.useState(false);
+  const [displayName, setDisplayName] = React.useState('');
+  const [bio, setBio] = React.useState('');
+  const [occupation, setOccupation] = React.useState('');
+  const [education, setEducation] = React.useState('');
+  const [locationName, setLocationName] = React.useState('');
 
-  // Mock initial photos
-  const [photos, setPhotos] = useState<string[]>([
-    Image.resolveAssetSource(require('../../../../assets/images/anh1.jpg')).uri,
-    Image.resolveAssetSource(require('../../../../assets/images/anh2.jpg')).uri,
-    Image.resolveAssetSource(require('../../../../assets/images/anh3.jpg')).uri,
-  ]);
-
-  const pickImage = async () => {
-    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    
-    if (permissionResult.granted === false) {
-      alert("Permission to access camera roll is required!");
-      return;
+  const loadProfile = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      const profile = await profileService.getMyProfile();
+      setDisplayName(profile?.basicInfo?.displayName || '');
+      setBio(profile?.bio || '');
+      setOccupation(profile?.background?.occupation || '');
+      setEducation(profile?.background?.education || '');
+      setLocationName(profile?.locationName || '');
+    } catch (err) {
+      Logger.error('Failed to load profile for editing', err);
+      showToast({
+        title: 'Error',
+        message: 'Could not load profile data.',
+        type: 'error',
+      });
+    } finally {
+      setLoading(false);
     }
+  }, [showToast]);
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [3, 4],
-      quality: 0.8,
-    });
+  React.useEffect(() => {
+    loadProfile();
+  }, [loadProfile]);
 
-    if (!result.canceled && result.assets && result.assets.length > 0) {
-      if (photos.length < 6) {
-        // TODO: Call API to upload photo
-        setPhotos([...photos, result.assets[0].uri]);
-      } else {
-        alert("You can only upload up to 6 photos.");
-      }
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      await profileService.updateProfile({
+        displayName,
+        bio,
+        occupation,
+        education,
+        locationName,
+      });
+      showToast({
+        title: 'Saved',
+        message: 'Profile updated successfully.',
+        type: 'success',
+      });
+      navigation.goBack();
+    } catch (err: any) {
+      Logger.error('Failed to save profile', err);
+      showToast({
+        title: 'Save failed',
+        message: err?.message || 'Could not update profile.',
+        type: 'error',
+      });
+    } finally {
+      setSaving(false);
     }
   };
 
-  const removePhoto = (index: number) => {
-    // TODO: Call API to delete photo
-    const newPhotos = [...photos];
-    newPhotos.splice(index, 1);
-    setPhotos(newPhotos);
-  };
-
-  const slots = [0, 1, 2, 3, 4, 5, 6, 7, 8]; // 9 slots like the screenshot
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#EE3F57" />
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <SvgChevronLeft />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Edit Profile</Text>
-        <View style={{ width: 44 }} />
-      </View>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.flex}>
+        <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+          <View style={styles.header}>
+            <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()} activeOpacity={0.8}>
+              <Ionicons name="chevron-back" size={24} color="#111827" />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>Edit Profile</Text>
+            <View style={styles.headerSpacer} />
+          </View>
 
-      <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
-        <View style={styles.photoGrid}>
-          {slots.map((index) => {
-            const isUploaded = index < photos.length;
-            return (
-              <View key={index} style={styles.photoSlotContainer}>
-                {isUploaded ? (
-                  <>
-                    <Image source={{ uri: photos[index] }} style={styles.photoImage} />
-                    <TouchableOpacity style={styles.photoBadge} onPress={() => removePhoto(index)}>
-                      <SvgMinus />
-                    </TouchableOpacity>
-                  </>
-                ) : (
-                  <>
-                    <TouchableOpacity 
-                      style={styles.photoPlaceholder} 
-                      onPress={pickImage}
-                      disabled={index > photos.length} // Force consecutive uploads
-                    >
-                    </TouchableOpacity>
-                    <TouchableOpacity 
-                      style={styles.photoBadge} 
-                      onPress={pickImage}
-                      disabled={index > photos.length}
-                    >
-                      {index <= photos.length && <SvgPlus />}
-                    </TouchableOpacity>
-                  </>
-                )}
-              </View>
-            );
-          })}
-        </View>
+          <View style={styles.card}>
+            <Text style={styles.label}>Display name</Text>
+            <TextInput style={styles.input} value={displayName} onChangeText={setDisplayName} placeholder="Your name" placeholderTextColor="#A1A1AA" />
 
-        <Text style={styles.helperText}>
-          Add a video, pic, or Loop to get 4% closer to completing your profile and you may even get more Likes.
-        </Text>
+            <Text style={styles.label}>Occupation</Text>
+            <TextInput style={styles.input} value={occupation} onChangeText={setOccupation} placeholder="Occupation" placeholderTextColor="#A1A1AA" />
 
-        <TouchableOpacity style={styles.addMediaButton} onPress={pickImage}>
-          <Text style={styles.addMediaText}>ADD MEDIA</Text>
-        </TouchableOpacity>
-        
-      </ScrollView>
+            <Text style={styles.label}>Education</Text>
+            <TextInput style={styles.input} value={education} onChangeText={setEducation} placeholder="Education" placeholderTextColor="#A1A1AA" />
+
+            <Text style={styles.label}>Location</Text>
+            <TextInput style={styles.input} value={locationName} onChangeText={setLocationName} placeholder="Location" placeholderTextColor="#A1A1AA" />
+
+            <Text style={styles.label}>Bio</Text>
+            <TextInput
+              style={[styles.input, styles.textArea]}
+              value={bio}
+              onChangeText={setBio}
+              placeholder="Tell people about yourself"
+              placeholderTextColor="#A1A1AA"
+              multiline
+              textAlignVertical="top"
+            />
+
+            <TouchableOpacity style={styles.saveButton} onPress={handleSave} activeOpacity={0.88} disabled={saving}>
+              {saving ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <Text style={styles.saveButtonText}>Save changes</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  flex: {
+    flex: 1,
+  },
   safeArea: {
     flex: 1,
-    backgroundColor: '#F3F4F6', // Match the light gray background from screenshot
+    backgroundColor: '#F7F7F8',
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F7F7F8',
+  },
+  scrollContent: {
+    padding: 16,
+    paddingBottom: 32,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: spacing(16),
-    height: scale(56),
-    backgroundColor: '#F3F4F6',
+    marginBottom: 16,
   },
   backButton: {
-    width: scale(44),
-    height: scale(44),
-    justifyContent: 'center',
-  },
-  headerTitle: {
-    fontSize: normalizeFont(20),
-    fontWeight: '600',
-    color: '#111827',
-  },
-  container: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: spacing(20),
-    paddingTop: spacing(16),
-    paddingBottom: spacing(40),
-  },
-  photoGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    gap: spacing(12),
-  },
-  photoSlotContainer: {
-    width: PHOTO_WIDTH,
-    height: PHOTO_WIDTH * 1.4,
-    marginBottom: spacing(8),
-  },
-  photoPlaceholder: {
-    width: '100%',
-    height: '100%',
-    backgroundColor: '#E5E7EB',
-    borderRadius: radius(12),
-    borderWidth: scale(2),
-    borderColor: '#D1D5DB',
-    borderStyle: 'dashed',
-  },
-  photoImage: {
-    width: '100%',
-    height: '100%',
-    borderRadius: radius(12),
-    backgroundColor: '#E5E7EB',
-  },
-  photoBadge: {
-    position: 'absolute',
-    bottom: -spacing(8),
-    right: -spacing(8),
-    backgroundColor: '#F3F4F6',
-    borderRadius: radius(14),
-  },
-  helperText: {
-    textAlign: 'center',
-    color: '#6B7280',
-    fontSize: normalizeFont(14),
-    lineHeight: verticalScale(20),
-    marginTop: spacing(24),
-    marginBottom: spacing(24),
-    paddingHorizontal: spacing(16),
-  },
-  addMediaButton: {
-    height: scale(56),
-    borderRadius: radius(28),
-    backgroundColor: '#F43F5E', // Gradient can be added later if needed
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#F43F5E',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
+    shadowColor: '#000',
+    shadowOpacity: 0.04,
     shadowRadius: 8,
-    elevation: 4,
-    marginBottom: spacing(40),
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
   },
-  addMediaText: {
-    color: '#FFFFFF',
-    fontSize: normalizeFont(16),
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#111827',
+  },
+  headerSpacer: {
+    width: 40,
+    height: 40,
+  },
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 2,
+  },
+  label: {
+    fontSize: 13,
     fontWeight: '700',
-    letterSpacing: 1,
+    color: '#4B5563',
+    marginTop: 14,
+    marginBottom: 8,
+  },
+  input: {
+    minHeight: 48,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    backgroundColor: '#FAFAFA',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    color: '#111827',
+    fontSize: 15,
+  },
+  textArea: {
+    minHeight: 120,
+  },
+  saveButton: {
+    marginTop: 24,
+    height: 54,
+    borderRadius: 16,
+    backgroundColor: '#EE3F57',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  saveButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
   },
 });

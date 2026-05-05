@@ -7,6 +7,7 @@ import { RootStackParamList } from '../../../app/navigation/RootNavigator';
 import Svg, { Path } from 'react-native-svg';
 import { authService } from '../../../services/api/authService';
 import { normalizeFont, radius, scale, spacing, verticalScale } from '../../../shared/utils/responsive';
+import { useToast } from '../../../shared/components/ToastProvider';
 
 export default function EmailSignUpDetailsScreen() {
   const [username, setUsername] = useState('');
@@ -15,10 +16,15 @@ export default function EmailSignUpDetailsScreen() {
   const [loading, setLoading] = useState(false);
   
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { showToast } = useToast();
 
   const handleSignUp = async () => {
     if (!username || !email || !password) {
-      Alert.alert('Error', 'Please fill in all fields');
+      showToast({
+        title: 'Thiếu thông tin',
+        message: 'Vui lòng điền đầy đủ các trường',
+        type: 'error'
+      });
       return;
     }
 
@@ -28,7 +34,11 @@ export default function EmailSignUpDetailsScreen() {
       // Registration successful, backend automatically sends email
       navigation.navigate('EmailSignUpVerify', { email });
     } catch (error: any) {
-      Alert.alert('Sign Up Failed', error.message || 'Something went wrong');
+      showToast({
+        title: 'Đăng ký thất bại',
+        message: error.message || 'Đã có lỗi xảy ra',
+        type: 'error'
+      });
     } finally {
       setLoading(false);
     }
@@ -47,7 +57,7 @@ export default function EmailSignUpDetailsScreen() {
                 <Path d="M15 18l-6-6 6-6" stroke="#F43F5E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </Svg>
             </TouchableOpacity>
-          </View>
+          </View>s
           
           <View style={styles.content}>
             <Text style={styles.title}>Create Account</Text>
