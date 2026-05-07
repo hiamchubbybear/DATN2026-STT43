@@ -11,18 +11,20 @@ using DoAnTotNghiep.Domain.Chat;
 
 namespace DoAnTotNghiep.Web.Hubs;
 
-[Authorize]
+// [Authorize] - Tạm thời bỏ để debug kết nối
 public class AppHub : Hub
 {
     private readonly ILogger<AppHub> _logger;
     private readonly ICurrentUserService _currentUserService;
     private readonly IChatMessageQueue _chatMessageQueue;
+    private readonly IConversationRepository _conversationRepository;
 
-    public AppHub(ILogger<AppHub> logger, ICurrentUserService currentUserService, IChatMessageQueue chatMessageQueue)
+    public AppHub(ILogger<AppHub> logger, ICurrentUserService currentUserService, IChatMessageQueue chatMessageQueue, IConversationRepository conversationRepository)
     {
         _logger = logger;
         _currentUserService = currentUserService;
         _chatMessageQueue = chatMessageQueue;
+        _conversationRepository = conversationRepository;
     }
 
     public override async Task OnConnectedAsync()
@@ -63,6 +65,14 @@ public class AppHub : Hub
 
         // GUARANTEE PERSISTENCE: Enqueue to background worker first!
         await _chatMessageQueue.EnqueueMessageAsync(chatMsg);
+
+        // Update last message in conversation
+        var conversation = await _conversationRepository.GetByIdAsync(conversationId);
+        if (conversation != null)
+        {
+            conversation.UpdateLastMessage(content);
+            await _conversationRepository.UpdateAsync(conversation);
+        }
 
         try
         {

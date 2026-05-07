@@ -96,9 +96,10 @@ app.UseRouting();
 
 // CORS should be before Auth
 app.UseCors(x => x
-    .AllowAnyOrigin()
+    .SetIsOriginAllowed(_ => true)
     .AllowAnyMethod()
-    .AllowAnyHeader());
+    .AllowAnyHeader()
+    .AllowCredentials());
 
 app.UseAuthentication();
 app.UseAuthorization();

@@ -28,6 +28,7 @@ public static class DependencyInjection
         services.AddScoped<IJwtService, JwtService>();
         services.AddScoped<Domain.Users.IUserProfileRepository, Repositories.UserProfileRepository>();
         services.AddScoped<IChatMessageRepository, ChatMessageRepository>();
+        services.AddScoped<IConversationRepository, ConversationRepository>();
         services.AddSingleton<IChatMessageQueue, ChatMessageQueue>();
         services.AddHostedService<ChatPersistenceBackgroundService>();
         services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();

@@ -62,11 +62,14 @@ public static class DependencyInjection
 
                     // If the request is for our hub...
                     var path = context.HttpContext.Request.Path;
-                    if (!string.IsNullOrEmpty(accessToken) &&
-                        (path.StartsWithSegments("/hubs/app")))
+                    if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs/app"))
                     {
-                        // Read the token out of the query string
+                        Console.WriteLine($"--- SIGNALR AUTH: Token found for path {path} ---");
                         context.Token = accessToken;
+                    }
+                    else if (path.StartsWithSegments("/hubs/app"))
+                    {
+                        Console.WriteLine($"--- SIGNALR AUTH: No token found for path {path} ---");
                     }
                     return Task.CompletedTask;
                 }

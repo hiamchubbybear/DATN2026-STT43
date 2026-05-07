@@ -31,6 +31,18 @@ public class MongoDbContext
                     cm.MapProperty(c => c.UserId)
                         .SetSerializer(new GuidSerializer(GuidRepresentation.Standard));
                 });
+
+                BsonClassMap.RegisterClassMap<DoAnTotNghiep.Domain.Chat.ChatMessage>(cm =>
+                {
+                    cm.AutoMap();
+                    cm.MapProperty(c => c.ConversationId)
+                        .SetSerializer(new GuidSerializer(GuidRepresentation.Standard));
+                });
+
+                BsonClassMap.RegisterClassMap<DoAnTotNghiep.Domain.Chat.Conversation>(cm =>
+                {
+                    cm.AutoMap();
+                });
             }
         }
         catch
@@ -56,6 +68,7 @@ public class MongoDbContext
     public IMongoCollection<UserProfile> UserProfiles => _database.GetCollection<UserProfile>("user_profiles");
     public IMongoCollection<DoAnTotNghiep.Domain.Chat.ChatMessage> ChatMessages => _database.GetCollection<DoAnTotNghiep.Domain.Chat.ChatMessage>("chat_messages");
     public IMongoCollection<Notification> Notifications => _database.GetCollection<Notification>("notifications");
+    public IMongoCollection<DoAnTotNghiep.Domain.Chat.Conversation> Conversations => _database.GetCollection<DoAnTotNghiep.Domain.Chat.Conversation>("conversations");
 }
 
 public class MongoDbInitializer

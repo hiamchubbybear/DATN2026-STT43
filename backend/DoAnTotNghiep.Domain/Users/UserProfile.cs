@@ -1,5 +1,9 @@
 ﻿using DoAnTotNghiep.Domain.Common;
 using DoAnTotNghiep.Domain.Enum;
+using MongoDB.Bson.Serialization.Attributes;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace DoAnTotNghiep.Domain.Users;
 
@@ -176,6 +180,8 @@ public class BasicInfo
 {
     public string DisplayName { get; private set; } = string.Empty;
     public DateTime Dob { get; private set; }
+
+    [BsonSerializer(typeof(SafeEnumSerializer<Gender>))]
     public Gender Gender { get; private set; } = Gender.Other;
     public List<string> Languages { get; private set; } = new();
 
@@ -204,6 +210,7 @@ public class Background
         Occupation = occupation?.Trim() ?? "";
     }
 }
+
 public class Lifestyle
 {
     public string Drinking { get; private set; } = string.Empty;
