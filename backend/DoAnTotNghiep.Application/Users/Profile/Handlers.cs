@@ -8,6 +8,10 @@ public class ProfileHandlers(IUserProfileRepository profileRepository) :
     IRequestHandler<UpdateBioCommand, bool>,
     IRequestHandler<UpdateLocationCommand, bool>,
     IRequestHandler<UpdatePreferencesCommand, bool>,
+    IRequestHandler<UpdateBasicInfoCommand, bool>,
+    IRequestHandler<UpdateBackgroundCommand, bool>,
+    IRequestHandler<UpdateLifestyleCommand, bool>,
+    IRequestHandler<UpdateDatingStyleCommand, bool>,
     IRequestHandler<UpdateProfileCommand, bool>
 {
     public async Task<UserProfileDto> Handle(GetMyProfileQuery request, CancellationToken cancellationToken)
@@ -67,6 +71,38 @@ public class ProfileHandlers(IUserProfileRepository profileRepository) :
     {
         var profile = await EnsureProfileExists(request.UserId);
         profile.UpdatePreferences(request.MinAgePreference, request.MaxAgePreference, request.MaxDistanceKm, request.lookingFor);
+        await profileRepository.UpdateAsync(profile);
+        return true;
+    }
+
+    public async Task<bool> Handle(UpdateBasicInfoCommand request, CancellationToken cancellationToken)
+    {
+        var profile = await EnsureProfileExists(request.UserId);
+        profile.UpdateBasicInfo(request.DisplayName, request.Dob, request.Gender, request.Languages);
+        await profileRepository.UpdateAsync(profile);
+        return true;
+    }
+
+    public async Task<bool> Handle(UpdateBackgroundCommand request, CancellationToken cancellationToken)
+    {
+        var profile = await EnsureProfileExists(request.UserId);
+        profile.UpdateBackground(request.Education, request.Occupation);
+        await profileRepository.UpdateAsync(profile);
+        return true;
+    }
+
+    public async Task<bool> Handle(UpdateLifestyleCommand request, CancellationToken cancellationToken)
+    {
+        var profile = await EnsureProfileExists(request.UserId);
+        profile.UpdateLifestyle(request.Drinking, request.Smoking, request.SocialLevel, request.PersonalityType, request.LoveLanguage, request.Hobbies, request.Interests);
+        await profileRepository.UpdateAsync(profile);
+        return true;
+    }
+
+    public async Task<bool> Handle(UpdateDatingStyleCommand request, CancellationToken cancellationToken)
+    {
+        var profile = await EnsureProfileExists(request.UserId);
+        profile.UpdateDatingStyle(request.FreeTimePrefer, request.DateStyle);
         await profileRepository.UpdateAsync(profile);
         return true;
     }

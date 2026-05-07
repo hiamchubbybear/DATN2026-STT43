@@ -1,4 +1,4 @@
-﻿using DoAnTotNghiep.Application.Common;
+using DoAnTotNghiep.Application.Common;
 using DoAnTotNghiep.Application.Exception;
 using DoAnTotNghiep.Domain.Users;
 using MediatR;
@@ -36,8 +36,6 @@ namespace DoAnTotNghiep.Application.Users.Photos.DeletePhoto
                 throw new NotFoundException("Photo not found");
 
             await _storage.DeleteAsync(photo.Url);
-
-            profile.RemovePhoto(photo.Id);
 
             if (!string.IsNullOrEmpty(photo.ThumbnailUrl))
             {

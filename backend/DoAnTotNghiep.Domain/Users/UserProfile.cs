@@ -1,4 +1,4 @@
-﻿using DoAnTotNghiep.Domain.Common;
+using DoAnTotNghiep.Domain.Common;
 using DoAnTotNghiep.Domain.Enum;
 
 namespace DoAnTotNghiep.Domain.Users;
@@ -13,8 +13,7 @@ public class UserProfile(Guid userId) : BaseEntity
     public DatingStyle DatingStyle { get; private set; } = new();
 
 
-    private readonly List<Photo> _photos = [];
-    public IReadOnlyCollection<Photo> Photos => _photos.AsReadOnly();
+    public List<Photo> Photos { get; private set; } = [];
 
     // Existing fields for ProfileHandlers
 
@@ -87,33 +86,33 @@ public class UserProfile(Guid userId) : BaseEntity
 
     public void AddPhoto(Photo photo)
     {
-        if (!_photos.Any())
+        if (!Photos.Any())
         {
             photo.SetPrimary(true);
         }
 
-        photo.SetOrder(_photos.Count);
-        _photos.Add(photo);
+        photo.SetOrder(Photos.Count);
+        Photos.Add(photo);
         SetUpdated();
     }
 
     public void RemovePhoto(Guid photoId)
     {
-        var photo = _photos.FirstOrDefault(x => x.Id == photoId);
+        var photo = Photos.FirstOrDefault(x => x.Id == photoId);
         if (photo == null)
             throw new Exception("Photo not found");
 
-        if (_photos.Count == 1)
+        if (Photos.Count == 1)
             throw new Exception("Cannot delete last photo");
 
         var wasPrimary = photo.IsPrimary;
 
-        _photos.Remove(photo);
+        Photos.Remove(photo);
 
         // nếu xoá primary → set lại
         if (wasPrimary)
         {
-            _photos[0].SetPrimary(true);
+            Photos[0].SetPrimary(true);
         }
         ReorderInternal();
         SetUpdated();
@@ -121,10 +120,10 @@ public class UserProfile(Guid userId) : BaseEntity
 
     public void ReorderPhotos(List<Guid> orderedIds)
     {
-        if (orderedIds.Count != _photos.Count)
+        if (orderedIds.Count != Photos.Count)
             throw new Exception("Invalid reorder data");
 
-        var map = _photos.ToDictionary(x => x.Id);
+        var map = Photos.ToDictionary(x => x.Id);
 
         var sorted = new List<Photo>();
 
@@ -140,36 +139,36 @@ public class UserProfile(Guid userId) : BaseEntity
             sorted.Add(photo);
         }
 
-        _photos.Clear();
-        _photos.AddRange(sorted);
+        Photos.Clear();
+        Photos.AddRange(sorted);
 
         SetUpdated();
     }
 
     private void ReorderInternal()
     {
-        for (int i = 0; i < _photos.Count; i++)
+        for (int i = 0; i < Photos.Count; i++)
         {
-            _photos[i].SetOrder(i);
+            Photos[i].SetOrder(i);
         }
     }
 
     public void SetPrimaryPhoto(Guid photoId)
     {
-        var target = _photos.FirstOrDefault(x => x.Id == photoId);
+        var target = Photos.FirstOrDefault(x => x.Id == photoId);
         if (target == null)
             throw new Exception("Photo not found");
 
         if (target.IsPrimary) return;
 
-        foreach (var p in _photos)
+        foreach (var p in Photos)
         {
             p.SetPrimary(false);
         }
 
         target.SetPrimary(true);
-        _photos.Remove(target);
-        _photos.Insert(0, target);
+        Photos.Remove(target);
+        Photos.Insert(0, target);
         ReorderInternal();
         SetUpdated();
     }

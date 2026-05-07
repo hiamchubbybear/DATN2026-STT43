@@ -1,4 +1,4 @@
-﻿using DoAnTotNghiep.Application.Common;
+using DoAnTotNghiep.Application.Common;
 using DoAnTotNghiep.Application.Users.Profile;
 using DoAnTotNghiep.Domain.Users;
 using MediatR;
@@ -13,18 +13,15 @@ namespace DoAnTotNghiep.Application.Users.Recommendation
     public class GetRecommendationsHandler : IRequestHandler<GetRecommendationsQuery, List<UserProfileDto>>
     {
         private readonly IUserProfileRepository _profileRepo;
-        private readonly ISwipeRepository _swipeRepo;
         private readonly ICurrentUserService _current;
         private readonly IBloomFilterService _bloom;
 
         public GetRecommendationsHandler(
             IUserProfileRepository profileRepo,
-            ISwipeRepository swipeRepo,
             ICurrentUserService current,
             IBloomFilterService bloom)
         {
             _profileRepo = profileRepo;
-            _swipeRepo = swipeRepo;
             _current = current;
             _bloom = bloom;
         }

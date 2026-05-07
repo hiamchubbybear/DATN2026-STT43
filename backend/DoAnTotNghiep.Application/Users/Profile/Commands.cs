@@ -10,6 +10,37 @@ public record UpdateLocationCommand(Guid UserId, double Latitude, double Longitu
 public record UpdatePreferencesCommand(Guid UserId, int MinAgePreference, int MaxAgePreference, int MaxDistanceKm, GenderPreference lookingFor) : IRequest<bool>;
 
 
+public record UpdateBasicInfoCommand(
+    Guid UserId, 
+    string DisplayName, 
+    DateTime Dob, 
+    Gender Gender, 
+    List<string> Languages
+) : IRequest<bool>;
+
+public record UpdateBackgroundCommand(
+    Guid UserId, 
+    string Education, 
+    string Occupation
+) : IRequest<bool>;
+
+public record UpdateLifestyleCommand(
+    Guid UserId,
+    string Drinking,
+    string Smoking,
+    string SocialLevel,
+    string PersonalityType,
+    List<string> LoveLanguage,
+    List<string> Hobbies,
+    List<string> Interests
+) : IRequest<bool>;
+
+public record UpdateDatingStyleCommand(
+    Guid UserId,
+    List<string> FreeTimePrefer,
+    List<string> DateStyle
+) : IRequest<bool>;
+
 public record UpdateProfileCommand(
     Guid UserId, 
     string DisplayName, 

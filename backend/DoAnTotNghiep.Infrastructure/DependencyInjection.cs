@@ -11,6 +11,7 @@ using DoAnTotNghiep.Infrastructure.Chat;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using DoAnTotNghiep.Infrastructure.Persistence.Redis;
 
 namespace DoAnTotNghiep.Infrastructure;
 
@@ -33,6 +34,7 @@ public static class DependencyInjection
         services.AddScoped<IEmailTemplateService, EmailTemplateService>();
         services.AddTransient<IPasswordResetToken, PasswordResetTokenRepository>();
         services.AddTransient<ITokenGenerator, TokenGenerateService>();
+        services.AddScoped<IBloomFilterService, BloomFilterService>();
         
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUserService, CurrentUserService>();

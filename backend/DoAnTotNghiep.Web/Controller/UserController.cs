@@ -2,6 +2,7 @@ using DoAnTotNghiep.Application.Common.Models;
 using DoAnTotNghiep.Application.Users.Photos;
 using DoAnTotNghiep.Application.Users.Photos.DeletePhoto;
 using DoAnTotNghiep.Application.Users.Photos.ReorderPhotos;
+using DoAnTotNghiep.Application.Users.Photos.SetPrimaryPhoto;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -93,6 +94,42 @@ public class UserController : ControllerBase
     }
 
     [Authorize]
+    [HttpPatch("me/basic-info")]
+    public async Task<IActionResult> UpdateBasicInfo([FromBody] Application.Users.Profile.UpdateBasicInfoCommand command)
+    {
+        var cmdWithUser = command with { UserId = GetUserId() };
+        await _mediator.Send(cmdWithUser);
+        return Ok(ApiResponse<string>.Succeeded(string.Empty, "Basic info updated"));
+    }
+
+    [Authorize]
+    [HttpPatch("me/background")]
+    public async Task<IActionResult> UpdateBackground([FromBody] Application.Users.Profile.UpdateBackgroundCommand command)
+    {
+        var cmdWithUser = command with { UserId = GetUserId() };
+        await _mediator.Send(cmdWithUser);
+        return Ok(ApiResponse<string>.Succeeded(string.Empty, "Background updated"));
+    }
+
+    [Authorize]
+    [HttpPatch("me/lifestyle")]
+    public async Task<IActionResult> UpdateLifestyle([FromBody] Application.Users.Profile.UpdateLifestyleCommand command)
+    {
+        var cmdWithUser = command with { UserId = GetUserId() };
+        await _mediator.Send(cmdWithUser);
+        return Ok(ApiResponse<string>.Succeeded(string.Empty, "Lifestyle updated"));
+    }
+
+    [Authorize]
+    [HttpPatch("me/dating-style")]
+    public async Task<IActionResult> UpdateDatingStyle([FromBody] Application.Users.Profile.UpdateDatingStyleCommand command)
+    {
+        var cmdWithUser = command with { UserId = GetUserId() };
+        await _mediator.Send(cmdWithUser);
+        return Ok(ApiResponse<string>.Succeeded(string.Empty, "Dating style updated"));
+    }
+
+    [Authorize]
     [HttpPost("photos")]
     public async Task<IActionResult> UploadPhoto(IFormFile file)
     {
@@ -114,6 +151,14 @@ public class UserController : ControllerBase
     public async Task<IActionResult> Reorder(ReoderPhotosCommand command)
     {
         await _mediator.Send(command);
+        return NoContent();
+    }
+
+    [Authorize]
+    [HttpPatch("photos/{photoId}/primary")]
+    public async Task<IActionResult> SetPrimary(Guid photoId)
+    {
+        await _mediator.Send(new SetPrimaryPhotoCommand(photoId));
         return NoContent();
     }
 }
