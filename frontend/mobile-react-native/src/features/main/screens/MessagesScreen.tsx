@@ -1,11 +1,12 @@
 import React from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Image, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
+import { Image, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator, ScrollView, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../../app/navigation/RootNavigator';
 import { UserDiscoverDto, userService } from '../../../services/api/userService';
+import { apiClient } from '../../../services/api/apiClient';
 import { Logger } from '../../../shared/utils/logger';
 import { normalizeFont, radius, scale, spacing, verticalScale } from '../../../shared/utils/responsive';
 
@@ -14,29 +15,50 @@ const defaultAvatar = require('../../../../assets/images/anh1.jpg');
 export const MessagesScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [users, setUsers] = React.useState<UserDiscoverDto[]>([]);
+  const [conversations, setConversations] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 
-  React.useEffect(() => {
-    const fetchUsers = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const data = await userService.discoverUsers();
-        setUsers(data);
-      } catch (err: any) {
-        Logger.error('Failed to fetch users', err);
-        setError(err.message || 'Failed to fetch users');
-      } finally {
-        setLoading(false);
+  const [refreshing, setRefreshing] = React.useState(false);
+
+  const fetchUsers = async (showLoading = true) => {
+    if (showLoading) setLoading(true);
+    setError(null);
+    try {
+      const usersData = await userService.discoverUsers();
+      setUsers(usersData);
+      
+      const convResponse = await apiClient.get('/api/chat/conversations');
+      if (convResponse.data?.success) {
+        setConversations(convResponse.data.data);
       }
-    };
+    } catch (err: any) {
+      Logger.error('Failed to fetch data', err);
+      setError(err.message || 'Failed to fetch data');
+    } finally {
+      if (showLoading) setLoading(false);
+    }
+  };
+
+  React.useEffect(() => {
     fetchUsers();
+  }, []);
+
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    await fetchUsers(false);
+    setRefreshing(false);
   }, []);
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <View style={styles.container}>
+      <ScrollView 
+        style={styles.container}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#EE3F57" />
+        }
+      >
         <View style={styles.headTop}>
           <Text style={styles.clock}>4:20</Text>
           <TouchableOpacity style={styles.filterBtn} activeOpacity={0.85}>
@@ -53,7 +75,7 @@ export const MessagesScreen = () => {
 
          <Text style={styles.sectionTitle}>Discover People (Test Chat)</Text>
         <View style={styles.activityRow}>
-          {loading ? (
+          {loading && !refreshing ? (
             <ActivityIndicator size="small" color="#EE3F57" />
           ) : error ? (
             <Text style={styles.errorText}>{error}</Text>
@@ -63,11 +85,21 @@ export const MessagesScreen = () => {
                 key={item.userId} 
                 style={styles.activityItem}
                 activeOpacity={0.7}
-                onPress={() => navigation.navigate('ChatRoom', {
-                  conversationId: item.userId, 
-                  receiverId: item.userId,
-                  receiverName: item.displayName
-                })}
+                onPress={async () => {
+                  try {
+                    const response = await apiClient.get(`/api/chat/conversation/${item.userId}`);
+                    const convId = response.data?.data;
+                    if (convId) {
+                      navigation.navigate('ChatRoom', {
+                        conversationId: convId, 
+                        receiverId: item.userId,
+                        receiverName: item.displayName
+                      });
+                    }
+                  } catch (err) {
+                    Logger.error('Failed to get conversation', err);
+                  }
+                }}
               >
                 <View style={styles.activityAvatarRing}>
                   <Image 
@@ -86,19 +118,50 @@ export const MessagesScreen = () => {
 
         <Text style={[styles.sectionTitle, styles.messagesTitle]}>Recent Chats</Text>
 
-        <View style={styles.emptyState}>
-          <Text style={styles.emptyText}>Click a person above to start testing chat!</Text>
-        </View>
+        {conversations.length > 0 ? (
+          conversations.map((conv) => (
+            <TouchableOpacity 
+              key={conv.id} 
+              style={styles.messageRow}
+              onPress={() => navigation.navigate('ChatRoom', {
+                conversationId: conv.id,
+                receiverId: conv.otherParticipantId,
+                receiverName: conv.otherParticipantName
+              })}
+            >
+              <Image 
+                source={conv.otherParticipantAvatar ? { uri: conv.otherParticipantAvatar } : defaultAvatar} 
+                style={styles.avatar} 
+              />
+              <View style={styles.messageMeta}>
+                <Text style={styles.name}>{conv.otherParticipantName}</Text>
+                <Text style={styles.preview} numberOfLines={1}>{conv.lastMessage || 'No messages yet'}</Text>
+              </View>
+              <View style={styles.trailing}>
+                <Text style={styles.time}>
+                  {conv.lastMessageAt ? new Date(conv.lastMessageAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : ''}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          ))
+        ) : (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyText}>Click a person above to start testing chat!</Text>
+            <Text style={[styles.emptyText, { marginTop: spacing(8), fontSize: normalizeFont(12) }]}>
+              Pull down to refresh and find new users
+            </Text>
+          </View>
+        )}
 
         <View style={styles.bottomSpacer} />
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#F7F7F8' },
-  container: { flex: 1, paddingHorizontal: spacing(20), paddingTop: spacing(2) },
+  safeArea: { flex: 1, backgroundColor: '#FFFFFF' },
+  container: { flex: 1, paddingHorizontal: spacing(20) },
   headTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',

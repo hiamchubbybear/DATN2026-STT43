@@ -4,6 +4,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../../app/navigation/RootNavigator';
 import { useChatStore } from '../../../store/chatStore';
 import { chatSignalRService } from '../../../services/api/chatSignalR';
+import { apiClient } from '../../../services/api/apiClient';
 import { useAuthStore } from '../../../store/authStore';
 import { useToast } from '../../../shared/components/ToastProvider';
 import Svg, { Path, Circle, Rect } from 'react-native-svg';
@@ -13,6 +14,12 @@ type Props = NativeStackScreenProps<RootStackParamList, 'ChatRoom'>;
 const EMPTY_ARRAY: any[] = [];
 
 // SVGs
+const BackIcon = () => (
+  <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+    <Path d="M15 18L9 12L15 6" stroke="#111111" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </Svg>
+);
+
 const MenuIcon = () => (
   <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
     <Circle cx="12" cy="5" r="2" fill="#111111" />
@@ -56,7 +63,7 @@ const SingleCheckIcon = ({ color }: { color: string }) => (
   </Svg>
 );
 
-export const ChatRoomScreen: React.FC<Props> = ({ route }) => {
+export const ChatRoomScreen: React.FC<Props> = ({ route, navigation }) => {
   const { conversationId, receiverId, receiverName } = route.params;
   const { user } = useAuthStore();
   const { showToast } = useToast();
@@ -68,7 +75,32 @@ export const ChatRoomScreen: React.FC<Props> = ({ route }) => {
 
   useEffect(() => {
     chatSignalRService.startConnection();
-  }, []);
+    fetchHistory();
+    
+    return () => {
+      chatSignalRService.stopConnection();
+    };
+  }, [conversationId]);
+
+  const fetchHistory = async () => {
+    try {
+      const response = await apiClient.get(`/api/chat/${conversationId}/history`);
+      const chatData = response.data?.data;
+      if (chatData && Array.isArray(chatData)) {
+        const mappedMessages = chatData.map((msg: any) => ({
+          id: msg.id || msg.clientMsgId || msg.reqId,
+          conversationId: conversationId,
+          senderId: msg.senderId,
+          payload: msg.content || msg.payload,
+          timestamp: msg.createdAt || msg.timestamp || new Date().toISOString(),
+          isDelivered: true,
+        }));
+        useChatStore.getState().setMessages(conversationId, mappedMessages);
+      }
+    } catch (error) {
+      console.error('Failed to fetch chat history:', error);
+    }
+  };
 
   const handleSend = async () => {
     if (!inputText.trim()) return;
@@ -152,6 +184,9 @@ export const ChatRoomScreen: React.FC<Props> = ({ route }) => {
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
+          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+            <BackIcon />
+          </TouchableOpacity>
           <View style={styles.avatarRing}>
             <Image source={require('../../../../assets/images/anh2.jpg')} style={styles.avatar} />
           </View>
@@ -241,6 +276,16 @@ const styles = StyleSheet.create({
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 8,
+    marginLeft: -8,
   },
   avatarRing: {
     width: 54,

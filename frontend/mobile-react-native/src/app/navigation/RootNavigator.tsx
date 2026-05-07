@@ -24,7 +24,7 @@ import { NotificationsMainScreen } from '../../features/main/screens/Notificatio
 import { MessagesScreen } from '../../features/main/screens/MessagesScreen';
 import { MatchesScreen } from '../../features/main/screens/MatchesScreen';
 import { ProfileMainScreen } from '../../features/main/screens/ProfileMainScreen';
-// import { ChatRoomScreen } from '../../features/chat/screens/ChatRoomScreen';
+import { ChatRoomScreen } from '../../features/chat/screens/ChatRoomScreen';
 
 export type RootStackParamList = {
   Onboarding: undefined;
@@ -124,14 +124,13 @@ export const RootNavigator = () => {
         <Stack.Screen name="DemoMessages" component={MessagesScreen} />
         <Stack.Screen name="DemoMatches" component={MatchesScreen} />
         <Stack.Screen name="DemoProfile" component={ProfileMainScreen} />
-        {/* <Stack.Screen 
+        <Stack.Screen 
           name="ChatRoom" 
           component={ChatRoomScreen} 
           options={{
-            presentation: 'modal',
             headerShown: false,
           }}
-        /> */}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );

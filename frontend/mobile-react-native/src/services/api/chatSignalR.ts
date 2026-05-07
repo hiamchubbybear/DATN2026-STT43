@@ -27,7 +27,7 @@ class ChatSignalRService {
       
       this.hubConnection = new signalR.HubConnectionBuilder()
         .withUrl(`${backendUrl}/hubs/app`, {
-          accessTokenFactory: () => token,
+          accessTokenFactory: () => useAuthStore.getState().accessToken || '',
         })
         .withAutomaticReconnect()
         .configureLogging(signalR.LogLevel.Information)
