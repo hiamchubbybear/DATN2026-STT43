@@ -42,11 +42,6 @@ public class UserRepository : IUserRepository
         return response;
     }
 
-    public async Task<UserAccount?> GetByRefreshToken(string refreshToken)
-    {
-        var filter = Builders<UserAccount>.Filter.ElemMatch(x => x.RefreshTokens, x => x.Token == refreshToken);
-        return await _users.Find(filter).FirstOrDefaultAsync();
-    }
 
     public async Task UpdateAsync(UserAccount user)
     {
@@ -61,5 +56,17 @@ public class UserRepository : IUserRepository
             var filter = Builders<UserAccount>.Filter.Eq(x => x.Id, guid);
             await _users.DeleteOneAsync(filter);
         }
+    }
+
+    public async Task<UserAccount> GetByIdAsync(Guid userId)
+    {
+        return await _users
+            .Find(x => x.Id == userId)
+            .FirstOrDefaultAsync();
+    }
+
+    public async Task<List<UserAccount>> ListAllAsync()
+    {
+        return await _users.Find(_ => true).ToListAsync();
     }
 }

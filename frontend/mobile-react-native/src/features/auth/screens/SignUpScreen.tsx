@@ -3,9 +3,10 @@ import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Ionicons } from '@expo/vector-icons';
 import { RootStackParamList } from '../../../app/navigation/RootNavigator';
 import { AuthBackButton } from '../../../shared/components/AuthBackButton';
+import { IconFacebook, IconGoogle, IconApple } from '../../../shared/components/AuthIcons';
+import { normalizeFont, radius, scale, spacing } from '../../../shared/utils/responsive';
 
 export const SignUpScreen = () => {
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -16,18 +17,26 @@ export const SignUpScreen = () => {
                 <AuthBackButton onPress={() => navigation.goBack()} />
 
                 <View style={styles.centerSection}>
-                    <Image source={require('../../../../assets/images/logo.png')} style={styles.logoImage} />
+                    <Image 
+                        source={require('../../../../assets/images/logo.png')} 
+                        style={styles.logoImage} 
+                        resizeMode="contain"
+                    />
 
                     <Text style={styles.title}>Sign up to continue</Text>
 
                     <View style={styles.buttonsStack}>
-                        <TouchableOpacity
+                        <TouchableOpacity 
                             style={[styles.actionButton, styles.primaryButton]}
-                            onPress={() => navigation.replace('MainTabs')}
+                            onPress={() => navigation.navigate('EmailSignUp')}
+                            activeOpacity={0.8}
                         >
                             <Text style={styles.primaryButtonText}>Continue with email</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity style={[styles.actionButton, styles.secondaryButton]}>
+                        <TouchableOpacity 
+                            style={[styles.actionButton, styles.secondaryButton]}
+                            activeOpacity={0.8}
+                        >
                             <Text style={styles.secondaryButtonText}>Use phone number</Text>
                         </TouchableOpacity>
                     </View>
@@ -39,15 +48,14 @@ export const SignUpScreen = () => {
                     </View>
 
                     <View style={styles.socialRow}>
-                        {/* Simplified social icons for now, same as LoginScreen layout but inline */}
-                        <TouchableOpacity style={styles.socialBtn}>
-                           <Ionicons name="logo-facebook" size={28} color="#1877F2" />
+                        <TouchableOpacity style={styles.socialBtn} activeOpacity={0.7}>
+                           <IconFacebook size={28} />
                         </TouchableOpacity>
-                        <TouchableOpacity style={styles.socialBtn}>
-                           <Ionicons name="logo-google" size={28} color="#EA4335" />
+                        <TouchableOpacity style={styles.socialBtn} activeOpacity={0.7}>
+                           <IconGoogle size={28} />
                         </TouchableOpacity>
-                        <TouchableOpacity style={styles.socialBtn}>
-                           <Ionicons name="logo-apple" size={28} color="#000000" />
+                        <TouchableOpacity style={styles.socialBtn} activeOpacity={0.7}>
+                           <IconApple size={28} />
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -73,37 +81,37 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         justifyContent: 'space-between',
-        paddingHorizontal: 24,
-        paddingTop: 16,
-        paddingBottom: 28,
+        paddingHorizontal: spacing(24),
+        paddingTop: spacing(16),
+        paddingBottom: spacing(28),
         backgroundColor: '#F3F3F3',
     },
     centerSection: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        gap: 22,
+        gap: spacing(22),
     },
     logoImage: {
-        width: 92,
-        height: 92,
-        borderRadius: 46,
+        width: scale(92),
+        height: scale(92),
+        borderRadius: radius(46),
     },
     title: {
         color: '#111111',
-        fontSize: 28,
+        fontSize: normalizeFont(28),
         fontWeight: '600',
         textAlign: 'center',
     },
     buttonsStack: {
         width: '100%',
-        gap: 12,
-        marginTop: 8,
+        gap: spacing(12),
+        marginTop: spacing(8),
     },
     actionButton: {
         width: '100%',
-        paddingVertical: 16,
-        borderRadius: 16,
+        paddingVertical: spacing(16),
+        borderRadius: radius(16),
         alignItems: 'center',
     },
     primaryButton: {
@@ -111,7 +119,7 @@ const styles = StyleSheet.create({
     },
     primaryButtonText: {
         color: '#FFFFFF',
-        fontSize: 16,
+        fontSize: normalizeFont(16),
         fontWeight: '600',
     },
     secondaryButton: {
@@ -121,7 +129,7 @@ const styles = StyleSheet.create({
     },
     secondaryButtonText: {
         color: '#EF4444',
-        fontSize: 16,
+        fontSize: normalizeFont(16),
         fontWeight: '600',
     },
     dividerRow: {
@@ -129,7 +137,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 8,
+        gap: spacing(8),
     },
     dividerLine: {
         flex: 1,
@@ -138,21 +146,21 @@ const styles = StyleSheet.create({
     },
     dividerText: {
         color: '#9CA3AF',
-        fontSize: 12,
+        fontSize: normalizeFont(12),
     },
     socialRow: {
         width: '100%',
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
-        gap: 14,
+        gap: spacing(14),
     },
     socialBtn: {
-        width: 64,
-        height: 64,
+        width: scale(64),
+        height: scale(64),
         borderWidth: 1,
         borderColor: '#E5E7EB',
-        borderRadius: 16,
+        borderRadius: radius(16),
         justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: '#FFFFFF',
@@ -161,11 +169,11 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 24,
+        gap: spacing(24),
     },
     linkText: {
         color: '#EF4444',
-        fontSize: 13,
+        fontSize: normalizeFont(13),
         fontWeight: '500',
     },
 });

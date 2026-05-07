@@ -13,7 +13,7 @@ public class UserAccount(string username, string email, string? hashPassword = n
     public string Role { get; private set; } = "Client";
     public AuthProvider Provider { get; private set; } = provider;
     public string? ProviderId { get; private set; } = providerId;
-    public List<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
+    
 
     public void MarkAsVerified()
     {

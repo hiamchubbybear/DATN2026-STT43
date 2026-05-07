@@ -3,6 +3,7 @@ namespace DoAnTotNghiep.Application.Common;
 public interface IGoogleAuthService
 {
     Task<GoogleJsonWebSignaturePayload?> VerifyGoogleTokenAsync(string idToken);
+    Task<GoogleJsonWebSignaturePayload?> VerifyAccessTokenAsync(string accessToken);
 }
 
 public class GoogleJsonWebSignaturePayload

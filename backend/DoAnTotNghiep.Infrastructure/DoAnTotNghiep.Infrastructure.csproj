@@ -17,6 +17,7 @@
         </None>
     </ItemGroup>
     <ItemGroup>
+        <PackageReference Include="AWSSDK.S3" Version="4.0.21.2" />
         <PackageReference Include="BCrypt.Net-Next" Version="4.1.0" />
         <PackageReference Include="Google.Apis.Auth" Version="1.73.0" />
         <PackageReference Include="MailKit" Version="4.15.1" />

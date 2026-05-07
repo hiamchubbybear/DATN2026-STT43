@@ -1,144 +1,317 @@
 import React from 'react';
-import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View, RefreshControl } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../../../app/navigation/RootNavigator';
+import { profileService } from '../../../services/api/profileService';
+import { Logger } from '../../../shared/utils/logger';
+import { calculateCompletion } from '../../../shared/utils/profileUtils';
 
-const profile = {
-  basic_info: {
-    displayName: 'Minh Anh',
-    dob: '1998-10-15',
-    gender: 'Female',
-    languages: ['Tiếng Việt', 'English', '한국어'],
-  },
-  background: {
-    education: 'Đại học Kinh tế TP.HCM',
-    occupation: 'Product Designer',
-  },
-  lifestyle: {
-    drinking: 'Occasionally',
-    smoking: 'Never',
-    socialLevel: 'Extrovert',
-    personalityType: 'ENFP',
-    loveLanguage: ['Quality Time', 'Words of Affirmation'],
-    hobbies: ['Photography', 'Pilates', 'Travel', 'Coffee Tasting'],
-    interests: ['Design', 'Startup', 'Music Festival', 'Hiking'],
-  },
-  dating_style: {
-    freeTimePrefer: ['Brunch cuối tuần', 'Road trip ngắn', 'Đi triển lãm'],
-    dateStyle: ['Trò chuyện sâu', 'Vui vẻ tự nhiên', 'Tôn trọng không gian cá nhân'],
-  },
-  bio: 'Mình thích cuộc sống cân bằng giữa công việc sáng tạo và những chuyến đi ngắn cuối tuần. Luôn tìm kiếm năng lượng tích cực và sự chân thành.',
-  photos: [
-    require('../../../../assets/images/anh1.jpg'),
-    require('../../../../assets/images/anh2.jpg'),
-    require('../../../../assets/images/anh3.jpg'),
-  ],
-};
+type ProfileNavigation = NativeStackNavigationProp<RootStackParamList>;
 
-const getAge = (dob: string) => {
+const defaultAvatar = require('../../../../assets/images/anh2.jpg');
+
+function calculateAge(dob?: string) {
+  if (!dob) return null;
+
   const birthDate = new Date(dob);
-  const now = new Date();
-  let age = now.getFullYear() - birthDate.getFullYear();
-  const monthDiff = now.getMonth() - birthDate.getMonth();
+  if (Number.isNaN(birthDate.getTime())) return null;
 
-  if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < birthDate.getDate())) {
-    age -= 1;
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDelta = today.getMonth() - birthDate.getMonth();
+
+  if (monthDelta < 0 || (monthDelta === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
   }
 
   return age;
-};
+}
 
 export const ProfileMainScreen = () => {
-  const habitItems = [
-    { key: 'Drinking', value: profile.lifestyle.drinking, icon: 'wine-outline' },
-    { key: 'Smoking', value: profile.lifestyle.smoking, icon: 'flame-outline' },
-    { key: 'Social', value: profile.lifestyle.socialLevel, icon: 'people-outline' },
-    { key: 'Personality', value: profile.lifestyle.personalityType, icon: 'sparkles-outline' },
-  ];
+  const navigation = useNavigation<ProfileNavigation>();
+  const insets = useSafeAreaInsets();
+  const [profile, setProfile] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
+  const [showAllPhotos, setShowAllPhotos] = React.useState(false);
 
-  const aboutChips = [
-    ...profile.basic_info.languages,
-    ...profile.lifestyle.loveLanguage,
-    ...profile.lifestyle.hobbies,
-    ...profile.lifestyle.interests,
-    ...profile.dating_style.freeTimePrefer,
-    ...profile.dating_style.dateStyle,
-  ];
+  const loadProfile = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await profileService.getMyProfile();
+      setProfile(data);
+    } catch (err: any) {
+      Logger.error('Failed to fetch profile', err);
+      setError(err?.message || 'Failed to load profile');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      loadProfile();
+    }, [loadProfile])
+  );
+
+  if (loading) {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color="#EE3F57" />
+      </View>
+    );
+  }
+
+  if (error || !profile) {
+    return (
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
+        <View style={styles.centered}>
+          <Ionicons name="cloud-offline-outline" size={56} color="#D1D5DB" />
+          <Text style={styles.errorTitle}>Profile unavailable</Text>
+          <Text style={styles.errorMessage}>{error || 'No profile data found.'}</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={loadProfile} activeOpacity={0.85}>
+            <Text style={styles.retryText}>Try again</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  const displayName = profile?.basicInfo?.displayName || 'Your profile';
+  const age = calculateAge(profile?.basicInfo?.dob);
+  const occupation = profile?.background?.occupation || 'No occupation set';
+  const location = profile?.locationName || 'No location set';
+  const bio = profile?.bio || 'Add a short bio to help people get to know you.';
+  const photos = profile?.photos || [];
+
+  const getGenderDisplay = (val: any) => {
+    if (val === 1) return 'Male';
+    if (val === 2) return 'Female';
+    if (val === 3) return 'Other';
+    return val || 'Not set';
+  };
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        <View style={styles.heroContainer}>
-          <Image source={profile.photos[0]} style={styles.heroImage} resizeMode="cover" />
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 32 }]}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={loading} onRefresh={loadProfile} colors={['#EE3F57']} tintColor="#EE3F57" />
+        }
+      >
+        <View style={styles.hero}>
+          <Image
+            source={photos[0]?.url ? { uri: photos[0].url } : defaultAvatar}
+            style={styles.heroImage}
+            resizeMode="cover"
+          />
 
-          <TouchableOpacity style={styles.settingsButton} activeOpacity={0.85}>
-            <Ionicons name="settings-outline" size={20} color="#FFFFFF" />
+          <TouchableOpacity style={[styles.fab, styles.fabLeft]} onPress={() => navigation.navigate('Settings')} activeOpacity={0.85}>
+            <Ionicons name="settings-outline" size={18} color="#FFFFFF" />
           </TouchableOpacity>
 
-          <View style={styles.heroOverlay}>
-            <View style={styles.avatarWrapper}>
-              <Image source={profile.photos[1]} style={styles.avatar} />
-            </View>
-            <View style={styles.profileIdentity}>
-              <Text style={styles.nameText}>
-                {profile.basic_info.displayName}, {getAge(profile.basic_info.dob)}
-              </Text>
-              <Text style={styles.genderText}>{profile.basic_info.gender}</Text>
-            </View>
+          <TouchableOpacity style={[styles.fab, styles.fabRight]} onPress={() => navigation.navigate('EditProfile')} activeOpacity={0.85}>
+            <Ionicons name="pencil" size={18} color="#FFFFFF" />
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.completionContainer}>
+          <View style={styles.completionHeader}>
+            <Text style={styles.completionValue}>{calculateCompletion(profile)}%</Text>
+          </View>
+          <View style={styles.progressBarBg}>
+            <View style={[styles.progressBarFill, { width: `${calculateCompletion(profile)}%` }]} />
           </View>
         </View>
 
-        <View style={styles.detailsCard}>
-          <View style={styles.sectionHeaderRow}>
-            <Text style={styles.sectionTitle}>Hồ sơ của tôi</Text>
-            <TouchableOpacity style={styles.editButton} activeOpacity={0.9}>
-              <Ionicons name="create-outline" size={16} color="#EE3F57" />
-              <Text style={styles.editText}>Chỉnh sửa</Text>
+        <View style={styles.card}>
+          <View style={styles.nameRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.nameText}>{displayName}{age ? `, ${age}` : ''}</Text>
+              <Text style={styles.subText}>{occupation}</Text>
+            </View>
+            <TouchableOpacity style={styles.editChip} onPress={() => navigation.navigate('EditProfile')} activeOpacity={0.85}>
+              <Text style={styles.editChipText}>Edit</Text>
+              <Ionicons name="chevron-forward" size={14} color="#EE3F57" />
             </TouchableOpacity>
           </View>
 
-          <Text style={styles.bioText}>{profile.bio}</Text>
-
-          <View style={styles.infoRow}>
-            <Ionicons name="briefcase-outline" size={18} color="#EE3F57" />
-            <Text style={styles.infoLabel}>Nghề nghiệp</Text>
-            <Text style={styles.infoValue}>{profile.background.occupation}</Text>
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Location</Text>
+            <Text style={styles.bodyText}>{location}</Text>
           </View>
 
-          <View style={styles.infoRow}>
-            <Ionicons name="school-outline" size={18} color="#EE3F57" />
-            <Text style={styles.infoLabel}>Học vấn</Text>
-            <Text style={styles.infoValue}>{profile.background.education}</Text>
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>About</Text>
+            <Text style={styles.bodyText}>{bio}</Text>
           </View>
 
-          <Text style={[styles.sectionTitle, styles.sectionSpacing]}>Sở thích & phong cách</Text>
-          <View style={styles.chipsWrap}>
-            {aboutChips.map((chip) => (
-              <View key={chip} style={styles.chip}>
-                <Text style={styles.chipText}>{chip}</Text>
+          <View style={styles.section}>
+            <View style={styles.sectionHeaderRow}>
+              <Text style={styles.sectionTitle}>Personal Info</Text>
+              <TouchableOpacity onPress={() => navigation.navigate('EditProfile')} activeOpacity={0.85}>
+                <Text style={styles.linkText}>Edit</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.infoGrid}>
+              <View style={styles.infoItem}>
+                <Ionicons name="person-outline" size={16} color="#6B7280" />
+                <Text style={styles.infoText}>{getGenderDisplay(profile.basicInfo?.gender)}</Text>
               </View>
-            ))}
-          </View>
-
-          <Text style={[styles.sectionTitle, styles.sectionSpacing]}>Thói quen</Text>
-          <View style={styles.habitGrid}>
-            {habitItems.map((item) => (
-              <View key={item.key} style={styles.habitCard}>
-                <View style={styles.habitIconWrap}>
-                  <Ionicons name={item.icon as any} size={18} color="#EE3F57" />
+              <View style={styles.infoItem}>
+                <Ionicons name="calendar-outline" size={16} color="#6B7280" />
+                <Text style={styles.infoText}>{profile.basicInfo?.dob ? new Date(profile.basicInfo.dob).toLocaleDateString() : 'Not set'}</Text>
+              </View>
+              {profile.basicInfo?.languages?.length > 0 && (
+                <View style={styles.infoItem}>
+                  <Ionicons name="language-outline" size={16} color="#6B7280" />
+                  <Text style={styles.infoText}>{profile.basicInfo.languages.join(', ')}</Text>
                 </View>
-                <Text style={styles.habitKey}>{item.key}</Text>
-                <Text style={styles.habitValue}>{item.value}</Text>
-              </View>
-            ))}
+              )}
+              {profile.interestedIn && (
+                <View style={styles.infoItem}>
+                  <Ionicons name="heart-outline" size={16} color="#6B7280" />
+                  <Text style={styles.infoText}>Interested in: {profile.interestedIn}</Text>
+                </View>
+              )}
+            </View>
           </View>
 
-          <Text style={[styles.sectionTitle, styles.sectionSpacing]}>Ảnh của tôi</Text>
-          <View style={styles.photoGrid}>
-            {profile.photos.map((photo, index) => (
-              <Image key={`${index}`} source={photo} style={styles.gridPhoto} resizeMode="cover" />
-            ))}
+          <View style={styles.section}>
+            <View style={styles.sectionHeaderRow}>
+              <Text style={styles.sectionTitle}>Lifestyle</Text>
+              <TouchableOpacity onPress={() => navigation.navigate('EditProfile')} activeOpacity={0.85}>
+                <Text style={styles.linkText}>Edit</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.tagContainer}>
+              {profile.lifestyle?.drinking && (
+                <View style={styles.tag}>
+                  <Ionicons name="wine-outline" size={14} color="#EE3F57" />
+                  <Text style={styles.tagText}>Drinks: {profile.lifestyle.drinking}</Text>
+                </View>
+              )}
+              {profile.lifestyle?.smoking && (
+                <View style={styles.tag}>
+                  <Ionicons name="leaf-outline" size={14} color="#EE3F57" />
+                  <Text style={styles.tagText}>Smokes: {profile.lifestyle.smoking}</Text>
+                </View>
+              )}
+              {profile.lifestyle?.socialLevel && (
+                <View style={styles.tag}>
+                  <Ionicons name="people-outline" size={14} color="#EE3F57" />
+                  <Text style={styles.tagText}>{profile.lifestyle.socialLevel}</Text>
+                </View>
+              )}
+              {profile.lifestyle?.personalityType && (
+                <View style={styles.tag}>
+                  <Ionicons name="sparkles-outline" size={14} color="#EE3F57" />
+                  <Text style={styles.tagText}>{profile.lifestyle.personalityType}</Text>
+                </View>
+              )}
+            </View>
           </View>
+
+          {(profile.lifestyle?.hobbies?.length > 0 || profile.lifestyle?.interests?.length > 0) && (
+            <View style={styles.section}>
+              <View style={styles.sectionHeaderRow}>
+                <Text style={styles.sectionTitle}>Interests & Hobbies</Text>
+                <TouchableOpacity onPress={() => navigation.navigate('EditProfile')} activeOpacity={0.85}>
+                  <Text style={styles.linkText}>Edit</Text>
+                </TouchableOpacity>
+              </View>
+              <View style={styles.tagContainer}>
+                {profile.lifestyle?.interests?.map((item: string) => (
+                  <View key={item} style={styles.interestTag}>
+                    <Text style={styles.interestTagText}>{item}</Text>
+                  </View>
+                ))}
+                {profile.lifestyle?.hobbies?.map((item: string) => (
+                  <View key={item} style={styles.hobbyTag}>
+                    <Text style={styles.hobbyTagText}>{item}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
+
+          {(profile.datingStyle?.freeTimePrefer?.length > 0 || profile.datingStyle?.dateStyle?.length > 0) && (
+            <View style={styles.section}>
+              <View style={styles.sectionHeaderRow}>
+                <Text style={styles.sectionTitle}>Dating Style</Text>
+                <TouchableOpacity onPress={() => navigation.navigate('EditProfile')} activeOpacity={0.85}>
+                  <Text style={styles.linkText}>Edit</Text>
+                </TouchableOpacity>
+              </View>
+              <View style={styles.tagContainer}>
+                {profile.datingStyle?.freeTimePrefer?.map((item: string) => (
+                  <View key={item} style={styles.datingTag}>
+                    <Text style={styles.datingTagText}>{item}</Text>
+                  </View>
+                ))}
+                {profile.datingStyle?.dateStyle?.map((item: string) => (
+                  <View key={item} style={[styles.datingTag, { backgroundColor: '#F0FDFA' }]}>
+                    <Text style={[styles.datingTagText, { color: '#0D9488' }]}>{item}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
+
+          <View style={styles.section}>
+            <View style={styles.sectionHeaderRow}>
+              <Text style={styles.sectionTitle}>Gallery</Text>
+              <TouchableOpacity onPress={() => navigation.navigate('EditGallery')} activeOpacity={0.85}>
+                <Text style={styles.linkText}>Edit gallery</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.galleryGrid}>
+              {photos.length > 0 ? (
+                <>
+                  {(showAllPhotos ? photos.slice(0, 9) : photos.slice(0, 3)).map((photo: any, index: number) => {
+                    const isLastOfThree = !showAllPhotos && index === 2 && photos.length > 3;
+                    return (
+                      <TouchableOpacity 
+                        key={photo.id || index} 
+                        style={styles.galleryItem}
+                        onPress={() => isLastOfThree ? setShowAllPhotos(true) : null}
+                        activeOpacity={isLastOfThree ? 0.7 : 1}
+                      >
+                        <Image source={{ uri: photo.url }} style={styles.photoImg} resizeMode="cover" />
+                        {isLastOfThree && (
+                          <View style={styles.moreOverlay}>
+                            <Text style={styles.moreText}>+{photos.length - 3}</Text>
+                          </View>
+                        )}
+                      </TouchableOpacity>
+                    );
+                  })}
+                  {showAllPhotos && photos.length > 3 && (
+                    <TouchableOpacity style={styles.collapseButton} onPress={() => setShowAllPhotos(false)}>
+                      <Text style={styles.collapseText}>Show less</Text>
+                    </TouchableOpacity>
+                  )}
+                </>
+              ) : (
+                <View style={styles.emptyGallery}>
+                  <Ionicons name="images-outline" size={20} color="#D1D5DB" />
+                  <Text style={styles.emptyGalleryText}>No photos yet</Text>
+                </View>
+              )}
+            </View>
+          </View>
+
+          <TouchableOpacity style={styles.primaryButton} onPress={() => navigation.navigate('DiscoverySettings')} activeOpacity={0.88}>
+            <Ionicons name="options-outline" size={18} color="#FFFFFF" />
+            <Text style={styles.primaryButtonText}>Discovery Settings</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -148,205 +321,306 @@ export const ProfileMainScreen = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F3F3F3',
+    backgroundColor: '#F7F7F8',
   },
   scroll: {
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 110,
+    paddingBottom: 24,
   },
-  heroContainer: {
-    height: 290,
-    backgroundColor: '#111111',
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+    backgroundColor: '#F7F7F8',
+  },
+  errorTitle: {
+    marginTop: 16,
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#111827',
+  },
+  errorMessage: {
+    marginTop: 8,
+    fontSize: 14,
+    color: '#6B7280',
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  retryButton: {
+    marginTop: 20,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 999,
+    backgroundColor: '#EE3F57',
+  },
+  retryText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  hero: {
+    height: 320,
+    position: 'relative',
   },
   heroImage: {
     width: '100%',
     height: '100%',
   },
-  settingsButton: {
+  fab: {
     position: 'absolute',
-    top: 14,
-    right: 16,
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: 'rgba(0,0,0,0.3)',
+    top: 16,
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.22)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  heroOverlay: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: -46,
+  fabLeft: {
+    left: 16,
+  },
+  fabRight: {
+    right: 16,
+  },
+  card: {
+    marginTop: -24,
+    marginHorizontal: 10,
+    borderRadius: 24,
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 16,
+    paddingTop: 22,
+    paddingBottom: 20,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 2,
+  },
+  nameRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    gap: 14,
+    gap: 12,
   },
-  avatarWrapper: {
-    width: 92,
-    height: 92,
-    borderRadius: 46,
-    padding: 3,
-    backgroundColor: '#FFFFFF',
+  nameText: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#111827',
   },
-  avatar: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 44,
+  subText: {
+    marginTop: 4,
+    fontSize: 13,
+    color: '#71717A',
   },
-  profileIdentity: {
-    paddingTop: 30,
+  editChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+    backgroundColor: '#FFF0F3',
+    gap: 4,
   },
-  detailsCard: {
-    marginTop: 56,
-    marginHorizontal: 12,
-    marginBottom: 16,
-    borderRadius: 24,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 28,
+  editChipText: {
+    color: '#EE3F57',
+    fontWeight: '700',
+  },
+  section: {
+    marginTop: 20,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 15,
     fontWeight: '700',
-    color: '#333333',
+    color: '#18181B',
+    marginBottom: 8,
+  },
+  bodyText: {
+    fontSize: 14,
+    color: '#52525B',
+    lineHeight: 20,
   },
   sectionHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    marginBottom: 12,
   },
-  editButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    borderWidth: 1,
-    borderColor: '#FDE0E5',
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    backgroundColor: '#FFF5F7',
-  },
-  editText: {
+  linkText: {
     color: '#EE3F57',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  bioText: {
-    marginTop: 10,
-    fontSize: 14,
-    lineHeight: 21,
-    color: '#4B5563',
-  },
-  nameText: {
-    color: '#111111',
-    fontSize: 28,
     fontWeight: '700',
   },
-  genderText: {
-    marginTop: 2,
-    color: '#6B7280',
+  galleryGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  galleryItem: {
+    width: '31.8%',
+    aspectRatio: 0.78,
+    borderRadius: 16,
+    backgroundColor: '#F3F4F6',
+    overflow: 'hidden',
+  },
+  photoImg: {
+    width: '100%',
+    height: '100%',
+  },
+  moreOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  moreText: {
+    color: '#FFFFFF',
+    fontSize: 20,
+    fontWeight: '800',
+  },
+  collapseButton: {
+    width: '100%',
+    paddingVertical: 10,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  collapseText: {
+    color: '#EE3F57',
+    fontWeight: '700',
     fontSize: 14,
-    fontWeight: '500',
   },
-  sectionSpacing: {
-    marginTop: 20,
+  completionContainer: {
+    marginTop: 16,
+    marginHorizontal: 12,
+    backgroundColor: '#FFFFFF',
+    padding: 16,
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 1,
   },
-  infoRow: {
+  completionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  completionTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#4B5563',
+  },
+  completionValue: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#EE3F57',
+  },
+  progressBarBg: {
+    height: 8,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: '100%',
+    backgroundColor: '#EE3F57',
+    borderRadius: 4,
+  },
+  emptyGallery: {
+    width: '100%',
+    paddingVertical: 28,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: '#E5E7EB',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyGalleryText: {
+    marginTop: 8,
+    color: '#9CA3AF',
+    fontSize: 13,
+  },
+  primaryButton: {
+    marginTop: 24,
+    height: 54,
+    borderRadius: 16,
+    backgroundColor: '#EE3F57',
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 12,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#F3F3F3',
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 12,
-    paddingVertical: 11,
+    justifyContent: 'center',
+    gap: 8,
   },
-  infoLabel: {
-    marginLeft: 8,
+  primaryButtonText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  infoGrid: {
+    gap: 8,
+  },
+  infoItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  infoText: {
     fontSize: 14,
-    fontWeight: '500',
-    color: '#ADAFBB',
+    color: '#4B5563',
   },
-  infoValue: {
-    marginLeft: 'auto',
-    maxWidth: '55%',
-    textAlign: 'right',
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333333',
-  },
-  chipsWrap: {
+  tagContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
-    marginTop: 12,
+    gap: 8,
   },
-  chip: {
+  tag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 999,
-    borderWidth: 1,
-    borderColor: '#EE3F57',
-    backgroundColor: '#FFF1F4',
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-  },
-  chipText: {
-    fontSize: 13,
-    color: '#EE3F57',
-    fontWeight: '600',
-  },
-  habitGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    rowGap: 12,
-    marginTop: 12,
-  },
-  habitCard: {
-    width: '48.5%',
-    borderRadius: 16,
     backgroundColor: '#F9FAFB',
     borderWidth: 1,
     borderColor: '#F3F4F6',
-    paddingHorizontal: 12,
-    paddingVertical: 12,
   },
-  habitIconWrap: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: '#FFF1F4',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 8,
-  },
-  habitKey: {
-    fontSize: 12,
-    color: '#ADAFBB',
+  tagText: {
+    fontSize: 13,
+    color: '#374151',
     fontWeight: '500',
   },
-  habitValue: {
-    marginTop: 2,
-    fontSize: 14,
-    color: '#333333',
+  interestTag: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: '#EEF2FF',
+  },
+  interestTagText: {
+    fontSize: 13,
+    color: '#4F46E5',
     fontWeight: '600',
   },
-  photoGrid: {
-    marginTop: 12,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 8,
+  hobbyTag: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: '#FFF7ED',
   },
-  gridPhoto: {
-    flex: 1,
-    height: 112,
-    borderRadius: 14,
+  hobbyTagText: {
+    fontSize: 13,
+    color: '#EA580C',
+    fontWeight: '600',
+  },
+  datingTag: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: '#F5F3FF',
+  },
+  datingTagText: {
+    fontSize: 13,
+    color: '#7C3AED',
+    fontWeight: '600',
   },
 });

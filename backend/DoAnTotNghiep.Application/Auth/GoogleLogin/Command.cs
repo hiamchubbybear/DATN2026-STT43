@@ -5,5 +5,6 @@ namespace DoAnTotNghiep.Application.Auth.GoogleLogin;
 
 public class GoogleLoginCommand : IRequest<AuthResponse>
 {
-    public required string IdToken { get; set; }
+    public string? IdToken { get; set; }
+    public string? AccessToken { get; set; }
 }

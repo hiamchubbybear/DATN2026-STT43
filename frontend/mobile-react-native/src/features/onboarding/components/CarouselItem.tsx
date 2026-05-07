@@ -3,6 +3,7 @@ import { View, StyleSheet, Animated } from 'react-native';
 import { Image } from 'expo-image';
 import { OnboardingSlide } from '../data/onboardingData';
 import { ONBOARDING_SPACED_ITEM_WIDTH, ONBOARDING_SPACING } from '../utils/constants';
+import { radius } from '../../../shared/utils/responsive';
 
 interface CarouselItemProps {
   item: OnboardingSlide;
@@ -41,7 +42,7 @@ const styles = StyleSheet.create({
   imageContainer: {
     flex: 1,
     marginHorizontal: ONBOARDING_SPACING / 2,
-    borderRadius: 20,
+    borderRadius: radius(20),
     overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },

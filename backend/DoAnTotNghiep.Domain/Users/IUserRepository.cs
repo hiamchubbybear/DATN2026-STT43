@@ -8,9 +8,10 @@ public interface IUserRepository
     Task<UserAccount?> ResetPassword(String newHashedPassword, String email);
 
 
-    Task<UserAccount?> GetByRefreshToken(string refreshToken);
 
     Task Create(UserAccount user);
     Task UpdateAsync(UserAccount user);
     Task DeleteAccount(string userId);
+    Task<UserAccount> GetByIdAsync(Guid userId);
+    Task<List<UserAccount>> ListAllAsync();
 }

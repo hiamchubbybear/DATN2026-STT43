@@ -14,33 +14,50 @@ namespace DoAnTotNghiep.Application.Users.Commands.Login
     {
         private readonly IUserRepository _repo;
         private readonly IJwtService _jwt;
+        private readonly ISessionRepository _sessionRepo;
+        private readonly IUserProfileRepository _profileRepo;
 
-        public RefreshTokenHandler(IUserRepository repo, IJwtService jwt) 
+        public RefreshTokenHandler(IUserRepository repo, IJwtService jwt, ISessionRepository sessionRepo, IUserProfileRepository profileRepo) 
         {
             _repo = repo;
             _jwt = jwt;
+            _sessionRepo = sessionRepo;
+            _profileRepo = profileRepo;
         }
         public async Task<AuthResponse> Handle(RefreshTokenCommand request, CancellationToken cancellationToken)
         {
-            var user = await _repo.GetByRefreshToken(request.RefreshToken);
-            if (user == null)
+            var session = await _sessionRepo.GetByRefreshToken(request.RefreshToken);
+            if (session == null)
             {
                 throw new UnauthorizedException("Invalid refresh token");
             }
-            var token = user.RefreshTokens.FirstOrDefault(x => x.Token == request.RefreshToken);
-            if (token == null || !token.IsActive)
+            if (!session.RefreshToken.IsActive)
             {
-                throw new UnauthorizedException("Invalid refresh token");
+                throw new UnauthorizedException("Refresh token is not active");
             }
-            token.IsRevoked = true;
+            var user = await _repo.GetByIdAsync(session.UserId);
+            if(user == null)
+            {
+                throw new UnauthorizedException("User not found");
+            }
+            
+            var profile = await _profileRepo.GetByUserIdAsync(user.Id);
+
+            session.RefreshToken.Revoke();
             var newAccessToken = _jwt.GenerateAccessToken(user);
             var newRefreshToken = _jwt.GenerateRefreshToken();
-            user.RefreshTokens.Add(newRefreshToken);
-            await _repo.UpdateAsync(user);
+            
+            session.RefreshToken = newRefreshToken;
+            await _sessionRepo.UpdateSession(session);
+
             return new AuthResponse
             {
                 AccessToken = newAccessToken,
-                RefreshToken = newRefreshToken.Token
+                RefreshToken = newRefreshToken.Token,
+                IsProfileCompleted = profile != null,
+                UserId = user.Id,
+                Username = user.Username,
+                Email = user.Email
             };
         }
     }

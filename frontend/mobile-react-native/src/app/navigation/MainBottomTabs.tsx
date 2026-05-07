@@ -1,12 +1,18 @@
-import React from 'react';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { StyleSheet, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { MainScreen } from '../../features/main/screens/MainScreen';
-import { MatchesScreen } from '../../features/main/screens/MatchesScreen';
-import { NotificationsMainScreen } from '../../features/main/screens/NotificationsMainScreen';
-import { MessagesScreen } from '../../features/main/screens/MessagesScreen';
-import { ProfileMainScreen } from '../../features/main/screens/ProfileMainScreen';
+import { Ionicons } from "@expo/vector-icons";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { Platform, StyleSheet, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { MainScreen } from "../../features/main/screens/MainScreen";
+import { MatchesScreen } from "../../features/main/screens/MatchesScreen";
+import { MessagesScreen } from "../../features/main/screens/MessagesScreen";
+import { NotificationsMainScreen } from "../../features/main/screens/NotificationsMainScreen";
+import { ProfileMainScreen } from "../../features/main/screens/ProfileMainScreen";
+import {
+  normalizeFont,
+  radius,
+  scale,
+  spacing,
+} from "../../shared/utils/responsive";
 
 export type MainTabParamList = {
   Main: undefined;
@@ -18,49 +24,52 @@ export type MainTabParamList = {
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
-const ICONS: Record<keyof MainTabParamList, keyof typeof Ionicons.glyphMap> = {
-  Main: 'albums',
-  Matches: 'heart-outline',
-  Messages: 'chatbubble-ellipses-outline',
-  Notifications: 'notifications-outline',
-  Profile: 'person-outline',
-};
-
-const LABELS: Record<keyof MainTabParamList, string> = {
-  Main: 'Cards',
-  Matches: 'Matches',
-  Messages: 'Messages',
-  Notifications: 'Notifications',
-  Profile: 'Profile',
+const ICONS: Record<
+  keyof MainTabParamList,
+  {
+    active: keyof typeof Ionicons.glyphMap;
+    inactive: keyof typeof Ionicons.glyphMap;
+  }
+> = {
+  Main: { active: "albums", inactive: "albums-outline" },
+  Matches: { active: "heart", inactive: "heart-outline" },
+  Messages: { active: "chatbubble", inactive: "chatbubble-ellipses-outline" },
+  Notifications: { active: "notifications", inactive: "notifications-outline" },
+  Profile: { active: "person", inactive: "person-outline" },
 };
 
 export const MainBottomTabs = () => {
+  const insets = useSafeAreaInsets();
+  const tabBottomOffset =
+    Platform.OS === "android" ? Math.max(insets.bottom, 10) : insets.bottom;
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarStyle: styles.tabBar,
+        tabBarStyle: [styles.tabBar, { bottom: tabBottomOffset }],
         tabBarItemStyle: styles.tabButton,
-        tabBarLabel: ({ focused }) => {
+        tabBarLabel: () => null,
+        tabBarActiveTintColor: "#EE3F57",
+        tabBarInactiveTintColor: "#A8ADB8",
+        tabBarIcon: ({ focused, color }) => {
           const routeName = route.name as keyof MainTabParamList;
-
-          return (
-            <Text style={[styles.tabLabel, focused && styles.tabLabelActive]}>
-              {LABELS[routeName]}
-            </Text>
-          );
-        },
-        tabBarIcon: ({ focused }) => {
-          const routeName = route.name as keyof MainTabParamList;
-          const iconColor = focused ? '#EE3F57' : '#ADAFBB';
+          const iconName = focused
+            ? ICONS[routeName].active
+            : ICONS[routeName].inactive;
 
           return (
             <View style={styles.tabInner}>
-              <View style={[styles.topLine, focused && styles.topLineActive]} />
-              <Ionicons name={ICONS[routeName]} size={22} color={iconColor} />
+              <Ionicons
+                name={iconName}
+                size={normalizeFont(22)}
+                color={color}
+              />
+              {focused ? <View style={styles.activeDot} /> : null}
             </View>
           );
         },
+        tabBarShowLabel: false,
       })}
     >
       <Tab.Screen name="Main" component={MainScreen} />
@@ -74,42 +83,37 @@ export const MainBottomTabs = () => {
 
 const styles = StyleSheet.create({
   tabBar: {
-    position: 'absolute',
+    position: "absolute",
     left: 0,
     right: 0,
     bottom: 0,
-    height: 78,
-    backgroundColor: 'rgba(255,255,255,0.95)',
+    height: scale(58),
+    borderRadius: 0,
+    backgroundColor: "#ECEFF3",
     borderTopWidth: 0,
-    elevation: 8,
+    elevation: 0,
+    shadowOpacity: 0,
   },
   tabButton: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
+    paddingTop: 0,
   },
   tabInner: {
-    width: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingTop: 4,
+    width: scale(28),
+    height: scale(28),
+    alignItems: "center",
+    justifyContent: "center",
   },
-  topLine: {
-    width: '100%',
-    height: 3,
-    marginBottom: 8,
-    backgroundColor: 'transparent',
-  },
-  topLineActive: {
-    backgroundColor: '#EE3F57',
-  },
-  tabLabel: {
-    marginTop: 2,
-    fontSize: 11,
-    color: '#ADAFBB',
-    fontWeight: '500',
-  },
-  tabLabelActive: {
-    color: '#EE3F57',
-    fontWeight: '700',
+  activeDot: {
+    position: "absolute",
+    top: spacing(2),
+    right: 0,
+    width: scale(8),
+    height: scale(8),
+    borderRadius: radius(999),
+    backgroundColor: "#EE3F57",
+    borderWidth: scale(1.5),
+    borderColor: "#ECEFF3",
   },
 });

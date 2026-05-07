@@ -7,7 +7,9 @@ using DoAnTotNghiep.Application.Auth.ResendVerification;
 using DoAnTotNghiep.Application.Auth.DeleteAccount;
 using DoAnTotNghiep.Application.Common.Models;
 using DoAnTotNghiep.Application.Users.Commands.Login;
+using DoAnTotNghiep.Application.Auth.VerifyResetToken;
 using MediatR;
+using DoAnTotNghiep.Application.Auth.Logout;
 
 namespace DoAnTotNghiep.Web.Controllers;
 
@@ -25,19 +27,22 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login(LoginCommand command)
     {
-        return Ok(await _mediator.Send(command));
+        var response = await _mediator.Send(command);
+        return Ok(ApiResponse<AuthResponse>.Succeeded(response, "Login successful"));
     }
 
     [HttpPost("google-login")]
     public async Task<IActionResult> GoogleLogin(DoAnTotNghiep.Application.Auth.GoogleLogin.GoogleLoginCommand command)
     {
-        return Ok(await _mediator.Send(command));
+        var response = await _mediator.Send(command);
+        return Ok(ApiResponse<AuthResponse>.Succeeded(response, "Google login successful"));
     }
 
     [HttpPost("refresh")]
     public async Task<IActionResult> Refresh(RefreshTokenCommand command)
     {
-        return Ok(await _mediator.Send(command));
+        var response = await _mediator.Send(command);
+        return Ok(ApiResponse<AuthResponse>.Succeeded(response, "Token refreshed successfully"));
     }
 
     [HttpPost("register")]
@@ -52,6 +57,13 @@ public class AuthController : ControllerBase
     {
         await _mediator.Send(request);
         return Ok(ApiResponse<string>.Succeeded(string.Empty, "If the email exists, a reset link has been sent."));
+    }
+
+    [HttpPost("verify-reset-token")]
+    public async Task<IActionResult> VerifyResetToken(VerifyResetTokenCommand request)
+    {
+        var result = await _mediator.Send(request);
+        return Ok(ApiResponse<bool>.Succeeded(result, "Token is valid."));
     }
 
     [HttpPost("reset-password")]
@@ -72,7 +84,7 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> VerifyEmail(VerifyEmailCommand request)
     {
         var result = await _mediator.Send(request);
-        return Ok(ApiResponse<string>.Succeeded(result, "Email verified successfully."));
+        return Ok(ApiResponse<AuthResponse>.Succeeded(result, "Email verified successfully."));
     }
 
     [HttpPost("resend-verification")]
@@ -87,5 +99,15 @@ public class AuthController : ControllerBase
     {
         var result = await _mediator.Send(request);
         return Ok(ApiResponse<string>.Succeeded(result, "Account deleted successfully."));
+    }
+    [HttpPost("logout")]
+    public async Task<IActionResult> Logout(LogoutCommand request)
+    {
+        var result = await _mediator.Send(request);
+        if (!result)
+        {
+            return BadRequest(ApiResponse<string>.Failed("Invalid refresh token."));
+        }
+        return Ok(ApiResponse<string>.Succeeded(string.Empty, "Logged out successfully."));
     }
 }

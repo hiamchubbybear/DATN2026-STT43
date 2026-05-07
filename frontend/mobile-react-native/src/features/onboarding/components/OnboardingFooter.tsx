@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PrimaryButton } from '../../../shared/components/PrimaryButton';
 import { OnboardingSlide } from '../data/onboardingData';
+import { normalizeFont, spacing, verticalScale } from '../../../shared/utils/responsive';
 
 interface OnboardingFooterProps {
   currentSlide: OnboardingSlide;
@@ -50,39 +51,39 @@ const styles = StyleSheet.create({
   },
   textSection: {
     alignItems: 'center',
-    paddingHorizontal: 32,
-    marginTop: 32,
-    minHeight: 100, // Keep height consistent
+    paddingHorizontal: spacing(32),
+    marginTop: spacing(32),
+    minHeight: verticalScale(100),
   },
   title: {
-    fontSize: 28,
+    fontSize: normalizeFont(28),
     fontWeight: '700',
     color: '#E84C60', // Red color
-    marginBottom: 16,
+    marginBottom: spacing(16),
     textAlign: 'center',
   },
   description: {
-    fontSize: 16,
+    fontSize: normalizeFont(16),
     color: '#4B5563', // Soft gray text
     textAlign: 'center',
-    lineHeight: 24,
+    lineHeight: verticalScale(24),
     fontWeight: '400',
   },
   actions: {
-    paddingHorizontal: 24,
-    paddingBottom: 24,
+    paddingHorizontal: spacing(24),
+    paddingBottom: spacing(24),
   },
   signInWrapper: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 20,
+    marginTop: spacing(20),
   },
   signInText: {
-    fontSize: 14,
+    fontSize: normalizeFont(14),
     color: '#6B7280',
   },
   signInHighlight: {
-    fontSize: 14,
+    fontSize: normalizeFont(14),
     color: '#E84C60',
     fontWeight: '600',
   },

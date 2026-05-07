@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, FlatList, ActivityIndicator, StyleSheet, TouchableOpacity } from 'react-native';
 import { usePosts } from '../api/usePosts';
+import { normalizeFont, radius, spacing, verticalScale } from '../../../shared/utils/responsive';
 
 export const HomeScreen = () => {
   const { data, isLoading, isError, error, refetch } = usePosts();
@@ -17,6 +18,19 @@ export const HomeScreen = () => {
     return (
       <View style={styles.center}>
         <Text style={styles.errorText}>Error: {error?.message}</Text>
+        <TouchableOpacity style={styles.button} onPress={() => refetch()}>
+          <Text style={styles.buttonText}>Retry</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  if (!data || !Array.isArray(data)) {
+    return (
+      <View style={styles.center}>
+        <Text style={styles.errorText}>
+          Invalid data received from server. Make sure the API endpoint is correct.
+        </Text>
         <TouchableOpacity style={styles.button} onPress={() => refetch()}>
           <Text style={styles.buttonText}>Retry</Text>
         </TouchableOpacity>
@@ -53,39 +67,40 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   listContainer: {
-    padding: 16,
+    padding: spacing(16),
   },
   card: {
     backgroundColor: '#fff',
     borderWidth: 1,
     borderColor: '#e5e5e5',
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 12,
+    borderRadius: radius(8),
+    padding: spacing(16),
+    marginBottom: spacing(12),
   },
   title: {
-    fontSize: 16,
+    fontSize: normalizeFont(16),
     fontWeight: 'bold',
-    marginBottom: 8,
+    marginBottom: spacing(8),
     color: '#000',
   },
   body: {
-    fontSize: 14,
+    fontSize: normalizeFont(14),
     color: '#666',
   },
   errorText: {
-    fontSize: 16,
+    fontSize: normalizeFont(16),
     color: '#d93025',
-    marginBottom: 16,
+    marginBottom: spacing(16),
   },
   button: {
     backgroundColor: '#000',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
+    paddingHorizontal: spacing(24),
+    paddingVertical: spacing(12),
+    borderRadius: radius(8),
   },
   buttonText: {
     color: '#fff',
     fontWeight: 'bold',
+    fontSize: normalizeFont(14),
   },
 });

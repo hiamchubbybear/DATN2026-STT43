@@ -3,9 +3,19 @@ using DoAnTotNghiep.Application;
 using DoAnTotNghiep.Infrastructure;
 using DoAnTotNghiep.Infrastructure.Persistence;
 using DoAnTotNghiep.Web;
+using DoAnTotNghiep.Web.Hubs;
 using FluentValidation;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Serilog;
+using MongoDB.Bson;
+using MongoDB.Bson.Serialization;
+using MongoDB.Bson.Serialization.Serializers;
+
+// Register MongoDB Guid Serializer globally before any other DB operations
+#pragma warning disable CS0618 // Type or member is obsolete
+BsonSerializer.RegisterSerializer(new GuidSerializer(GuidRepresentation.Standard));
+#pragma warning restore CS0618
+System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,14 +30,10 @@ builder.Host.UseSerilog();
 
 var mongoSettings = builder.Configuration.GetSection("MongoDb").Get<MongoSettings>();
 var redisSettings = builder.Configuration.GetSection("Redis").Get<RedisSettings>();
-var secretKey = builder.Configuration["Key:SecretKey"];
+var secretKey = builder.Configuration["Key:SecretKey"] ?? throw new InvalidOperationException("SecretKey is missing in configuration");
 builder.Services.Configure<KeySettings>(builder.Configuration.GetSection("Key"));
 builder.Services.AddJwtAuthentication(secretKey);
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
-WebApplication.CreateBuilder(new WebApplicationOptions
-{
-    EnvironmentName = "Development"
-});
 builder.Services.AddProblemDetails();
 builder.Services.AddApplication();
 builder.Services.AddSingleton(mongoSettings!);
@@ -39,6 +45,31 @@ builder.Services.AddHealthChecks()
     .AddRedis(redisSettings!.ConnectionString, name: "redis");
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddControllers();
+
+try 
+{
+    var redisConfig = StackExchange.Redis.ConfigurationOptions.Parse(redisSettings!.ConnectionString);
+    redisConfig.AbortOnConnectFail = true; // Fail fast for the check
+    redisConfig.ConnectTimeout = 2000;
+    
+    // Ping Redis to see if it's alive
+    using var muxer = StackExchange.Redis.ConnectionMultiplexer.Connect(redisConfig);
+    
+    builder.Services.AddSignalR().AddStackExchangeRedis(options =>
+    {
+        var finalConfig = StackExchange.Redis.ConfigurationOptions.Parse(redisSettings!.ConnectionString);
+        finalConfig.AbortOnConnectFail = false;
+        finalConfig.ChannelPrefix = "PsyConnect";
+        options.Configuration = finalConfig;
+    });
+    Log.Information("Redis is online. SignalR Redis Backplane enabled.");
+}
+catch (Exception ex)
+{
+    Log.Warning("Redis is offline! Falling back to In-Memory SignalR (Single Node Mode). Error: {Msg}", ex.Message);
+    builder.Services.AddSignalR();
+}
+
 // builder.Services.AddValidatorsFromAssemblyContaining<ResetPasswordValidator>();
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
@@ -48,9 +79,30 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 Log.Information("Environment: {Env}", builder.Environment.EnvironmentName);
 var app = builder.Build();
 app.UseExceptionHandler();
+if (app.Environment.IsDevelopment())
+{
+    // app.UseDeveloperExceptionPage();
+}
+else 
+{
+    app.UseHttpsRedirection();
+}
+
 app.UseSerilogRequestLogging();
 app.UseDefaultFiles();
 app.UseStaticFiles();
+
+app.UseRouting();
+
+// CORS should be before Auth
+app.UseCors(x => x
+    .AllowAnyOrigin()
+    .AllowAnyMethod()
+    .AllowAnyHeader());
+
+app.UseAuthentication();
+app.UseAuthorization();
+
 app.MapHealthChecks("/health", new HealthCheckOptions
 {
     ResponseWriter = async (context, report) =>
@@ -68,8 +120,8 @@ app.MapHealthChecks("/health", new HealthCheckOptions
     }
 });
 app.MapControllers();
+app.MapHub<AppHub>("/hubs/app");
 app.MapFallbackToFile("index.html");
-app.UseHttpsRedirection();
 
 
 using (var scope = app.Services.CreateScope())

@@ -140,6 +140,13 @@ export default function LoginScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <Path d="M15 18l-6-6 6-6" stroke="#111111" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          </Svg>
+        </TouchableOpacity>
+      </View>
       <View style={styles.content}>
         <View style={styles.logoContainer}>
           <LogoGradientWave />
@@ -149,9 +156,7 @@ export default function LoginScreen() {
 
         <TouchableOpacity
           style={styles.primaryBtn}
-          onPress={() =>
-            alert("Làm luồng đăng nhập bằng Email sau do đây là test")
-          }
+          onPress={() => router.push("/signup" as never)}
         >
           <Text style={styles.primaryBtnText}>Continue with email</Text>
         </TouchableOpacity>
@@ -215,11 +220,25 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#FFFFFF",
   },
+  header: {
+    paddingHorizontal: 24,
+    paddingTop: Platform.OS === "ios" ? 10 : 20,
+    paddingBottom: 10,
+  },
+  backButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   content: {
     flex: 1,
     alignItems: "center",
     paddingHorizontal: 24,
-    paddingTop: Platform.OS === "ios" ? 60 : 80,
+    paddingTop: Platform.OS === "ios" ? 20 : 40,
   },
   logoContainer: {
     marginBottom: 40,
@@ -284,5 +303,5 @@ const styles = StyleSheet.create({
     color: "#EF4444", // Match the button hue
     fontSize: 14,
     fontWeight: "500",
-  },
+  }
 });

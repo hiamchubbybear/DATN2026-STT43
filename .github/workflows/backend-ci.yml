@@ -6,6 +6,7 @@ on:
       - main
       - cicd
       - noti
+      - develop
     paths:
       - "backend/**"
       - "k8s/**"

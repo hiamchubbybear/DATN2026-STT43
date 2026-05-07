@@ -8,6 +8,7 @@ import { CarouselItem } from '../components/CarouselItem';
 import { Pagination } from '../components/Pagination';
 import { OnboardingFooter } from '../components/OnboardingFooter';
 import { ONBOARDING_SPACED_ITEM_WIDTH, SCREEN_WIDTH, SCREEN_HEIGHT } from '../utils/constants';
+import { spacing, verticalScale } from '../../../shared/utils/responsive';
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Onboarding'>;
 };
@@ -160,13 +161,13 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: '#ffffff',
-    paddingTop: Platform.OS === 'android' ? 24 : 0,
+    paddingTop: Platform.OS === 'android' ? spacing(24) : 0,
   },
   container: {
     flex: 1,
   },
   carouselWrapper: {
     height: SCREEN_HEIGHT * 0.45,
-    marginTop: 20,
+    marginTop: spacing(20),
   },
 });

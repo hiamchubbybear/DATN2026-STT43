@@ -16,12 +16,15 @@ public class Session : BaseEntity
     public string? IpAddress { get; set; }
     public bool IsRevoked { get; set; }
 
-    public Session(Guid userId, string? deviceId, string? ipAddress, string? platform, string? pushToken)
+    public RefreshToken RefreshToken { get; set; } 
+
+    public Session(Guid userId, string? deviceId, string? ipAddress, string? platform, string? pushToken, RefreshToken refreshToken)
     {
         UserId = userId;
         DeviceId = deviceId;
         IpAddress = ipAddress;
         Platform = platform;
         PushToken = pushToken;
+        RefreshToken = refreshToken;
     }
 }

@@ -2,6 +2,7 @@ import React from 'react';
 import { View, StyleSheet, Animated } from 'react-native';
 import { OnboardingSlide } from '../data/onboardingData';
 import { ONBOARDING_SPACED_ITEM_WIDTH } from '../utils/constants';
+import { radius, scale, spacing } from '../../../shared/utils/responsive';
 
 interface PaginationProps {
   data: OnboardingSlide[];
@@ -62,13 +63,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginVertical: 24,
+    marginVertical: spacing(24),
   },
   dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginHorizontal: 4,
+    width: scale(8),
+    height: scale(8),
+    borderRadius: radius(4),
+    marginHorizontal: spacing(4),
   },
   dotActive: {
     backgroundColor: '#E84C60',

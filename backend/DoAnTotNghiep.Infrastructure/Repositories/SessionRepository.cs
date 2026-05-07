@@ -17,4 +17,14 @@ public class UserSessionRepository : ISessionRepository
     {
         return _sessions.InsertOneAsync(session);
     }
+
+    public async Task<Session?> GetByRefreshToken(string refreshToken)
+    {
+        return await _sessions.Find(s => s.RefreshToken.Token == refreshToken).FirstOrDefaultAsync();
+    }
+
+    public async Task UpdateSession(Session session)
+    {
+        await _sessions.ReplaceOneAsync(x => x.Id == session.Id, session);
+    }
 }

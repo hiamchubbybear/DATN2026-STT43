@@ -15,13 +15,18 @@ namespace DoAnTotNghiep.Infrastructure.Security
     {
         private const int EXPIRE_TIME = 3;
         private readonly string _secretKey;
-        public string? UserId { get; }
-        public string? Email { get; }
-        public string? Role { get; }
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public JwtService(IOptions<KeySettings> keySettings)
+        public string? UserId => _httpContextAccessor.HttpContext?.User?.FindFirstValue(JwtRegisteredClaimNames.Sub) 
+                                 ?? _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+        public string? Email => _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.Email);
+        public string? Role => _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.Role);
+        public bool IsAuthenticated => _httpContextAccessor.HttpContext?.User?.Identity?.IsAuthenticated ?? false;
+
+        public JwtService(IOptions<KeySettings> keySettings, IHttpContextAccessor httpContextAccessor)
         {
             _secretKey = keySettings.Value.SecretKey;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public string GenerateAccessToken(UserAccount user)

@@ -12,19 +12,38 @@ public class GoogleLoginHandler : IRequestHandler<GoogleLoginCommand, AuthRespon
     private readonly IGoogleAuthService _googleAuthService;
     private readonly IUserRepository _userRepository;
     private readonly IJwtService _jwtService;
+    private readonly IUserProfileRepository _profileRepository;
+    private readonly ISessionRepository _sessionRepository;
 
-    public GoogleLoginHandler(IGoogleAuthService googleAuthService, IUserRepository userRepository, IJwtService jwtService)
+    public GoogleLoginHandler(
+        IGoogleAuthService googleAuthService, 
+        IUserRepository userRepository, 
+        IJwtService jwtService, 
+        IUserProfileRepository profileRepository,
+        ISessionRepository sessionRepository)
     {
         _googleAuthService = googleAuthService;
         _userRepository = userRepository;
         _jwtService = jwtService;
+        _profileRepository = profileRepository;
+        _sessionRepository = sessionRepository;
     }
 
     public async Task<AuthResponse> Handle(GoogleLoginCommand request, CancellationToken cancellationToken)
     {
-        var payload = await _googleAuthService.VerifyGoogleTokenAsync(request.IdToken);
+        GoogleJsonWebSignaturePayload? payload = null;
+
+        if (!string.IsNullOrEmpty(request.IdToken))
+        {
+            payload = await _googleAuthService.VerifyGoogleTokenAsync(request.IdToken);
+        }
+        else if (!string.IsNullOrEmpty(request.AccessToken))
+        {
+            payload = await _googleAuthService.VerifyAccessTokenAsync(request.AccessToken);
+        }
+
         if (payload == null)
-            throw new UnauthorizedException("Invalid Google token");
+            throw new UnauthorizedException("Invalid Google token or access token");
 
         var user = await _userRepository.GetByEmail(payload.Email);
 
@@ -55,13 +74,26 @@ public class GoogleLoginHandler : IRequestHandler<GoogleLoginCommand, AuthRespon
         var accessToken = _jwtService.GenerateAccessToken(user);
         var refreshToken = _jwtService.GenerateRefreshToken();
 
-        user.RefreshTokens.Add(refreshToken);
-        await _userRepository.UpdateAsync(user);
+        var profile = await _profileRepository.GetByUserIdAsync(user.Id);
+
+        var session = new Session(
+            user.Id,
+            null, // Google login might not have device info in command yet
+            null,
+            "Mobile",
+            null,
+            refreshToken
+        );
+        await _sessionRepository.CreateSession(session);
 
         return new AuthResponse
         {
             AccessToken = accessToken,
-            RefreshToken = refreshToken.Token
+            RefreshToken = refreshToken.Token,
+            IsProfileCompleted = profile != null,
+            UserId = user.Id,
+            Username = user.Username,
+            Email = user.Email
         };
     }
 }
