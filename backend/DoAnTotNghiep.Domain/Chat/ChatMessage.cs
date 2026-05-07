@@ -1,4 +1,5 @@
 using DoAnTotNghiep.Domain.Common;
+using DoAnTotNghiep.Domain.Risk;
 using System;
 using System.Collections.Generic;
 
@@ -21,6 +22,11 @@ public class ChatMessage : BaseEntity
     // Delivery and read status for multi-device
     public List<string> DeliveredToDeviceIds { get; private set; } = new();
     public List<string> ReadByDeviceIds { get; private set; } = new();
+
+    // Scam-detection score; null until the AI service has scored the message.
+    // Server-side scoring only applies to plaintext messages (E2EE preserves
+    // privacy by design — see AI_PLAN.md §7.4).
+    public RiskScore? Risk { get; private set; }
 
     private ChatMessage() { } // ORM
 
@@ -65,6 +71,12 @@ public class ChatMessage : BaseEntity
             ReadByDeviceIds.Add(deviceId);
             SetUpdated();
         }
+    }
+
+    public void AssignRisk(RiskScore risk)
+    {
+        Risk = risk ?? throw new ArgumentNullException(nameof(risk));
+        SetUpdated();
     }
 }
 
