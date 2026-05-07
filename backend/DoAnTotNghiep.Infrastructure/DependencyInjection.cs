@@ -2,6 +2,7 @@ using DoAnTotNghiep.Application.Common;
 using DoAnTotNghiep.Application.Email;
 using DoAnTotNghiep.Domain.Token;
 using DoAnTotNghiep.Infrastructure.Persistence;
+using DoAnTotNghiep.Infrastructure.Persistence.Redis;
 using DoAnTotNghiep.Infrastructure.Persistence.Email.Template;
 using DoAnTotNghiep.Infrastructure.Persistence.Storage;
 using DoAnTotNghiep.Infrastructure.Repositories;
@@ -21,6 +22,8 @@ public static class DependencyInjection
     {
         services.AddSingleton<MongoDbContext>();
         services.AddSingleton<MongoDbInitializer>();
+        services.AddScoped<ISwipeRepository, SwipeRepository>();
+        services.AddScoped<IBloomFilterService, BloomFilterService>();
         services.AddScoped<Domain.Users.IUserRepository, Repositories.UserRepository>();
         services.AddScoped<Domain.Users.ISessionRepository, Repositories.UserSessionRepository>();
         services.AddScoped<IJwtService, JwtService>();

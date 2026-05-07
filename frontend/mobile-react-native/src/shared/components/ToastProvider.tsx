@@ -1,17 +1,9 @@
-import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { Animated, StyleSheet, Text, View, Dimensions, Platform } from 'react-native';
 import Svg, { Path, Circle } from 'react-native-svg';
+import { registerToastHandler, type ToastOptions, type ToastType } from '../services/toast';
 
 const { width } = Dimensions.get('window');
-
-type ToastType = 'success' | 'error' | 'info';
-
-interface ToastOptions {
-  title: string;
-  message: string;
-  type?: ToastType;
-  duration?: number;
-}
 
 interface ToastContextType {
   showToast: (options: ToastOptions) => void;
@@ -44,7 +36,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [toast, setToast] = useState<ToastOptions | null>(null);
   const opacity = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(-100)).current;
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const hideToast = useCallback(() => {
     Animated.parallel([
@@ -84,6 +76,11 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       hideToast();
     }, options.duration || 3000);
   }, [opacity, translateY, hideToast]);
+
+  useEffect(() => {
+    registerToastHandler(showToast);
+    return () => registerToastHandler(null);
+  }, [showToast]);
 
   const getIcon = (type?: ToastType) => {
     switch (type) {

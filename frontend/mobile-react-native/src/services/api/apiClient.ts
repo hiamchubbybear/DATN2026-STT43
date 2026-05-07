@@ -3,7 +3,7 @@ import axiosRetry from 'axios-retry';
 import { Logger } from '../../shared/utils/logger';
 import { useAuthStore } from '../../store/authStore';
 import { refreshAuthToken } from './tokenRefresh';
-import Toast from 'react-native-toast-message';
+import { toast } from '../../shared/services/toast';
 
 // Normalize errors to a standard format
 export interface ApiError {
@@ -108,13 +108,7 @@ apiClient.interceptors.response.use(
 
     // Show global toast for non-401 errors (401 is handled above)
     if (error.response?.status !== 401) {
-      Toast.show({
-        type: 'error',
-        text1: 'API Error',
-        text2: message,
-        position: 'top',
-        topOffset: 60,
-      });
+      toast.show({ type: 'error', title: 'API Error', message });
     }
 
     return Promise.reject(errorObj);

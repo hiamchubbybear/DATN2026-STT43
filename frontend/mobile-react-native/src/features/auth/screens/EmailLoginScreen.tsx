@@ -9,7 +9,6 @@ import {
   Platform,
   TouchableWithoutFeedback,
   Keyboard,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -26,9 +25,8 @@ import { useToast } from '../../../shared/components/ToastProvider';
 export default function EmailLoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [focusedInput, setFocusedInput] = useState<string | null>(null);
+  const [focusedInput, setFocusedInput] = useState<'email' | 'password' | null>(null);
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const setAuth = useAuthStore(state => state.setAuth);
   const { showToast } = useToast();

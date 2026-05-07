@@ -1,4 +1,4 @@
-using DoAnTotNghiep.Domain.Common;
+﻿using DoAnTotNghiep.Domain.Common;
 using DoAnTotNghiep.Domain.Enum;
 
 namespace DoAnTotNghiep.Domain.Users;
@@ -11,8 +11,6 @@ public class UserProfile(Guid userId) : BaseEntity
     public Background Background { get; private set; } = new();
     public Lifestyle Lifestyle { get; private set; } = new();
     public DatingStyle DatingStyle { get; private set; } = new();
-
-
     public List<Photo> Photos { get; private set; } = [];
 
     // Existing fields for ProfileHandlers
