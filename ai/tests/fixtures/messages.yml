@@ -1,0 +1,111 @@
+# Tier-0 scorer regression fixtures.
+#
+# Each entry has:
+#   id              — short slug, used as the pytest parametrize id
+#   text            — raw input message
+#   lang            — "vi" or "en" (optional)
+#   expect_labels   — labels that MUST be present (subset, not equality)
+#   forbid_labels   — labels that MUST NOT be present (default: [])
+#   min_score       — score lower bound (inclusive, optional)
+#   max_score       — score upper bound (inclusive, optional)
+#
+# Add a fixture every time you tune the lexicons or weights — this file
+# is the gold eval set we'll hand to Sprint E2 for calibration.
+
+- id: scam_phone_and_zalo_vi
+  text: "Em ơi qua zalo mình nói chuyện cho tiện nhé 0987654321"
+  lang: vi
+  expect_labels: [off_platform_link, phone_leak]
+  min_score: 0.6
+
+- id: scam_phone_dotted_vi
+  text: "Liên hệ anh 0987.654.321 để biết thêm chi tiết"
+  lang: vi
+  expect_labels: [phone_leak]
+  min_score: 0.3
+
+- id: scam_phone_with_country_code
+  text: "Số điện thoại của em là +84 987 654 321 nhé"
+  lang: vi
+  expect_labels: [phone_leak]
+  min_score: 0.3
+
+- id: scam_money_request_vi
+  text: "Anh đang kẹt tiền em ck giúp anh 5 triệu nhé"
+  lang: vi
+  expect_labels: [money_request]
+  min_score: 0.4
+
+- id: scam_investment_pitch_vi
+  text: "Em theo sàn BO của anh đi, lệnh thắng 100% với USDT"
+  lang: vi
+  expect_labels: [investment_pitch]
+  min_score: 0.4
+
+- id: scam_widow_template_vi
+  text: "Anh góa vợ đã 3 năm rồi, một mình nuôi con đơn thân thật cô đơn lắm"
+  lang: vi
+  expect_labels: [widow_template, romance_bait]
+  min_score: 0.2
+
+- id: scam_telegram_link_en
+  text: "Hey honey, please add me on telegram t.me/scammer123"
+  lang: en
+  expect_labels: [off_platform_link]
+  min_score: 0.4
+
+- id: scam_email_leak_en
+  text: "Email me at john.doe@example.com when you're free"
+  lang: en
+  expect_labels: [email_leak]
+  min_score: 0.2
+
+- id: scam_eth_address_money_en
+  text: "Please send money in ETH to 0xAbCdEf0123456789012345678901234567890123 right now"
+  lang: en
+  expect_labels: [crypto_address, money_request]
+  min_score: 0.5
+
+- id: scam_widower_military_en
+  text: "I am a widower, deployed overseas as a military officer on an oil rig"
+  lang: en
+  expect_labels: [widow_template, military_template, romance_bait]
+  min_score: 0.3
+
+- id: scam_gift_card_en
+  text: "Could you buy me a steam card for $50? I'll pay you back tomorrow"
+  lang: en
+  expect_labels: [gift_card_request]
+  min_score: 0.4
+
+- id: scam_bank_account_vi
+  text: "STK Vietcombank của anh là 1234567890, em chuyển khoản giúp anh nhé"
+  lang: vi
+  expect_labels: [bank_number, money_request]
+  min_score: 0.4
+
+- id: benign_smalltalk_vi
+  text: "Hôm nay em đi cà phê không?"
+  lang: vi
+  expect_labels: []
+  forbid_labels: [phone_leak, off_platform_link, money_request]
+  max_score: 0.05
+
+- id: benign_smalltalk_en
+  text: "What's your favorite movie?"
+  lang: en
+  expect_labels: []
+  forbid_labels: [phone_leak, off_platform_link, money_request]
+  max_score: 0.05
+
+- id: benign_long_innocuous_en
+  text: "I work as a software engineer in HCMC, I love hiking on weekends and reading sci-fi"
+  lang: en
+  expect_labels: []
+  max_score: 0.05
+
+- id: benign_empty
+  text: " "
+  lang: en
+  expect_labels: []
+  max_score: 0.0

@@ -1,0 +1,92 @@
+# English scam-keyword lexicon.
+# Phrases are matched case-insensitively with word boundaries.
+# Keep entries 2+ characters; single tokens like "wa" produce false positives.
+
+off_platform:
+  - zalo
+  - telegram
+  - whatsapp
+  - wechat
+  - signal app
+  - text me at
+  - dm me on
+  - message me on
+  - add me on
+  - contact me on
+  - hangouts
+
+money:
+  - send money
+  - wire money
+  - western union
+  - moneygram
+  - lend me
+  - need money
+  - urgent funds
+  - emergency funds
+  - money transfer
+  - bank transfer
+
+investment:
+  - investment opportunity
+  - guaranteed return
+  - guaranteed profit
+  - signal group
+  - copy trade
+  - mining pool
+  - forex signal
+  - binary options
+  - bitcoin
+  - ethereum
+  - usdt
+
+gift_card:
+  - gift card
+  - steam card
+  - google play card
+  - itunes card
+  - amazon card
+  - apple card
+
+romance_bait:
+  - widow
+  - widower
+  - lonely
+  - single father
+  - single mother
+  - god fearing
+  - god-fearing
+
+widow:
+  - widow
+  - widower
+  - my wife passed
+  - my husband passed
+  - my late wife
+  - my late husband
+
+military:
+  - military officer
+  - army officer
+  - navy officer
+  - marine corps
+  - deployed overseas
+  - oil rig
+  - oil platform
+  - peacekeeping mission
+  - united nations soldier
+
+fast_escalation:
+  - marry me
+  - settle down
+  - immigrate
+  - relocate to
+  - move to your country
+  - love you forever
+  - my soulmate
+
+bank:
+  - account number
+  - routing number
+  - swift code
+  - iban

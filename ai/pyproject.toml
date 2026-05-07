@@ -35,6 +35,9 @@ build-backend = "setuptools.build_meta"
 include = ["app*"]
 exclude = ["tests*", "data*", "models*", "notebooks*", "scripts*"]
 
+[tool.setuptools.package-data]
+"app.detectors.lexicons" = ["*.yml"]
+
 [tool.ruff]
 line-length = 100
 target-version = "py311"

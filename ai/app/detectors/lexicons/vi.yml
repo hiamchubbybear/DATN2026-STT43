@@ -1,0 +1,102 @@
+# Vietnamese scam-keyword lexicon.
+# Phrases are matched case-insensitively with word boundaries (Unicode-aware).
+# Add cautiously — false positives erode user trust.
+
+off_platform:
+  - zalo
+  - kết bạn zalo
+  - kb zalo
+  - add zalo
+  - add zl
+  - kết bạn zl
+  - telegram
+  - whatsapp
+  - wechat
+  - ib riêng
+  - inbox riêng
+  - nhắn riêng
+  - nhắn ngoài
+  - sang zalo
+
+money:
+  - chuyển khoản
+  - ck cho anh
+  - ck giúp anh
+  - ck giúp em
+  - nạp tiền
+  - mượn tiền
+  - vay nóng
+  - cho mượn
+  - mượn tạm
+  - cần gấp tiền
+  - kẹt tiền
+  - chuyển khoản gấp
+
+investment:
+  - đầu tư
+  - sàn bo
+  - sàn binary
+  - lệnh thắng
+  - kèo ngon
+  - copy trade
+  - sàn forex
+  - tín hiệu giao dịch
+  - lãi suất cao
+  - usdt
+  - bitcoin
+
+gift_card:
+  - thẻ cào
+  - thẻ steam
+  - thẻ google play
+  - thẻ itunes
+  - thẻ apple
+  - mua thẻ giúp
+
+romance_bait:
+  - góa
+  - vợ mất
+  - chồng mất
+  - một mình nuôi con
+  - đơn thân
+  - cô đơn lắm
+  - chia tay người yêu cũ
+
+widow:
+  - góa
+  - vợ mất
+  - chồng mất
+  - vợ đã mất
+  - chồng đã mất
+  - vợ qua đời
+  - chồng qua đời
+
+military:
+  - quân nhân mỹ
+  - lính mỹ
+  - lính nato
+  - đóng quân
+  - căn cứ quân sự
+  - liên hợp quốc
+  - kỹ sư dầu khí
+  - giàn khoan dầu
+
+fast_escalation:
+  - kết hôn với anh
+  - lấy anh đi
+  - về với anh
+  - sống chung
+  - định cư cùng
+  - bảo lãnh em
+  - yêu em mãi mãi
+
+bank:
+  - stk
+  - số tài khoản
+  - tài khoản ngân hàng
+  - vietcombank
+  - techcombank
+  - vietinbank
+  - bidv
+  - agribank
+  - sacombank

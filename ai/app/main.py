@@ -12,9 +12,10 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from app import __version__
-from app.api import health
+from app.api import health, message
 from app.core.config import get_settings
 from app.core.logging import configure_logging, get_logger
+from app.detectors import lexicon
 
 
 @asynccontextmanager
@@ -22,6 +23,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     settings = get_settings()
     configure_logging(level=settings.log_level, json_logs=settings.is_production)
     log = get_logger("app.main")
+    lexicon.warm_up()
     log.info(
         "ai_service_starting",
         env=settings.env,
@@ -46,6 +48,7 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
     app.include_router(health.router)
+    app.include_router(message.router)
     return app
 
 
