@@ -2,6 +2,7 @@ using DoAnTotNghiep.Application.Common;
 using DoAnTotNghiep.Application.Email;
 using DoAnTotNghiep.Domain.Token;
 using DoAnTotNghiep.Infrastructure.Persistence;
+using DoAnTotNghiep.Infrastructure.Persistence.Redis;
 using DoAnTotNghiep.Infrastructure.Security;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,6 +18,8 @@ public static class DependencyInjection
     {
         services.AddSingleton<MongoDbContext>();
         services.AddSingleton<MongoDbInitializer>();
+        services.AddScoped<ISwipeRepository, SwipeRepository>();
+        services.AddScoped<IBloomFilterService, BloomFilterService>();
         services.AddScoped<Domain.Users.IUserRepository, Repositories.UserRepository>();
         services.AddScoped<Domain.Users.ISessionRepository, Repositories.UserSessionRepository>();
         services.AddScoped<IJwtService, JwtService>();
@@ -27,7 +30,6 @@ public static class DependencyInjection
         services.AddScoped<IEmailTemplateService, EmailTemplateService>();
         services.AddTransient<IPasswordResetToken, PasswordResetTokenRepository>();
         services.AddTransient<ITokenGenerator, TokenGenerateService>();
-        services.AddScoped<IJwtService, JwtService>();
         var redisSettings = configuration.GetSection("Redis").Get<RedisSettings>();
         
         services.AddMemoryCache();

@@ -1,4 +1,4 @@
-using DoAnTotNghiep.Domain.Common;
+﻿using DoAnTotNghiep.Domain.Common;
 
 namespace DoAnTotNghiep.Domain.Users;
 
@@ -6,7 +6,8 @@ public class UserProfile(Guid userId) : BaseEntity
 {
     public Guid UserId { get; private set; } = userId;
 
-    
+    // Allow MongoDB to deserialize legacy `Photos` field.
+    public List<Photo> Photos { get; private set; } = [];
     public string Bio { get; private set; } = string.Empty;
     public string Gender { get; private set; } = string.Empty;
     public string InterestedIn { get; private set; } = string.Empty;

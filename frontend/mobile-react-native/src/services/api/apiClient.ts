@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { Logger } from '../../shared/utils/logger';
+import { toast } from '../../shared/services/toast';
 
 // Normalize errors to a standard format
 export interface ApiError {
@@ -8,8 +9,7 @@ export interface ApiError {
 }
 
 export const apiClient = axios.create({
-  // Fallback to JSONPlaceholder for demo purposes
-  baseURL: process.env.EXPO_PUBLIC_API_URL || 'https://jsonplaceholder.typicode.com',
+  baseURL: process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:5017',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -42,10 +42,10 @@ apiClient.interceptors.response.use(
       statusCode: error.response?.status,
     };
     
-    Logger.error(`[API RS Error] ${error.config?.url} - ${errorObj.statusCode}: ${errorObj.message}`);
-    
-    // Auto-logout logic on 401 could go here using Zustand's getState()
-    // if (errorObj.statusCode === 401) useAuthStore.getState().logout();
+    Logger.error(`[API Error] ${error.config?.url} - ${errorObj.statusCode}: ${errorObj.message}`);
+    if (error.response?.status !== 401) {
+      toast.show({ type: 'error', title: 'API Error', message: errorObj.message });
+    }
 
     return Promise.reject(errorObj);
   }
