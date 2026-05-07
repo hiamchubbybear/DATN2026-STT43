@@ -1,156 +1,128 @@
 import React from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Image } from 'react-native';
+import { Alert, RefreshControl, StyleSheet, Text, TouchableOpacity, View, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { normalizeFont, radius, scale, spacing, verticalScale } from '../../../shared/utils/responsive';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { notificationService, type NotificationDto } from '../../../services/api/notificationService';
 
-// const matchBubbles = [
-//   {
-//     id: 'likes',
-//     type: 'likes',
-//     label: '20+ Likes',
-//     image: require('../../../../assets/images/anh2.jpg'),
-//   },
-//   {
-//     id: 'm-1',
-//     type: 'match',
-//     label: 'Chloe',
-//     image: require('../../../../assets/images/anh1.jpg'),
-//     unread: true,
-//   },
-//   {
-//     id: 'm-2',
-//     type: 'match',
-//     label: 'Sofia',
-//     image: require('../../../../assets/images/anh3.jpg'),
-//     unread: true,
-//   },
-//   {
-//     id: 'm-3',
-//     type: 'match',
-//     label: 'Leilani',
-//     image: require('../../../../assets/images/anh2.jpg'),
-//     unread: false,
-//   },
-// ];
+function formatTime(iso: string) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  const diffMs = Date.now() - d.getTime();
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 1) return 'Just now';
+  if (mins < 60) return `${mins}m`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h`;
+  const days = Math.floor(hrs / 24);
+  return `${days}d`;
+}
 
-const alertItems = [
-  {
-    id: 'a-1',
-    name: 'Profile Boost',
-    message: 'Your profile was shown to 50 more people today.',
-    time: '1h',
-    unread: true,
-    icon: 'flash',
-    tone: '#F27121',
-    bg: '#FFF1E6',
-  },
-  {
-    id: 'a-2',
-    name: 'New Match!',
-    message: 'You and Leilani liked each other. Send a message!',
-    time: '2h',
-    unread: false,
-    icon: 'heart',
-    tone: '#8A2387',
-    bg: '#F5E9FF',
-  },
-  {
-    id: 'a-3',
-    name: 'Profile Verified',
-    message: 'Your identity has been successfully verified.',
-    time: 'Yesterday',
-    unread: false,
-    icon: 'shield-checkmark',
-    tone: '#EE3F57',
-    bg: '#FDECEF',
-  },
-  {
-    id: 'a-4',
-    name: 'Weekend Premium Offer',
-    message: 'Get 50% off Premium to see who liked you.',
-    time: '2d',
-    unread: false,
-    icon: 'star',
-    tone: '#F27121',
-    bg: '#FFF1E6',
-  },
-];
+function toneForType(type?: string) {
+  switch ((type || '').toLowerCase()) {
+    case 'match':
+      return { icon: 'heart' as const, tone: '#8A2387', bg: '#F5E9FF' };
+    case 'message':
+      return { icon: 'chatbubble' as const, tone: '#3B82F6', bg: '#EFF6FF' };
+    case 'warning':
+      return { icon: 'warning' as const, tone: '#F59E0B', bg: '#FFFBEB' };
+    case 'admin':
+      return { icon: 'shield-checkmark' as const, tone: '#EE3F57', bg: '#FDECEF' };
+    default:
+      return { icon: 'information-circle' as const, tone: '#6B7280', bg: '#F3F4F6' };
+  }
+}
 
 export const NotificationsMainScreen = () => {
+  const qc = useQueryClient();
+  const { data, isLoading, isRefetching, refetch } = useQuery({
+    queryKey: ['notifications'],
+    queryFn: notificationService.list,
+  });
+
+  const del = useMutation({
+    mutationFn: (id: string) => notificationService.delete(id),
+    onMutate: async (id) => {
+      await qc.cancelQueries({ queryKey: ['notifications'] });
+      const prev = qc.getQueryData<NotificationDto[]>(['notifications']);
+      qc.setQueryData<NotificationDto[]>(['notifications'], (cur) => (cur || []).filter((x) => x.id !== id));
+      return { prev };
+    },
+    onError: (_err, _id, ctx) => {
+      if (ctx?.prev) qc.setQueryData(['notifications'], ctx.prev);
+    },
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: ['notifications'] });
+    },
+  });
+
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <ScrollView
         style={styles.container}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => refetch()} />}
       >
         <Text style={styles.title}>Notifications</Text>
 
-        {/* <Text style={styles.sectionTitleAccent}>New Matches</Text> */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.bubbleRow}
-        >
-          {/* {matchBubbles.map((item) => (
-            <View key={item.id} style={styles.bubbleItem}>
-              <View
-                style={[
-                  styles.bubbleRing,
-                  item.type === 'likes' ? styles.bubbleRingLikes : styles.bubbleRingMatch,
-                ]}
-              >
-                <Image
-                  source={item.image}
-                  style={[styles.bubbleAvatar, item.type === 'likes' && styles.bubbleBlur]}
-                />
-                {item.type === 'likes' ? (
-                  <View style={styles.likeBadge}>
-                    <Ionicons name="heart" size={normalizeFont(12)} color="#FFFFFF" />
-                  </View>
-                ) : null}
-                {item.type === 'match' && item.unread ? <View style={styles.unreadDot} /> : null}
-              </View>
-              <Text style={styles.bubbleLabel}>{item.label}</Text>
-            </View>
-          ))} */}
-        </ScrollView>
-
         <Text style={styles.sectionTitle}>Alerts & Activity</Text>
         <View style={styles.list}>
-          {alertItems.map((item) => (
-            <View key={item.id} style={styles.listRow}>
+          {!isLoading && (!data || data.length === 0) ? (
+            <View style={styles.emptyWrap}>
+              <Ionicons name="notifications-off-outline" size={normalizeFont(22)} color="#9CA3AF" />
+              <Text style={styles.emptyText}>No notifications yet</Text>
+            </View>
+          ) : null}
+
+          {(data || []).map((item) => {
+            const t = toneForType(item.type);
+            return (
+            <TouchableOpacity
+              key={item.id}
+              style={styles.listRow}
+              activeOpacity={0.85}
+              onLongPress={() =>
+                Alert.alert('Xóa thông báo', 'Bạn muốn xóa thông báo này?', [
+                  { text: 'Hủy', style: 'cancel' },
+                  { text: 'Xóa', style: 'destructive', onPress: () => del.mutate(item.id) },
+                ])
+              }
+            >
               <View style={styles.leading}>
-                <View style={[styles.alertIconWrap, { backgroundColor: item.bg }]}
-                >
+                <View style={[styles.alertIconWrap, { backgroundColor: t.bg }]}>
                   <Ionicons
-                    name={
-                      item.icon === 'heart'
-                        ? 'heart'
-                        : item.icon === 'shield-checkmark'
-                        ? 'shield-checkmark'
-                        : item.icon === 'star'
-                        ? 'star'
-                        : 'flash'
-                    }
+                    name={t.icon}
                     size={normalizeFont(18)}
-                    color={item.tone}
+                    color={t.tone}
                   />
                 </View>
               </View>
 
               <View style={styles.listBody}>
-                <Text style={[styles.listTitle, item.unread && styles.listTitleUnread]}>{item.name}</Text>
-                <Text style={styles.listMessage} numberOfLines={1}>{item.message}</Text>
+                <Text style={styles.listTitle}>{item.title}</Text>
+                <Text style={styles.listMessage} numberOfLines={1}>{item.content}</Text>
+                <Text style={styles.typeText}>{(item.type || 'info').toUpperCase()}</Text>
               </View>
 
               <View style={styles.listMeta}>
-                <Text style={styles.timeText}>{item.time}</Text>
-                {item.unread ? <View style={styles.timeDot} /> : null}
+                <Text style={styles.timeText}>{formatTime(item.createdAt)}</Text>
+                <TouchableOpacity
+                  onPress={() =>
+                    Alert.alert('Xóa thông báo', 'Bạn muốn xóa thông báo này?', [
+                      { text: 'Hủy', style: 'cancel' },
+                      { text: 'Xóa', style: 'destructive', onPress: () => del.mutate(item.id) },
+                    ])
+                  }
+                  hitSlop={10}
+                  style={styles.trashBtn}
+                >
+                  <Ionicons name="trash-outline" size={normalizeFont(18)} color="#9CA3AF" />
+                </TouchableOpacity>
               </View>
-            </View>
-          ))}
+            </TouchableOpacity>
+          )})}
         </View>
       </ScrollView>
       <View style={styles.homeIndicator} />
@@ -172,72 +144,6 @@ const styles = StyleSheet.create({
     color: '#333333',
     marginBottom: spacing(10),
   },
-  sectionTitleAccent: {
-    fontSize: normalizeFont(12),
-    fontWeight: '700',
-    color: '#EE3F57',
-    letterSpacing: 0.4,
-    marginBottom: spacing(8),
-  },
-  bubbleRow: {
-    paddingBottom: spacing(6),
-    gap: spacing(16),
-  },
-  bubbleItem: {
-    alignItems: 'center',
-  },
-  bubbleRing: {
-    width: scale(64),
-    height: scale(64),
-    borderRadius: radius(32),
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-  },
-  bubbleRingLikes: {
-    borderColor: '#8A2387',
-  },
-  bubbleRingMatch: {
-    borderColor: '#EE3F57',
-  },
-  bubbleAvatar: {
-    width: scale(58),
-    height: scale(58),
-    borderRadius: radius(29),
-  },
-  bubbleBlur: {
-    opacity: 0.35,
-  },
-  bubbleLabel: {
-    marginTop: spacing(6),
-    fontSize: normalizeFont(11),
-    fontWeight: '600',
-    color: '#333333',
-  },
-  unreadDot: {
-    position: 'absolute',
-    right: -2,
-    top: -2,
-    width: scale(10),
-    height: scale(10),
-    borderRadius: radius(5),
-    backgroundColor: '#EE3F57',
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
-  },
-  likeBadge: {
-    position: 'absolute',
-    right: -2,
-    bottom: -2,
-    width: scale(18),
-    height: scale(18),
-    borderRadius: radius(9),
-    backgroundColor: '#8A2387',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
-  },
   sectionTitle: {
     marginTop: spacing(8),
     marginBottom: spacing(6),
@@ -248,6 +154,19 @@ const styles = StyleSheet.create({
   list: {
     borderTopWidth: 1,
     borderTopColor: '#E2E8F0',
+  },
+  emptyWrap: {
+    paddingVertical: spacing(18),
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing(8),
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+  },
+  emptyText: {
+    fontSize: normalizeFont(13),
+    color: '#9CA3AF',
+    fontWeight: '600',
   },
   listRow: {
     flexDirection: 'row',
@@ -277,13 +196,17 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#333333',
   },
-  listTitleUnread: {
-    color: '#111111',
-  },
   listMessage: {
     marginTop: spacing(4),
     fontSize: normalizeFont(12),
     color: '#ADAFBB',
+  },
+  typeText: {
+    marginTop: spacing(6),
+    fontSize: normalizeFont(10),
+    color: '#9CA3AF',
+    fontWeight: '700',
+    letterSpacing: 0.6,
   },
   listMeta: {
     alignItems: 'flex-end',
@@ -293,11 +216,9 @@ const styles = StyleSheet.create({
     fontSize: normalizeFont(11),
     color: '#ADAFBB',
   },
-  timeDot: {
-    width: scale(8),
-    height: scale(8),
-    borderRadius: radius(4),
-    backgroundColor: '#EE3F57',
+  trashBtn: {
+    padding: spacing(6),
+    borderRadius: radius(10),
   },
   bottomNav: {
     position: 'absolute',

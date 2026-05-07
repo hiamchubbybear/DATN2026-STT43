@@ -1,4 +1,5 @@
 using DoAnTotNghiep.Application.Users;
+using DoAnTotNghiep.Domain.Notifications;
 using DoAnTotNghiep.Domain.Token;
 using DoAnTotNghiep.Domain.Users;
 using MongoDB.Bson;
@@ -54,6 +55,7 @@ public class MongoDbContext
 
     public IMongoCollection<UserProfile> UserProfiles => _database.GetCollection<UserProfile>("user_profiles");
     public IMongoCollection<DoAnTotNghiep.Domain.Chat.ChatMessage> ChatMessages => _database.GetCollection<DoAnTotNghiep.Domain.Chat.ChatMessage>("chat_messages");
+    public IMongoCollection<Notification> Notifications => _database.GetCollection<Notification>("notifications");
 }
 
 public class MongoDbInitializer
