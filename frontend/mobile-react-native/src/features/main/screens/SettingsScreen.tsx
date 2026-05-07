@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthStore } from '../../../store/authStore';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import { normalizeFont, radius, spacing } from '../../../shared/utils/responsive';
 
 const SettingsItem = ({ icon, label, color = '#111827', onPress, showArrow = true }: { 
   icon: keyof typeof Ionicons.glyphMap, 

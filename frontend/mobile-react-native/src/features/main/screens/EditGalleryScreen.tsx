@@ -89,6 +89,15 @@ export const EditGalleryScreen = () => {
   };
 
   const handleDeletePhoto = async (photoId: string) => {
+    if (photos.length <= 1) {
+      showToast({
+        type: 'error',
+        text1: 'Cannot Delete',
+        text2: 'You must have at least one photo.'
+      });
+      return;
+    }
+
     try {
       setSaving(true);
       await profileService.deletePhoto(photoId);
@@ -110,7 +119,36 @@ export const EditGalleryScreen = () => {
     }
   };
 
-  const slots = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+  const handleSetPrimary = async (photoId: string) => {
+    try {
+      setSaving(true);
+      await profileService.setPrimaryPhoto(photoId);
+      
+      // Update local state to reflect change
+      setPhotos(photos.map(p => ({
+        ...p,
+        isPrimary: p.id === photoId
+      })));
+
+      showToast({
+        type: 'success',
+        text1: 'Success',
+        text2: 'Primary photo updated'
+      });
+    } catch (error) {
+      Logger.error('Failed to set primary photo', error);
+      showToast({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Could not update primary photo'
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Show existing photos + one empty slot for adding more (up to 9)
+  const slots = Array.from({ length: Math.min(photos.length + 1, 9) }, (_, i) => i);
 
   if (loading) {
     return (
@@ -143,7 +181,20 @@ export const EditGalleryScreen = () => {
               <View key={index} style={styles.photoSlotContainer}>
                 {isUploaded ? (
                   <View style={styles.imageContainer}>
-                    <Image source={{ uri: photo.url }} style={styles.photoImage} />
+                    <TouchableOpacity 
+                      activeOpacity={0.9} 
+                      style={styles.flex}
+                      onPress={() => handleSetPrimary(photo.id)}
+                    >
+                      <Image source={{ uri: photo.url }} style={[styles.photoImage, photo.isPrimary && styles.primaryPhotoBorder]} />
+                    </TouchableOpacity>
+                    
+                    {photo.isPrimary && (
+                      <View style={styles.primaryBadge}>
+                        <Text style={styles.primaryText}>PRIMARY</Text>
+                      </View>
+                    )}
+
                     <TouchableOpacity 
                       style={styles.deleteBadge} 
                       onPress={() => handleDeletePhoto(photo.id)}
@@ -281,6 +332,29 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#FFFFFF',
     elevation: 3,
+    zIndex: 10,
+  },
+  primaryBadge: {
+    position: 'absolute',
+    bottom: 8,
+    left: 8,
+    right: 8,
+    backgroundColor: 'rgba(244, 63, 94, 0.9)',
+    paddingVertical: 4,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  primaryText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '800',
+  },
+  primaryPhotoBorder: {
+    borderWidth: 3,
+    borderColor: '#F43F5E',
+  },
+  flex: {
+    flex: 1,
   },
   plusIcon: {
     width: 32,

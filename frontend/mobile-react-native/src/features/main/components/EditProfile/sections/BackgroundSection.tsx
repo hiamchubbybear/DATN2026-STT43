@@ -1,0 +1,83 @@
+import React from 'react';
+import { Text, TextInput, TouchableOpacity, StyleSheet, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { EditProfileSection } from '../EditProfileSection';
+
+interface BackgroundSectionProps {
+  occupation: string;
+  setOccupation: (val: string) => void;
+  education: string;
+  onOpenModal: (type: string, title: string, options: string[]) => void;
+  onSave: () => void;
+  isSaving: boolean;
+}
+
+export const BackgroundSection = ({
+  occupation,
+  setOccupation,
+  education,
+  onOpenModal,
+  onSave,
+  isSaving
+}: BackgroundSectionProps) => {
+  return (
+    <EditProfileSection title="Background" onSave={onSave} isSaving={isSaving}>
+      <Text style={styles.label}>Occupation</Text>
+      <TextInput 
+        style={styles.input} 
+        value={occupation} 
+        onChangeText={setOccupation} 
+        placeholder="What do you do?" 
+        placeholderTextColor="#A1A1AA" 
+      />
+
+      <Text style={styles.label}>Education</Text>
+      <TouchableOpacity 
+        style={styles.selector} 
+        onPress={() => onOpenModal('education', 'Select Education', ['High School', 'Bachelor', 'Master', 'PhD'])}
+      >
+        <Text style={education ? styles.selectorText : styles.placeholderText}>{education || 'Select Education'}</Text>
+        <Ionicons name="chevron-down" size={20} color="#9CA3AF" />
+      </TouchableOpacity>
+    </EditProfileSection>
+  );
+};
+
+const styles = StyleSheet.create({
+  label: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#374151',
+    marginBottom: 8,
+    marginTop: 16,
+  },
+  input: {
+    height: 52,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    fontSize: 16,
+    color: '#111827',
+    borderWidth: 1,
+    borderColor: '#F3F4F6',
+  },
+  selector: {
+    height: 52,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: '#F3F4F6',
+  },
+  selectorText: {
+    fontSize: 16,
+    color: '#111827',
+  },
+  placeholderText: {
+    fontSize: 16,
+    color: '#9CA3AF',
+  },
+});

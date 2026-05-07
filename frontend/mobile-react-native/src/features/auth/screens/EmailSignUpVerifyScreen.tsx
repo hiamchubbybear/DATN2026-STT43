@@ -8,6 +8,7 @@ import Svg, { Path } from 'react-native-svg';
 import { authService } from '../../../services/api/authService';
 import { useAuthStore } from '../../../store/authStore';
 import { useToast } from '../../../shared/components/ToastProvider';
+import { normalizeFont, radius, scale, spacing, verticalScale } from '../../../shared/utils/responsive';
 
 const { width } = Dimensions.get('window');
 

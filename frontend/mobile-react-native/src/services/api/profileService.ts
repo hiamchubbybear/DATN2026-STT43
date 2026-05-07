@@ -62,6 +62,11 @@ export const profileService = {
     return response.data;
   },
 
+  setPrimaryPhoto: async (photoId: string) => {
+    const response = await apiClient.patch(`/api/users/photos/${photoId}/primary`);
+    return response.data;
+  },
+
   updateProfile: async (data: any) => {
     const response = await apiClient.patch('/api/users/me/profile', data);
     return response.data;
@@ -79,6 +84,34 @@ export const profileService = {
 
   updateBio: async (data: { bio: string; gender: string; interestedIn: string }) => {
     const response = await apiClient.patch('/api/users/me/bio', data);
+    return response.data;
+  },
+
+  updateBasicInfo: async (data: { displayName: string; dob: string; gender: string; languages: string[] }) => {
+    const response = await apiClient.patch('/api/users/me/basic-info', data);
+    return response.data;
+  },
+
+  updateBackground: async (data: { education: string; occupation: string }) => {
+    const response = await apiClient.patch('/api/users/me/background', data);
+    return response.data;
+  },
+
+  updateLifestyle: async (data: {
+    drinking: string;
+    smoking: string;
+    socialLevel: string;
+    personalityType: string;
+    loveLanguage: string[];
+    hobbies: string[];
+    interests: string[];
+  }) => {
+    const response = await apiClient.patch('/api/users/me/lifestyle', data);
+    return response.data;
+  },
+
+  updateDatingStyle: async (data: { freeTimePrefer: string[]; dateStyle: string[] }) => {
+    const response = await apiClient.patch('/api/users/me/dating-style', data);
     return response.data;
   },
 };

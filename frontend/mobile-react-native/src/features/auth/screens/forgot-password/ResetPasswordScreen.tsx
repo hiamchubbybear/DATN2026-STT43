@@ -7,6 +7,7 @@ import { RootStackParamList } from '../../../../app/navigation/RootNavigator';
 import Svg, { Path } from 'react-native-svg';
 import { authService } from '../../../../services/api/authService';
 import { useToast } from '../../../../shared/components/ToastProvider';
+import { normalizeFont, radius, scale, spacing, verticalScale } from '../../../../shared/utils/responsive';
 
 export default function ResetPasswordScreen() {
   const [password, setPassword] = useState('');

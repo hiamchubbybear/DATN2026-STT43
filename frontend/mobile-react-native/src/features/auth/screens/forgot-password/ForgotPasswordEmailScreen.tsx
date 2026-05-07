@@ -8,6 +8,7 @@ import Svg, { Path } from 'react-native-svg';
 import { authService } from '../../../../services/api/authService';
 import { useToast } from '../../../../shared/components/ToastProvider';
 import { ActivityIndicator } from 'react-native';
+import { normalizeFont, radius, scale, spacing, verticalScale } from '../../../../shared/utils/responsive';
 
 export default function ForgotPasswordEmailScreen() {
   const [email, setEmail] = useState('');

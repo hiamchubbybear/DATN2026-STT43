@@ -17,6 +17,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../../app/navigation/RootNavigator';
 import { Ionicons } from '@expo/vector-icons';
+import Svg, { Path } from 'react-native-svg';
 import { authService } from '../../../services/api/authService';
 import { useAuthStore } from '../../../store/authStore';
 import { normalizeFont, radius, scale, spacing, verticalScale } from '../../../shared/utils/responsive';
@@ -85,10 +86,13 @@ export default function EmailLoginScreen() {
               Please enter your email address and password to log in.
             </Text>
 
-            <View style={styles.inputContainer}>
+            <View style={[
+              styles.inputContainer,
+              focusedInput === 'email' && styles.inputFocused
+            ]}>
               <Svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={styles.icon}>
-                <Path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke="#6B7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                <Path d="M22 6l-10 7L2 6" stroke="#6B7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                <Path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke={focusedInput === 'email' ? "#F43F5E" : "#6B7280"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                <Path d="M22 6l-10 7L2 6" stroke={focusedInput === 'email' ? "#F43F5E" : "#6B7280"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </Svg>
               <TextInput
                 style={styles.input}
@@ -99,13 +103,19 @@ export default function EmailLoginScreen() {
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
+                onFocus={() => setFocusedInput('email')}
+                onBlur={() => setFocusedInput(null)}
               />
             </View>
 
-            <View style={[styles.inputContainer, styles.marginTop]}>
+            <View style={[
+              styles.inputContainer, 
+              styles.marginTop,
+              focusedInput === 'password' && styles.inputFocused
+            ]}>
               <Svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={styles.icon}>
-                <Path d="M19 11H5c-1.1 0-2 .9-2 2v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7c0-1.1-.9-2-2-2z" stroke="#6B7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                <Path d="M7 11V7c0-2.76 2.24-5 5-5s5 2.24 5 5v4" stroke="#6B7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                <Path d="M19 11H5c-1.1 0-2 .9-2 2v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7c0-1.1-.9-2-2-2z" stroke={focusedInput === 'password' ? "#F43F5E" : "#6B7280"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                <Path d="M7 11V7c0-2.76 2.24-5 5-5s5 2.24 5 5v4" stroke={focusedInput === 'password' ? "#F43F5E" : "#6B7280"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </Svg>
               <TextInput
                 style={styles.input}
@@ -116,6 +126,8 @@ export default function EmailLoginScreen() {
                 secureTextEntry
                 autoCapitalize="none"
                 autoCorrect={false}
+                onFocus={() => setFocusedInput('password')}
+                onBlur={() => setFocusedInput(null)}
               />
             </View>
 
@@ -185,7 +197,7 @@ const styles = StyleSheet.create({
     lineHeight: verticalScale(22),
     marginBottom: spacing(32),
   },
-  inputWrapper: {
+  inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
@@ -199,6 +211,10 @@ const styles = StyleSheet.create({
   },
   icon: {
     marginRight: spacing(12),
+  },
+  inputFocused: {
+    borderColor: '#F43F5E',
+    backgroundColor: '#FFF1F2',
   },
   iconContainerFocused: {
     backgroundColor: '#FFF1F2',
