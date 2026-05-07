@@ -8,6 +8,7 @@ import { MessagesScreen } from "../../features/main/screens/MessagesScreen";
 import { NotificationsMainScreen } from "../../features/main/screens/NotificationsMainScreen";
 import { ProfileMainScreen } from "../../features/main/screens/ProfileMainScreen";
 import {
+  isTablet,
   normalizeFont,
   radius,
   scale,
@@ -40,14 +41,25 @@ const ICONS: Record<
 
 export const MainBottomTabs = () => {
   const insets = useSafeAreaInsets();
-  const tabBottomOffset =
+  const tabBottomInset =
     Platform.OS === "android" ? Math.max(insets.bottom, 10) : insets.bottom;
+  const tabBarBaseHeight = scale(
+    isTablet ? 53 : Platform.OS === "ios" ? 47 : 45
+  );
+  const tabBarTotalHeight = tabBarBaseHeight + tabBottomInset;
 
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarStyle: [styles.tabBar, { bottom: tabBottomOffset }],
+        sceneContainerStyle: { paddingBottom: tabBarTotalHeight },
+        tabBarStyle: [
+          styles.tabBar,
+          {
+            height: tabBarTotalHeight,
+            paddingBottom: tabBottomInset,
+          },
+        ],
         tabBarItemStyle: styles.tabButton,
         tabBarLabel: () => null,
         tabBarActiveTintColor: "#EE3F57",
@@ -87,7 +99,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    height: scale(58),
     borderRadius: 0,
     backgroundColor: "#ECEFF3",
     borderTopWidth: 0,
