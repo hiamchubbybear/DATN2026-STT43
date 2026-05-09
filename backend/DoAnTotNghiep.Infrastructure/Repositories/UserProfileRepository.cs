@@ -1,3 +1,4 @@
+using DoAnTotNghiep.Application.Common.Extensions;
 using DoAnTotNghiep.Domain.Enum;
 using DoAnTotNghiep.Domain.Users;
 using DoAnTotNghiep.Infrastructure.Persistence;
@@ -37,53 +38,24 @@ public class UserProfileRepository : IUserProfileRepository
     public async Task<List<UserProfile>> GetCandidatesAsync(UserProfile me, int skip, int take)
     {
         var builder = Builders<UserProfile>.Filter;
-        var notMe = builder.Ne(x => x.UserId, me.UserId);
-        var genderFilter = me.LookingFor switch
-        {
-            GenderPreference.Male =>
-                builder.Eq(x => x.Gender, Gender.Male),
+        var myGender = me.Gender;
+        var myLookingFor = me.LookingFor;
+        var filter = builder.Ne(x => x.UserId, me.UserId);
 
-            GenderPreference.Female =>
-                builder.Eq(x => x.Gender, Gender.Female),
-
-            GenderPreference.Everyone =>
-                builder.In(x => x.Gender, new[]
-                {
-                Gender.Male,
-                Gender.Female,
-                Gender.Other
-                }),
-
-            _ => builder.Empty
-        };
-
-        var myGenderAsPreference = me.Gender switch
-        {
-            Gender.Male => GenderPreference.Male,
-            Gender.Female => GenderPreference.Female,
-            _ => GenderPreference.Everyone
-        };
-
-        var reverseFilter = builder.Or(
+        filter &= builder.Or(
             builder.Eq(x => x.LookingFor, GenderPreference.Everyone),
-            builder.Eq(x => x.LookingFor, myGenderAsPreference)
+            builder.Eq(x => x.LookingFor, myGender.ToPreference())
         );
 
+        if(myLookingFor != GenderPreference.Everyone)
+        {
+            filter &= builder.Eq(x => x.BasicInfo.Gender, myLookingFor.ToGender());
+        }
         var minDob = DateTime.UtcNow.AddYears(-me.MaxAgePreference);
         var maxDob = DateTime.UtcNow.AddYears(-me.MinAgePreference);
 
-        var ageFilter = builder.And(
-            builder.Gte(x => x.BasicInfo.Dob, minDob),
-            builder.Lte(x => x.BasicInfo.Dob, maxDob)
-        );
-
-        var filter = builder.And(
-            notMe,
-            genderFilter,
-            reverseFilter,
-            ageFilter
-        );
-
+        filter &= builder.Gte(x => x.BasicInfo.Dob, minDob) &
+                  builder.Lte(x => x.BasicInfo.Dob, maxDob);
         return await _profiles
             .Find(filter)
             .Skip(skip)

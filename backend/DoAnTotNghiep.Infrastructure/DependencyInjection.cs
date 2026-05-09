@@ -11,6 +11,9 @@ using DoAnTotNghiep.Infrastructure.Chat;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using DoAnTotNghiep.Application.Users.Recommendation.Services;
+using DoAnTotNghiep.Infrastructure.Persistence.Geo;
+using DoAnTotNghiep.Infrastructure.Persistence.Redis;
 
 namespace DoAnTotNghiep.Infrastructure;
 
@@ -38,6 +41,10 @@ public static class DependencyInjection
         services.AddScoped<ICurrentUserService, CurrentUserService>();
         var redisSettings = configuration.GetSection("Redis").Get<RedisSettings>();
         
+        services.AddScoped<IRecommendationScoringService, RecommendationScoringService>();
+        services.AddScoped<IGeoService, GeoService>();
+        services.AddScoped<ISeenUserService, SeenUserService>();
+
         services.AddMemoryCache();
         services.AddSingleton<ICacheService>(sp => 
         {

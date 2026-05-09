@@ -64,6 +64,11 @@ public class UserProfile(Guid userId) : BaseEntity
 
     public void UpdateLocation(double latitude, double longitude, string locationName)
     {
+        if (latitude < -90 || latitude > 90)
+            throw new ArgumentException("Invalid latitude");
+
+        if (longitude < -180 || longitude > 180)
+            throw new ArgumentException("Invalid longitude");
         Latitude = latitude;
         Longitude = longitude;
         LocationName = locationName?.Trim() ?? string.Empty;
@@ -87,11 +92,26 @@ public class UserProfile(Guid userId) : BaseEntity
 
     public void AddPhoto(Photo photo)
     {
+        if (photo == null)
+            throw new ArgumentNullException(nameof(photo));
+
         if (!_photos.Any())
         {
             photo.SetPrimary(true);
         }
-
+        else
+        {
+            if (photo.IsPrimary)
+            {
+                foreach (var p in _photos)
+                    p.SetPrimary(false);
+            }
+            else
+            {
+                if (!_photos.Any(p => p.IsPrimary))
+                    photo.SetPrimary(true);
+            }
+        }
         photo.SetOrder(_photos.Count);
         _photos.Add(photo);
         SetUpdated();
@@ -180,6 +200,7 @@ public class BasicInfo
     public string DisplayName { get; private set; } = string.Empty;
     public DateTime Dob { get; private set; }
     public Gender Gender { get; private set; } = Gender.Other;
+    public int Age => DateTime.Now.Year - Dob.Year - (DateTime.UtcNow.DayOfYear < Dob.DayOfYear ? 1 : 0);
     public List<string> Languages { get; private set; } = new();
 
     public void Update(string name, DateTime dob, Gender gender, List<string> languages)
