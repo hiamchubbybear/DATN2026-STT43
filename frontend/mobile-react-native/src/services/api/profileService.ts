@@ -114,5 +114,10 @@ export const profileService = {
     const response = await apiClient.patch('/api/users/me/dating-style', data);
     return response.data;
   },
+  
+  getProfile: async (userId: string) => {
+    const response = await apiClient.get(`/api/users/${userId}`);
+    return response.data.data;
+  },
 };
 

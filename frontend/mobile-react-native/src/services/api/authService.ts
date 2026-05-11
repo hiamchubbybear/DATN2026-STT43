@@ -1,8 +1,14 @@
 import { apiClient } from './apiClient';
+import { getDeviceInfo } from '../../shared/utils/deviceUtils';
 
 export const authService = {
   login: async (email: string, password: string) => {
-    const response = await apiClient.post('/api/auth/login', { email, password });
+    const deviceInfo = getDeviceInfo();
+    const response = await apiClient.post('/api/auth/login', { 
+      email, 
+      password,
+      ...deviceInfo
+    });
     return response.data;
   },
 
@@ -41,7 +47,11 @@ export const authService = {
   },
 
   googleLogin: async (idToken: string) => {
-    const response = await apiClient.post('/api/auth/google-login', { idToken });
+    const deviceInfo = getDeviceInfo();
+    const response = await apiClient.post('/api/auth/google-login', { 
+      idToken,
+      ...deviceInfo
+    });
     return response.data;
   },
 
