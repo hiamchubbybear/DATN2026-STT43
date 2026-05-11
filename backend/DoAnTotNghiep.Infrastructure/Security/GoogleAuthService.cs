@@ -24,11 +24,16 @@ public class GoogleAuthService : IGoogleAuthService
         try
         {
             var clientId = _configuration.GetValue<string>("Oauth2:Google:ClientId");
+            var iosClientId = "792593212502-gtpc459mcq4qe1gqm4q4b57m1e0ouq26.apps.googleusercontent.com";
             
             var settings = new GoogleJsonWebSignature.ValidationSettings();
-            if (!string.IsNullOrEmpty(clientId))
+            var audiences = new List<string>();
+            if (!string.IsNullOrEmpty(clientId)) audiences.Add(clientId);
+            if (!string.IsNullOrEmpty(iosClientId)) audiences.Add(iosClientId);
+            
+            if (audiences.Any())
             {
-                settings.Audience = new List<string> { clientId };
+                settings.Audience = audiences;
             }
             
             var payload = await GoogleJsonWebSignature.ValidateAsync(idToken, settings);

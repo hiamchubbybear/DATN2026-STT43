@@ -26,6 +26,7 @@ public record UserProfileDto(
     int MaxDistanceKm);
 
 public record GetMyProfileQuery(Guid UserId) : IRequest<UserProfileDto>;
+public record GetUserProfileQuery(Guid UserId) : IRequest<UserProfileDto?>;
 
 public record UserSearchDto(Guid UserId, string DisplayName, string Email);
 public record SearchUsersQuery() : IRequest<List<UserSearchDto>>;

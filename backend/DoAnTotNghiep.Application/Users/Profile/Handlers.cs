@@ -12,8 +12,31 @@ public class ProfileHandlers(IUserProfileRepository profileRepository) :
     IRequestHandler<UpdateBackgroundCommand, bool>,
     IRequestHandler<UpdateLifestyleCommand, bool>,
     IRequestHandler<UpdateDatingStyleCommand, bool>,
-    IRequestHandler<UpdateProfileCommand, bool>
+    IRequestHandler<UpdateProfileCommand, bool>,
+    IRequestHandler<GetUserProfileQuery, UserProfileDto?>
 {
+    public async Task<UserProfileDto?> Handle(GetUserProfileQuery request, CancellationToken cancellationToken)
+    {
+        var profile = await profileRepository.GetByUserIdAsync(request.UserId);
+        if (profile == null) return null;
+
+        return new UserProfileDto(
+            request.UserId,
+            new BasicInfoDto(profile.BasicInfo.DisplayName, profile.BasicInfo.Dob, profile.BasicInfo.Gender, profile.BasicInfo.Languages),
+            new BackgroundDto(profile.Background.Education, profile.Background.Occupation),
+            new LifestyleDto(profile.Lifestyle.Drinking, profile.Lifestyle.Smoking, profile.Lifestyle.SocialLevel, profile.Lifestyle.PersonalityType, profile.Lifestyle.LoveLanguage, profile.Lifestyle.Hobbies, profile.Lifestyle.Interests),
+            new DatingStyleDto(profile.DatingStyle.FreeTimePrefer, profile.DatingStyle.DateStyle),
+            profile.Photos.Select(p => new PhotoDto(p.Id, p.Url, p.Order, p.IsPrimary)).ToList(),
+            profile.Bio, 
+            profile.InterestedIn,
+            profile.Latitude, 
+            profile.Longitude, 
+            profile.LocationName,
+            profile.MinAgePreference, 
+            profile.MaxAgePreference, 
+            profile.MaxDistanceKm);
+    }
+
     public async Task<UserProfileDto> Handle(GetMyProfileQuery request, CancellationToken cancellationToken)
     {
         var profile = await profileRepository.GetByUserIdAsync(request.UserId);

@@ -1,4 +1,4 @@
-﻿using DoAnTotNghiep.Domain.Common;
+using DoAnTotNghiep.Domain.Common;
 using DoAnTotNghiep.Domain.Enum;
 using MongoDB.Bson.Serialization.Attributes;
 using System;
@@ -7,15 +7,19 @@ using System.Linq;
 
 namespace DoAnTotNghiep.Domain.Users;
 
+[BsonIgnoreExtraElements]
 public class UserProfile(Guid userId) : BaseEntity
 {
+    [BsonConstructor]
+    private UserProfile() : this(Guid.Empty) { }
+
     public Guid UserId { get; private set; } = userId;
 
     public BasicInfo BasicInfo { get; private set; } = new();
     public Background Background { get; private set; } = new();
     public Lifestyle Lifestyle { get; private set; } = new();
     public DatingStyle DatingStyle { get; private set; } = new();
-    public List<Photo> Photos { get; private set; } = [];
+    public List<Photo> Photos { get; set; } = [];
 
     // Existing fields for ProfileHandlers
 
@@ -60,11 +64,18 @@ public class UserProfile(Guid userId) : BaseEntity
     public void UpdateBio(string bio, Gender gender, string interestedIn)
     {
         Bio = bio?.Trim() ?? string.Empty;
+        BasicInfo.Gender = gender;
+        InterestedIn = interestedIn?.Trim() ?? string.Empty;
         SetUpdated();
     }
 
     public void UpdateLocation(double latitude, double longitude, string locationName)
     {
+        if (latitude < -90 || latitude > 90)
+            throw new ArgumentException("Invalid latitude");
+
+        if (longitude < -180 || longitude > 180)
+            throw new ArgumentException("Invalid longitude");
         Latitude = latitude;
         Longitude = longitude;
         LocationName = locationName?.Trim() ?? string.Empty;
@@ -88,11 +99,26 @@ public class UserProfile(Guid userId) : BaseEntity
 
     public void AddPhoto(Photo photo)
     {
+        if (photo == null)
+            throw new ArgumentNullException(nameof(photo));
+
         if (!Photos.Any())
         {
             photo.SetPrimary(true);
         }
-
+        else
+        {
+            if (photo.IsPrimary)
+            {
+                foreach (var p in Photos)
+                    p.SetPrimary(false);
+            }
+            else
+            {
+                if (!Photos.Any(p => p.IsPrimary))
+                    photo.SetPrimary(true);
+            }
+        }
         photo.SetOrder(Photos.Count);
         Photos.Add(photo);
         SetUpdated();
@@ -176,14 +202,16 @@ public class UserProfile(Guid userId) : BaseEntity
     }
 }
 
+[BsonIgnoreExtraElements]
 public class BasicInfo
 {
-    public string DisplayName { get; private set; } = string.Empty;
-    public DateTime Dob { get; private set; }
+    public string DisplayName { get; set; } = string.Empty;
+    public DateTime Dob { get; set; }
 
     [BsonSerializer(typeof(SafeEnumSerializer<Gender>))]
-    public Gender Gender { get; private set; } = Gender.Other;
-    public List<string> Languages { get; private set; } = new();
+    public Gender Gender { get; set; } = Gender.Other;
+    public int Age => DateTime.Now.Year - Dob.Year - (DateTime.UtcNow.DayOfYear < Dob.DayOfYear ? 1 : 0);
+    public List<string> Languages { get; set; } = new();
 
     public void Update(string name, DateTime dob, Gender gender, List<string> languages)
     {
@@ -199,10 +227,11 @@ public class BasicInfo
     }
 }
 
+[BsonIgnoreExtraElements]
 public class Background
 {
-    public string Education { get; private set; } = string.Empty;
-    public string Occupation { get; private set; } = string.Empty;
+    public string Education { get; set; } = string.Empty;
+    public string Occupation { get; set; } = string.Empty;
 
     public void Update(string education, string occupation)
     {
@@ -211,16 +240,17 @@ public class Background
     }
 }
 
+[BsonIgnoreExtraElements]
 public class Lifestyle
 {
-    public string Drinking { get; private set; } = string.Empty;
-    public string Smoking { get; private set; } = string.Empty;
-    public string SocialLevel { get; private set; } = string.Empty;
-    public string PersonalityType { get; private set; } = string.Empty;
+    public string Drinking { get; set; } = string.Empty;
+    public string Smoking { get; set; } = string.Empty;
+    public string SocialLevel { get; set; } = string.Empty;
+    public string PersonalityType { get; set; } = string.Empty;
 
-    public List<string> LoveLanguage { get; private set; } = new();
-    public List<string> Hobbies { get; private set; } = new();
-    public List<string> Interests { get; private set; } = new();
+    public List<string> LoveLanguage { get; set; } = new();
+    public List<string> Hobbies { get; set; } = new();
+    public List<string> Interests { get; set; } = new();
 
     public void Update(
         string drinking,
@@ -251,10 +281,11 @@ public class Lifestyle
     }
 }
 
+[BsonIgnoreExtraElements]
 public class DatingStyle
 {
-    public List<string> FreeTimePrefer { get; private set; } = new();
-    public List<string> DateStyle { get; private set; } = new();
+    public List<string> FreeTimePrefer { get; set; } = new();
+    public List<string> DateStyle { get; set; } = new();
 
     public void Update(List<string> freeTimePrefer, List<string> dateStyle)
     {

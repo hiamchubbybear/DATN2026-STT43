@@ -27,6 +27,7 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login(LoginCommand command)
     {
+        command.IpAddress ??= HttpContext.Connection.RemoteIpAddress?.ToString();
         var response = await _mediator.Send(command);
         return Ok(ApiResponse<AuthResponse>.Succeeded(response, "Login successful"));
     }
@@ -34,6 +35,7 @@ public class AuthController : ControllerBase
     [HttpPost("google-login")]
     public async Task<IActionResult> GoogleLogin(DoAnTotNghiep.Application.Auth.GoogleLogin.GoogleLoginCommand command)
     {
+        command.IpAddress ??= HttpContext.Connection.RemoteIpAddress?.ToString();
         var response = await _mediator.Send(command);
         return Ok(ApiResponse<AuthResponse>.Succeeded(response, "Google login successful"));
     }
