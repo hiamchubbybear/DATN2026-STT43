@@ -44,7 +44,11 @@ builder.Services.AddHealthChecks()
     .AddMongoDb(_ => new MongoDB.Driver.MongoClient(mongoSettings!.ConnectionString), name: "mongodb")
     .AddRedis(redisSettings!.ConnectionString, name: "redis");
 builder.Services.AddInfrastructure(builder.Configuration);
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+    });
 
 try 
 {

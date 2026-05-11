@@ -48,7 +48,7 @@ export default function EmailLoginScreen() {
           authData.refreshToken,
           authData.isProfileCompleted,
         );
-        navigation.replace('MainTabs');
+        console.log("✅ [EmailLogin] Success! RootNavigator will auto-switch.");
       } else {
         throw new Error('Invalid response from server');
       }

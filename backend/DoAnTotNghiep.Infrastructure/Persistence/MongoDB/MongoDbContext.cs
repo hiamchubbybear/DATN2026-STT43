@@ -15,7 +15,10 @@ public class MongoDbContext
     {
         try
         {
-            
+            // Register global GuidSerializer for all Guids
+            BsonSerializer.RegisterSerializer(new GuidSerializer(GuidRepresentation.Standard));
+
+            // For MongoDB Driver 3.x, we should register class maps carefully
             if (!BsonClassMap.IsClassMapRegistered(typeof(DoAnTotNghiep.Domain.Common.BaseEntity)))
             {
                 BsonClassMap.RegisterClassMap<DoAnTotNghiep.Domain.Common.BaseEntity>(cm =>
@@ -32,6 +35,11 @@ public class MongoDbContext
                         .SetSerializer(new GuidSerializer(GuidRepresentation.Standard));
                 });
 
+                BsonClassMap.RegisterClassMap<DoAnTotNghiep.Domain.Users.UserAccount>(cm =>
+                {
+                    cm.AutoMap();
+                });
+
                 BsonClassMap.RegisterClassMap<DoAnTotNghiep.Domain.Chat.ChatMessage>(cm =>
                 {
                     cm.AutoMap();
@@ -43,11 +51,29 @@ public class MongoDbContext
                 {
                     cm.AutoMap();
                 });
+
+                BsonClassMap.RegisterClassMap<DoAnTotNghiep.Domain.Users.UserSwipe>(cm =>
+                {
+                    cm.AutoMap();
+                    cm.MapProperty(c => c.ActorId)
+                        .SetSerializer(new GuidSerializer(GuidRepresentation.Standard));
+                    cm.MapProperty(c => c.TargetId)
+                        .SetSerializer(new GuidSerializer(GuidRepresentation.Standard));
+                });
+
+                BsonClassMap.RegisterClassMap<DoAnTotNghiep.Domain.Users.UserMatch>(cm =>
+                {
+                    cm.AutoMap();
+                    cm.MapProperty(c => c.UserOneId)
+                        .SetSerializer(new GuidSerializer(GuidRepresentation.Standard));
+                    cm.MapProperty(c => c.UserTwoId)
+                        .SetSerializer(new GuidSerializer(GuidRepresentation.Standard));
+                });
             }
         }
         catch
         {
-            
+            // Ignore if already registered
         }
     }
 
@@ -69,6 +95,8 @@ public class MongoDbContext
     public IMongoCollection<DoAnTotNghiep.Domain.Chat.ChatMessage> ChatMessages => _database.GetCollection<DoAnTotNghiep.Domain.Chat.ChatMessage>("chat_messages");
     public IMongoCollection<Notification> Notifications => _database.GetCollection<Notification>("notifications");
     public IMongoCollection<DoAnTotNghiep.Domain.Chat.Conversation> Conversations => _database.GetCollection<DoAnTotNghiep.Domain.Chat.Conversation>("conversations");
+    public IMongoCollection<UserSwipe> UserSwipes => _database.GetCollection<UserSwipe>("user_swipes");
+    public IMongoCollection<UserMatch> UserMatches => _database.GetCollection<UserMatch>("user_matches");
 }
 
 public class MongoDbInitializer

@@ -308,10 +308,6 @@ export const ProfileMainScreen = () => {
             </View>
           </View>
 
-          <TouchableOpacity style={styles.primaryButton} onPress={() => navigation.navigate('DiscoverySettings')} activeOpacity={0.88}>
-            <Ionicons name="options-outline" size={18} color="#FFFFFF" />
-            <Text style={styles.primaryButtonText}>Discovery Settings</Text>
-          </TouchableOpacity>
         </View>
       </ScrollView>
     </SafeAreaView>

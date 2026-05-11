@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace DoAnTotNghiep.Application.Common
 {
-    public interface IBloomFilterService
+    public interface ISeenUserService
     {
-        Task<bool> MightContainAsync(string key, string value);
-        Task AddAsync(string key, string value);
+        Task<HashSet<Guid>> GetAllAsync(Guid userId);
+        Task MarkSeenAsync(Guid userId, Guid targetUserId);
     }
 }

@@ -6,7 +6,6 @@ namespace DoAnTotNghiep.Domain.Common;
 public abstract class BaseEntity
 {
     [BsonId]
-    [BsonRepresentation(BsonType.String)]
     public Guid Id { get; protected set; } = Guid.NewGuid();
 
     public DateTime CreatedAt { get; protected set; } = DateTime.UtcNow;

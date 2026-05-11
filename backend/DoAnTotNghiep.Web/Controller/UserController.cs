@@ -57,6 +57,15 @@ public class UserController : ControllerBase
     }
 
     [Authorize]
+    [HttpGet("{userId}")]
+    public async Task<IActionResult> GetUserProfile(Guid userId)
+    {
+        var result = await _mediator.Send(new Application.Users.Profile.GetUserProfileQuery(userId));
+        if (result == null) return NotFound(ApiResponse<string>.Failed("Profile not found"));
+        return Ok(ApiResponse<Application.Users.Profile.UserProfileDto>.Succeeded(result));
+    }
+
+    [Authorize]
     [HttpPatch("me/profile")]
     public async Task<IActionResult> UpdateProfile([FromBody] Application.Users.Profile.UpdateProfileCommand command)
     {
