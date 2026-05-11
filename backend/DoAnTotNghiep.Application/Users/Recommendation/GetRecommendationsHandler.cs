@@ -1,133 +1,137 @@
 using DoAnTotNghiep.Application.Common;
+using DoAnTotNghiep.Application.Exception;
 using DoAnTotNghiep.Application.Users.Profile;
 using DoAnTotNghiep.Domain.Users;
 using MediatR;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace DoAnTotNghiep.Application.Users.Recommendation
 {
-    public class GetRecommendationsHandler : IRequestHandler<GetRecommendationsQuery, List<UserProfileDto>>
+    public class GetRecommendationsHandler : IRequestHandler<GetRecommendationsQuery, RecommendationResponse>
     {
         private readonly IUserProfileRepository _profileRepo;
         private readonly ICurrentUserService _current;
-        private readonly IBloomFilterService _bloom;
+        private readonly ISeenUserService _seen;
+        private readonly ICacheService _cache;
+        private readonly IRecommendationScoringService _scoring;
+        private readonly IGeoService _geo;
 
         public GetRecommendationsHandler(
             IUserProfileRepository profileRepo,
             ICurrentUserService current,
-            IBloomFilterService bloom)
+            ISeenUserService seen,
+            ICacheService cache,
+            IRecommendationScoringService scoring,
+            IGeoService geo)
         {
             _profileRepo = profileRepo;
             _current = current;
-            _bloom = bloom;
+            _seen = seen;
+            _cache = cache;
+            _scoring = scoring;
+            _geo = geo;
         }
 
-        public async Task<List<UserProfileDto>> Handle(
+        public async Task<RecommendationResponse> Handle(
             GetRecommendationsQuery request,
             CancellationToken ct)
         {
             var userId = Guid.Parse(_current.UserId!);
-            var me = await _profileRepo.GetByUserIdAsync(userId);
+            var cacheKey = $"rec:{userId}:{request.Take}";
 
-            var candidates = await _profileRepo.GetCandidatesAsync(
-                me,
-                request.Skip,
-                request.Take * 3 
-            );
-            var result = new List<(UserProfile profile, double score)>();
-            foreach (var candidate in candidates)
+            // Get excluded IDs (swiped/seen)
+            var seenIds = await _seen.GetAllAsync(userId);
+
+            // Check Cache
+            var cached = await _cache.GetAsync<RecommendationResponse>(cacheKey);
+            if (cached != null)
             {
-                var bloomKey = $"swipe:{userId}";
-                var seen = await _bloom.MightContainAsync(bloomKey, candidate.UserId.ToString());
-                if (seen) continue;
-                var score = CalculateScore(me, candidate);
-                result.Add((candidate, score));
+                // Filter out already seen users from cache
+                var filteredResults = cached.Items
+                    .Where(x => !seenIds.Contains(x.UserId))
+                    .ToList();
+
+                if (filteredResults.Count >= request.Take / 2) // If still have enough items
+                {
+                    return new RecommendationResponse(filteredResults);
+                }
+                // If cache is too depleted, continue to fetch fresh data
             }
 
-            var sorted = result
-                .OrderByDescending(x => x.score)
+            var me = await _profileRepo.GetByUserIdAsync(userId)
+                ?? throw new NotFoundException("User not found");
+
+            // 1. Primary Fetch: Strict filters
+            var candidates = await _profileRepo.GetCandidatesAsync(
+                me,
+                seenIds.ToList(),
+                0,
+                request.Take * 5
+            );
+
+            // 2. Fallback Fetch: Relax filters if no one found
+            if (!candidates.Any())
+            {
+                candidates = await _profileRepo.GetCandidatesAsync(
+                    me,
+                    seenIds.ToList(),
+                    0,
+                    request.Take * 5,
+                    relaxFilters: true
+                );
+                
+                if (candidates.Any())
+                {
+                    Console.WriteLine($"[Recommendation] Fallback triggered: Found {candidates.Count} users with relaxed filters.");
+                }
+            }
+
+            var results = new List<GetRecommendationsDto>();
+
+            foreach (var c in candidates)
+            {
+                if (ct.IsCancellationRequested)
+                    break;
+
+                // Double check distance (DB filter might be loose)
+                var distance = _geo.CalculateDistance(me, c);
+                if (distance > me.MaxDistanceKm)
+                    continue;
+
+                var score = _scoring.CalculateScore(me, c, distance);
+
+                results.Add(new GetRecommendationsDto(
+                    c.UserId,
+                    c.BasicInfo.DisplayName,
+                    c.BasicInfo.Age,
+                    c.Bio ?? "",
+                    c.LocationName ?? "",
+                    c.Photos.FirstOrDefault(p => p.IsPrimary)?.ThumbnailUrl ?? c.Photos.FirstOrDefault(p => p.IsPrimary)?.Url,
+                    Math.Round(distance, 1),
+                    Math.Round(score, 2)
+                ));
+
+                if (results.Count >= request.Take * 3)
+                    break;
+            }
+
+            var final = results
+                .OrderByDescending(x => x.Score)
+                .Take(request.Take * 2)
+                .OrderBy(_ => Random.Shared.Next()) // Add some variety
                 .Take(request.Take)
-                .Select(x => Map(x.profile))
                 .ToList();
 
-            return sorted;
-        }
+            var response = new RecommendationResponse(final);
 
-        private double CalculateScore(UserProfile me, UserProfile other)
-        {
-            double score = 0;
+            // Store in cache for 3 minutes
+            await _cache.SetAsync(cacheKey, response, TimeSpan.FromMinutes(3));
 
-            var distance = GeoDistance(me, other);
-            score += (1 - distance / me.MaxDistanceKm) * 40;
-
-            var age = GetAge(other);
-            if (age >= me.MinAgePreference && age <= me.MaxAgePreference)
-                score += 20;
-
-            var common = me.Lifestyle.Interests
-                .Intersect(other.Lifestyle.Interests)
-                .Count();
-
-            score += common * 5;
-
-            if (other.Photos.Any())
-                score += 10;
-
-            return score;
-        }
-
-        private double GeoDistance(UserProfile a, UserProfile b)
-        {
-            var dx = a.Latitude - b.Latitude;
-            var dy = a.Longitude - b.Longitude;
-            return Math.Sqrt(dx * dx + dy * dy) * 111;
-        }
-        private int GetAge(UserProfile p)
-        {
-            return DateTime.UtcNow.Year - p.BasicInfo.Dob.Year;
-        }
-        private UserProfileDto Map(UserProfile p)
-        {
-            return new UserProfileDto(
-                p.UserId,
-                new BasicInfoDto(
-                    p.BasicInfo.DisplayName,
-                    p.BasicInfo.Dob,
-                    p.BasicInfo.Gender,
-                    p.BasicInfo.Languages),
-                new BackgroundDto(
-                    p.Background.Education,
-                    p.Background.Occupation),
-                new LifestyleDto(
-                    p.Lifestyle.Drinking,
-                    p.Lifestyle.Smoking,
-                    p.Lifestyle.SocialLevel,
-                    p.Lifestyle.PersonalityType,
-                    p.Lifestyle.LoveLanguage,
-                    p.Lifestyle.Hobbies,
-                    p.Lifestyle.Interests),
-                new DatingStyleDto(
-                    p.DatingStyle.FreeTimePrefer,
-                    p.DatingStyle.DateStyle),
-                new List<PhotoDto>(
-                    p.Photos.Select(photo => new PhotoDto(
-                        photo.Id,
-                        photo.Url,
-                        photo.Order,
-                        photo.IsPrimary))),
-                p.Bio ?? string.Empty,
-                p.InterestedIn ?? string.Empty,
-                p.Latitude,
-                p.Longitude,
-                p.LocationName ?? string.Empty,
-                p.MinAgePreference,
-                p.MaxAgePreference,
-                p.MaxDistanceKm
-                );
+            return response;
         }
     }
 }
