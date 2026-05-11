@@ -11,6 +11,7 @@ const routeByMenu: Record<MenuItem, string> = {
   Reports: '/admin/reports',
   Notifications: '/admin/notifications',
   Reviews: '/admin/reviews',
+  'System Monitor': '/admin/system-monitor',
   'Test Upload': '/admin/test-upload',
 };
 
@@ -20,6 +21,7 @@ const menuByRoute: Array<{ prefix: string; menu: MenuItem }> = [
   { prefix: '/admin/reports', menu: 'Reports' },
   { prefix: '/admin/notifications', menu: 'Notifications' },
   { prefix: '/admin/reviews', menu: 'Reviews' },
+  { prefix: '/admin/system-monitor', menu: 'System Monitor' },
   { prefix: '/admin/test-upload', menu: 'Test Upload' },
 ];
 

@@ -6,6 +6,8 @@ using DoAnTotNghiep.Web;
 using DoAnTotNghiep.Web.Hubs;
 using FluentValidation;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Prometheus;
 using Serilog;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
@@ -23,8 +25,10 @@ var builder = WebApplication.CreateBuilder(args);
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)
     .Enrich.FromLogContext()
-    .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}")
+    .Enrich.WithMachineName()
+    .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj} {Properties:j}{NewLine}{Exception}")
     .CreateLogger();
+
 
 builder.Host.UseSerilog();
 
@@ -41,8 +45,9 @@ builder.Services.AddSingleton(redisSettings!);
 builder.Services.AddSingleton<MongoDbContext>();
 
 builder.Services.AddHealthChecks()
-    .AddMongoDb(_ => new MongoDB.Driver.MongoClient(mongoSettings!.ConnectionString), name: "mongodb")
-    .AddRedis(redisSettings!.ConnectionString, name: "redis");
+    .AddMongoDb(_ => new MongoDB.Driver.MongoClient(mongoSettings!.ConnectionString), name: "mongodb", tags: ["db", "ready"])
+    .AddRedis(redisSettings!.ConnectionString, name: "redis", tags: ["cache", "ready"]);
+
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
@@ -50,27 +55,31 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
     });
 
+var redisConfig = StackExchange.Redis.ConfigurationOptions.Parse(redisSettings!.ConnectionString);
+redisConfig.AbortOnConnectFail = false; // Allow reconnection
+
 try 
 {
-    var redisConfig = StackExchange.Redis.ConfigurationOptions.Parse(redisSettings!.ConnectionString);
-    redisConfig.AbortOnConnectFail = true; // Fail fast for the check
-    redisConfig.ConnectTimeout = 2000;
-    
-    // Ping Redis to see if it's alive
-    using var muxer = StackExchange.Redis.ConnectionMultiplexer.Connect(redisConfig);
-    
+    var muxer = StackExchange.Redis.ConnectionMultiplexer.Connect(redisConfig);
+    builder.Services.AddSingleton<StackExchange.Redis.IConnectionMultiplexer>(muxer);
+
     builder.Services.AddSignalR().AddStackExchangeRedis(options =>
     {
-        var finalConfig = StackExchange.Redis.ConfigurationOptions.Parse(redisSettings!.ConnectionString);
-        finalConfig.AbortOnConnectFail = false;
-        finalConfig.ChannelPrefix = "PsyConnect";
-        options.Configuration = finalConfig;
+        options.Configuration = redisConfig;
+        options.Configuration.ChannelPrefix = "PsyConnect";
     });
-    Log.Information("Redis is online. SignalR Redis Backplane enabled.");
+    Log.Information("Redis backplane enabled.");
 }
 catch (Exception ex)
 {
-    Log.Warning("Redis is offline! Falling back to In-Memory SignalR (Single Node Mode). Error: {Msg}", ex.Message);
+    Log.Warning("Redis connection error! Services might be degraded. Error: {Msg}", ex.Message);
+    // Still try to register a multiplexer if possible, or handle it in services
+    try {
+        var lazyMuxer = StackExchange.Redis.ConnectionMultiplexer.Connect(redisConfig);
+        builder.Services.AddSingleton<StackExchange.Redis.IConnectionMultiplexer>(lazyMuxer);
+    } catch {
+        Log.Error("Critical: Could not even initialize a disconnected Redis multiplexer.");
+    }
     builder.Services.AddSignalR();
 }
 
@@ -98,6 +107,12 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+// Prometheus HTTP metrics - must be after UseRouting
+app.UseHttpMetrics(options =>
+{
+    options.AddCustomLabel("endpoint", ctx => ctx.Request.Path.Value ?? "unknown");
+});
+
 // CORS should be before Auth
 app.UseCors(x => x
     .SetIsOriginAllowed(_ => true)
@@ -113,7 +128,7 @@ app.MapHealthChecks("/health", new HealthCheckOptions
     ResponseWriter = async (context, report) =>
     {
         context.Response.ContentType = "application/json";
-        var isHealthy = report.Status == Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus.Healthy;
+        var isHealthy = report.Status == HealthStatus.Healthy;
         var response = new
         {
             schemaVersion = 1,
@@ -124,6 +139,39 @@ app.MapHealthChecks("/health", new HealthCheckOptions
         await context.Response.WriteAsJsonAsync(response);
     }
 });
+
+// Liveness: app is running (no dependency checks)
+app.MapHealthChecks("/health/live", new HealthCheckOptions
+{
+    Predicate = _ => false // Only checks the app itself, no external deps
+});
+
+// Readiness: app can serve traffic (all dependencies up)
+app.MapHealthChecks("/health/ready", new HealthCheckOptions
+{
+    Predicate = check => check.Tags.Contains("ready"),
+    ResponseWriter = async (context, report) =>
+    {
+        context.Response.ContentType = "application/json";
+        var result = new
+        {
+            status = report.Status.ToString(),
+            checks = report.Entries.Select(e => new
+            {
+                name = e.Key,
+                status = e.Value.Status.ToString(),
+                description = e.Value.Description,
+                duration = e.Value.Duration.TotalMilliseconds
+            })
+        };
+        context.Response.StatusCode = report.Status == HealthStatus.Healthy ? 200 : 503;
+        await context.Response.WriteAsJsonAsync(result);
+    }
+});
+
+// Prometheus metrics scrape endpoint
+app.MapMetrics("/metrics");
+
 app.MapControllers();
 app.MapHub<AppHub>("/hubs/app");
 app.MapFallbackToFile("index.html");

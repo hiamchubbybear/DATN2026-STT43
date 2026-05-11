@@ -1,8 +1,9 @@
+using DoAnTotNghiep.Application.Notifications;
+using DoAnTotNghiep.Application.Observability;
+using DoAnTotNghiep.Domain.Users;
 using FirebaseAdmin;
 using FirebaseAdmin.Messaging;
 using Google.Apis.Auth.OAuth2;
-using DoAnTotNghiep.Application.Notifications;
-using DoAnTotNghiep.Domain.Users;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
@@ -15,57 +16,54 @@ namespace DoAnTotNghiep.Infrastructure.Notifications;
 public class FirebaseNotificationService : INotificationService
 {
     private readonly ISessionRepository _sessionRepository;
-    private readonly FirebaseMessaging _messaging;
+    private readonly IMetricsService _metrics;
+    private readonly FirebaseMessaging? _messaging;
 
-    public FirebaseNotificationService(ISessionRepository sessionRepository, IConfiguration configuration)
+    public FirebaseNotificationService(
+        ISessionRepository sessionRepository,
+        IMetricsService metrics,
+        IConfiguration configuration)
     {
         _sessionRepository = sessionRepository;
+        _metrics = metrics;
 
         if (FirebaseApp.DefaultInstance == null)
         {
             var configPath = configuration["Firebase:ServiceAccountPath"];
             if (!string.IsNullOrEmpty(configPath) && File.Exists(configPath))
             {
-                FirebaseApp.Create(new AppOptions()
+                FirebaseApp.Create(new AppOptions
                 {
                     Credential = GoogleCredential.FromFile(configPath)
                 });
             }
             else
             {
-                // Fallback or warning - in real world you MUST have this config
-                Console.WriteLine("Warning: Firebase ServiceAccountPath not found or file does not exist.");
+                Console.WriteLine("[FCM] Warning: Firebase ServiceAccountPath not configured or file not found. Push notifications disabled.");
             }
         }
 
         if (FirebaseApp.DefaultInstance != null)
-        {
             _messaging = FirebaseMessaging.GetMessaging(FirebaseApp.DefaultInstance);
-        }
     }
 
     public async Task SendPushNotificationAsync(string pushToken, string title, string body, Dictionary<string, string>? data = null)
     {
         if (_messaging == null) return;
 
-        var message = new Message()
-        {
-            Token = pushToken,
-            Notification = new Notification()
-            {
-                Title = title,
-                Body = body
-            },
-            Data = data
-        };
-
         try
         {
-            await _messaging.SendAsync(message);
+            await _messaging.SendAsync(new Message
+            {
+                Token = pushToken,
+                Notification = new Notification { Title = title, Body = body },
+                Data = data
+            });
+            _metrics.RecordNotificationSent("push");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error sending push notification: {ex.Message}");
+            Console.WriteLine($"[FCM] Push failed: {ex.Message}");
         }
     }
 
@@ -75,26 +73,19 @@ public class FirebaseNotificationService : INotificationService
         if (tokens == null || !tokens.Any()) return;
 
         foreach (var token in tokens)
-        {
             await SendPushNotificationAsync(token, title, body, data);
-        }
     }
 
     public async Task BroadcastNotificationAsync(string title, string body, Dictionary<string, string>? data = null)
     {
         if (_messaging == null) return;
 
-        var message = new Message()
+        await _messaging.SendAsync(new Message
         {
             Topic = "all",
-            Notification = new Notification()
-            {
-                Title = title,
-                Body = body
-            },
+            Notification = new Notification { Title = title, Body = body },
             Data = data
-        };
-
-        await _messaging.SendAsync(message);
+        });
+        _metrics.RecordNotificationSent("push_broadcast");
     }
 }

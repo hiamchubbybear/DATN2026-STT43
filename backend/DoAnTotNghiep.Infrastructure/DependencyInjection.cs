@@ -1,11 +1,15 @@
 using DoAnTotNghiep.Application.Common;
 using DoAnTotNghiep.Application.Email;
+using DoAnTotNghiep.Application.Notifications;
+using DoAnTotNghiep.Application.Observability;
 using DoAnTotNghiep.Domain.Token;
 using DoAnTotNghiep.Infrastructure.Persistence;
 using DoAnTotNghiep.Infrastructure.Persistence.Redis;
 using DoAnTotNghiep.Infrastructure.Persistence.Email.Template;
 using DoAnTotNghiep.Infrastructure.Persistence.Storage;
 using DoAnTotNghiep.Infrastructure.Repositories;
+using DoAnTotNghiep.Infrastructure.Notifications;
+using DoAnTotNghiep.Infrastructure.Observability;
 using DoAnTotNghiep.Infrastructure.Security;
 using DoAnTotNghiep.Application.Chat;
 using DoAnTotNghiep.Infrastructure.Chat;
@@ -54,6 +58,7 @@ public static class DependencyInjection
         services.AddScoped<IRecommendationScoringService, RecommendationScoringService>();
         services.AddScoped<IGeoService, GeoService>();
         services.AddScoped<ISeenUserService, SeenUserService>();
+        services.AddSingleton<IMetricsService, PrometheusMetricsService>();
 
         services.AddMemoryCache();
         services.AddSingleton<ICacheService>(sp =>
@@ -65,9 +70,9 @@ public static class DependencyInjection
         services.Configure<EmailSettings>(smtpSettings);
 
 
-        var r2 = configuration.GetSection("CloudflareR2").Get<R2Settings>();
+        var r2 = configuration.GetSection("CloudflareR2").Get<R2Settings>() ?? new R2Settings();
         services.AddSingleton(r2);
-        services.AddScoped<IFileStorageService,R2StorageService>();
+        services.AddScoped<IFileStorageService, R2StorageService>();
 
         return services;
     }

@@ -1,15 +1,17 @@
 using DoAnTotNghiep.Application.Common;
 using DoAnTotNghiep.Application.Notifications;
+using DoAnTotNghiep.Application.Observability;
 using DoAnTotNghiep.Domain.Users;
 using MediatR;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace DoAnTotNghiep.Application.Users.Swipes.SwipeAction;
 
 public record SwipeActionCommand(Guid TargetId, SwipeType Type) : IRequest<SwipeActionResponse>;
-
 public record SwipeActionResponse(bool IsMatch, Guid? MatchId = null);
 
 public class SwipeActionHandler : IRequestHandler<SwipeActionCommand, SwipeActionResponse>
@@ -19,19 +21,22 @@ public class SwipeActionHandler : IRequestHandler<SwipeActionCommand, SwipeActio
     private readonly ICacheService _cacheService;
     private readonly INotificationService _notificationService;
     private readonly IUserProfileRepository _userProfileRepository;
+    private readonly IMetricsService _metrics;
 
     public SwipeActionHandler(
         ISwipeRepository swipeRepository,
         ICurrentUserService currentUserService,
         ICacheService cacheService,
         INotificationService notificationService,
-        IUserProfileRepository userProfileRepository)
+        IUserProfileRepository userProfileRepository,
+        IMetricsService metrics)
     {
         _swipeRepository = swipeRepository;
         _currentUserService = currentUserService;
         _cacheService = cacheService;
         _notificationService = notificationService;
         _userProfileRepository = userProfileRepository;
+        _metrics = metrics;
     }
 
     public async Task<SwipeActionResponse> Handle(SwipeActionCommand request, CancellationToken cancellationToken)
@@ -49,6 +54,7 @@ public class SwipeActionHandler : IRequestHandler<SwipeActionCommand, SwipeActio
         // 2. Save Swipe
         var swipe = new UserSwipe(currentUserId, request.TargetId, request.Type);
         await _swipeRepository.AddAsync(swipe);
+        _metrics.RecordSwipeAction(request.Type.ToString());
 
         // 3. Remove from cache feed
         var cacheKey = $"swipe_feed:{currentUserId}";
@@ -67,6 +73,7 @@ public class SwipeActionHandler : IRequestHandler<SwipeActionCommand, SwipeActio
             {
                 var match = new UserMatch(currentUserId, request.TargetId);
                 await _swipeRepository.AddMatchAsync(match);
+                _metrics.RecordMatchCreated();
 
                 // Send Push Notifications
                 var me = await _userProfileRepository.GetByUserIdAsync(currentUserId);

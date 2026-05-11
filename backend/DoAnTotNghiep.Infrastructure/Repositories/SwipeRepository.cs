@@ -43,7 +43,7 @@ public sealed class SwipeRepository : ISwipeRepository
 
     public async Task<bool> HasLikedAsync(Guid actorId, Guid targetId)
     {
-        return await _swipes.Find(x => x.ActorId == actorId && x.TargetId == targetId && x.Type == SwipeType.Like).AnyAsync();
+        return await _swipes.Find(x => x.ActorId == actorId && x.TargetId == targetId && (x.Type == SwipeType.Like || x.Type == SwipeType.SuperLike)).AnyAsync();
     }
 
     public async Task<List<UserMatch>> GetMatchesAsync(Guid userId)

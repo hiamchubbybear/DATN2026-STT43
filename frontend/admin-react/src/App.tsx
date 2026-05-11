@@ -8,6 +8,7 @@ import ReportsPage from './pages/reports/ReportsPage';
 import NotificationsPage from './pages/notifications/NotificationsPage';
 import ReviewsPage from './pages/reviews/ReviewsPage';
 import UploadTestPage from './pages/test/UploadTestPage';
+import SystemMonitorPage from './pages/system-monitor/SystemMonitorPage';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -43,6 +44,7 @@ function App() {
           <Route path="notifications" element={<NotificationsPage />} />
           <Route path="reviews" element={<ReviewsPage />} />
           <Route path="test-upload" element={<UploadTestPage />} />
+          <Route path="system-monitor" element={<SystemMonitorPage />} />
         </Route>
 
         <Route path="*" element={<Navigate to={isAuthenticated ? '/admin/dashboard' : '/login'} replace />} />

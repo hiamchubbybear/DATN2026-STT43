@@ -1,6 +1,10 @@
 using DoAnTotNghiep.Domain.Users;
 using DoAnTotNghiep.Infrastructure.Persistence;
 using MongoDB.Driver;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace DoAnTotNghiep.Infrastructure.Repositories;
 
@@ -30,9 +34,9 @@ public class UserSessionRepository : ISessionRepository
 
     public async Task<List<string>> GetPushTokensByUserId(Guid userId)
     {
-        var sessions = await _sessions.Find(x => x.UserId == userId && !x.IsRevoked && !string.IsNullOrEmpty(x.PushToken))
+        var sessions = await _sessions
+            .Find(x => x.UserId == userId && !x.IsRevoked && !string.IsNullOrEmpty(x.PushToken))
             .ToListAsync();
-        
         return sessions.Select(x => x.PushToken!).Distinct().ToList();
     }
 }
