@@ -3,6 +3,10 @@ using DoAnTotNghiep.Domain.Enum;
 using DoAnTotNghiep.Domain.Users;
 using DoAnTotNghiep.Infrastructure.Persistence;
 using MongoDB.Driver;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace DoAnTotNghiep.Infrastructure.Repositories;
 
@@ -30,38 +34,69 @@ public class UserProfileRepository : IUserProfileRepository
         var filter = Builders<UserProfile>.Filter.Eq(x => x.Id, profile.Id);
         await _profiles.ReplaceOneAsync(filter, profile);
     }
+
     public async Task<List<UserProfile>> ListAllAsync()
     {
         return await _profiles.Find(_ => true).ToListAsync();
     }
 
-    public async Task<List<UserProfile>> GetCandidatesAsync(UserProfile me, int skip, int take)
+    // Batch fetch — replaces N single-document queries in the feed handler
+    public async Task<List<UserProfile>> GetByUserIdsAsync(List<Guid> userIds)
+    {
+        return await _profiles
+            .Find(x => userIds.Contains(x.UserId))
+            .ToListAsync();
+    }
+
+    public async Task<List<UserProfile>> GetCandidatesAsync(
+        UserProfile me,
+        List<Guid> excludeUserIds,
+        int skip,
+        int take,
+        bool relaxFilters = false,
+        GenderPreference? genderPreference = null,
+        int? minAge = null,
+        int? maxAge = null,
+        int? maxDistanceKm = null)
     {
         var builder = Builders<UserProfile>.Filter;
-        var myGender = me.Gender;
-        var myLookingFor = me.LookingFor;
-        var filter = builder.Ne(x => x.UserId, me.UserId);
+        var filters = new List<FilterDefinition<UserProfile>>();
 
-        filter &= builder.Or(
-            builder.Eq(x => x.LookingFor, GenderPreference.Everyone),
-            builder.Eq(x => x.LookingFor, myGender.ToPreference())
-        );
+        // 1. Exclude self + already-swiped users
+        var excluded = new List<Guid> { me.UserId };
+        if (excludeUserIds?.Any() == true)
+            excluded.AddRange(excludeUserIds);
 
-        if(myLookingFor != GenderPreference.Everyone)
+        filters.Add(builder.Nin(x => x.UserId, excluded));
+
+        // 2. Gender preference filter
+        var effectiveGenderPref = genderPreference ?? me.LookingFor;
+        if (effectiveGenderPref != GenderPreference.Everyone
+            && effectiveGenderPref != GenderPreference.None)
         {
-            filter &= builder.Eq(x => x.BasicInfo.Gender, myLookingFor.ToGender());
+            var targetGender = effectiveGenderPref == GenderPreference.Male ? Gender.Male : Gender.Female;
+            filters.Add(builder.Eq(x => x.BasicInfo.Gender, targetGender));
         }
-        var minDob = DateTime.UtcNow.AddYears(-me.MaxAgePreference);
-        var maxDob = DateTime.UtcNow.AddYears(-me.MinAgePreference);
 
-        filter &= builder.Gte(x => x.BasicInfo.Dob, minDob) &
-                  builder.Lte(x => x.BasicInfo.Dob, maxDob);
+        // 3. Age preference filter
+        if (!relaxFilters)
+        {
+            var effectiveMinAge = minAge ?? me.MinAgePreference;
+            var effectiveMaxAge = maxAge ?? me.MaxAgePreference;
+            
+            var minDob = DateTime.UtcNow.AddYears(-(effectiveMaxAge + 1));
+            var maxDob = DateTime.UtcNow.AddYears(-(effectiveMinAge - 1));
+            filters.Add(builder.Gte(x => x.BasicInfo.Dob, minDob));
+            filters.Add(builder.Lte(x => x.BasicInfo.Dob, maxDob));
+        }
+
+        var finalFilter = builder.And(filters);
+        
         return await _profiles
-            .Find(filter)
+            .Find(finalFilter)
+            .SortByDescending(x => x.CreatedAt)
             .Skip(skip)
             .Limit(take)
             .ToListAsync();
-
-
     }
 }
