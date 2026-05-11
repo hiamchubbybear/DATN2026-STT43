@@ -75,11 +75,8 @@ export const LoginScreen = () => {
   const [request, response, promptAsync] = Google.useAuthRequest(
     {
       clientId: GOOGLE_WEB_CLIENT_ID,
-      webClientId: GOOGLE_WEB_CLIENT_ID,
       iosClientId: GOOGLE_IOS_CLIENT_ID,
       androidClientId: GOOGLE_ANDROID_CLIENT_ID,
-      responseType: ResponseType.Token,
-      shouldAutoExchangeCode: false,
       scopes: ["openid", "profile", "email"],
     },
     redirectUriOptions as any
@@ -149,8 +146,7 @@ export const LoginScreen = () => {
           authData.refreshToken,
           authData.isProfileCompleted
         );
-        console.log("✅ [API] Đăng nhập thành công! Điều hướng về Home...");
-        navigation.replace("MainTabs");
+        console.log("✅ [API] Đăng nhập thành công! RootNavigator sẽ tự chuyển màn hình.");
       } else {
         showToast({
           title: "Lỗi",

@@ -2,7 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Platform, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { MainScreen } from "../../features/main/screens/MainScreen";
+import { HomeScreen } from "../../features/home/screens/HomeScreen";
 import { MatchesScreen } from "../../features/main/screens/MatchesScreen";
 import { MessagesScreen } from "../../features/main/screens/MessagesScreen";
 import { NotificationsMainScreen } from "../../features/main/screens/NotificationsMainScreen";
@@ -84,7 +84,7 @@ export const MainBottomTabs = () => {
         tabBarShowLabel: false,
       })}
     >
-      <Tab.Screen name="Main" component={MainScreen} />
+      <Tab.Screen name="Main" component={HomeScreen} />
       <Tab.Screen name="Matches" component={MatchesScreen} />
       <Tab.Screen name="Messages" component={MessagesScreen} />
       <Tab.Screen name="Notifications" component={NotificationsMainScreen} />

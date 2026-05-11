@@ -6,8 +6,8 @@ import { useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import React from "react";
 import {
-  Alert,
   ActivityIndicator,
+  Alert,
   Platform,
   StyleSheet,
   Text,
@@ -76,13 +76,16 @@ export default function LoginScreen() {
     [isExpoGo],
   );
 
-  const [request, response, promptAsync] = Google.useAuthRequest({
-    clientId: googleWebClientId,
-    webClientId: googleWebClientId,
-    responseType: ResponseType.IdToken,
-    shouldAutoExchangeCode: false,
-    scopes: ["profile", "email"],
-  }, redirectUriOptions as any);
+  const [request, response, promptAsync] = Google.useAuthRequest(
+    {
+      clientId: googleWebClientId,
+      webClientId: googleWebClientId,
+      responseType: ResponseType.IdToken,
+      shouldAutoExchangeCode: false,
+      scopes: ["profile", "email"],
+    },
+    redirectUriOptions as any,
+  );
 
   React.useEffect(() => {
     console.log("[GoogleAuth][app/login] config", {
@@ -92,35 +95,38 @@ export default function LoginScreen() {
     });
   }, [isExpoGo, googleWebClientId, redirectUriOptions]);
 
-  const handleBackendLogin = React.useCallback(async (idToken: string) => {
-    try {
-      setLoading(true);
-      // Replace localhost with your actual API domain when testing on real devices
-      const API_URL = "https://datn.chessy.dev/api/auth/google-login";
-      const res = await fetch(API_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ idToken }),
-      });
+  const handleBackendLogin = React.useCallback(
+    async (idToken: string) => {
+      try {
+        setLoading(true);
 
-      const data = await res.json();
+        const API_URL = "https://datn.chessy.dev/api/auth/google-login";
+        const res = await fetch(API_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ idToken }),
+        });
+
+        const data = await res.json();
         if (res.ok && data.data?.accessToken) {
-        await AsyncStorage.setItem("accessToken", data.data.accessToken);
-        await AsyncStorage.setItem("refreshToken", data.data.refreshToken);
-        router.replace("/(tabs)" as never);
-      } else {
-        console.error("Login failed:", data);
-        Alert.alert("Login Error", data.message || "Failed to authenticate");
+          await AsyncStorage.setItem("accessToken", data.data.accessToken);
+          await AsyncStorage.setItem("refreshToken", data.data.refreshToken);
+          router.replace("/(tabs)" as never);
+        } else {
+          console.error("Login failed:", data);
+          Alert.alert("Login Error", data.message || "Failed to authenticate");
+        }
+      } catch (error) {
+        console.error("Network error API", error);
+        Alert.alert("Network Error", "Không thể kết nối server");
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error("Network error API", error);
-      Alert.alert("Network Error", "Không thể kết nối server");
-    } finally {
-      setLoading(false);
-    }
-  }, [router]);
+    },
+    [router],
+  );
 
   React.useEffect(() => {
     console.log("[GoogleAuth][app/login] response", response);
@@ -133,7 +139,8 @@ export default function LoginScreen() {
         handleBackendLogin(idToken);
       }
     } else if (response?.type === "error") {
-      const message = (response as any)?.error?.message ?? "Google login thất bại";
+      const message =
+        (response as any)?.error?.message ?? "Google login thất bại";
       Alert.alert("Google Sign-In Error", message);
     }
   }, [response, handleBackendLogin]);
@@ -141,9 +148,18 @@ export default function LoginScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backButton}
+        >
           <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <Path d="M15 18l-6-6 6-6" stroke="#111111" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            <Path
+              d="M15 18l-6-6 6-6"
+              stroke="#111111"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </Svg>
         </TouchableOpacity>
       </View>
@@ -176,25 +192,39 @@ export default function LoginScreen() {
               try {
                 console.log("[GoogleAuth][app/login] request", request);
                 if (request) {
-                  const redirectOk = request.redirectUri === "https://auth.expo.io/@tranvanhuy16032004/datn-2026";
+                  const redirectOk =
+                    request.redirectUri ===
+                    "https://auth.expo.io/@tranvanhuy16032004/datn-2026";
                   const responseTypeOk = request.responseType === "id_token";
                   if (!redirectOk || !responseTypeOk) {
-                    Alert.alert("Google Config Error", "Bundle đang dùng config cũ. Hãy restart bằng `npx expo start -c` rồi thử lại.");
-                    console.warn("[GoogleAuth][app/login] blocked invalid request config", {
-                      redirectUri: request.redirectUri,
-                      responseType: request.responseType,
-                    });
+                    Alert.alert(
+                      "Google Config Error",
+                      "Bundle đang dùng config cũ. Hãy restart bằng `npx expo start -c` rồi thử lại.",
+                    );
+                    console.warn(
+                      "[GoogleAuth][app/login] blocked invalid request config",
+                      {
+                        redirectUri: request.redirectUri,
+                        responseType: request.responseType,
+                      },
+                    );
                     return;
                   }
                 }
                 const result = await promptAsync();
-                console.log("[GoogleAuth][app/login] promptAsync result", result);
+                console.log(
+                  "[GoogleAuth][app/login] promptAsync result",
+                  result,
+                );
                 if (result.type === "cancel" || result.type === "dismiss") {
                   return;
                 }
               } catch (error) {
                 console.error("Error launching Google auth", error);
-                Alert.alert("Google Sign-In Error", "Không thể mở Google Sign-In");
+                Alert.alert(
+                  "Google Sign-In Error",
+                  "Không thể mở Google Sign-In",
+                );
               }
             }}
           >
@@ -230,9 +260,9 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderColor: "#E5E7EB",
+    alignItems: "center",
+    justifyContent: "center",
   },
   content: {
     flex: 1,
@@ -251,7 +281,7 @@ const styles = StyleSheet.create({
   },
   primaryBtn: {
     width: "100%",
-    backgroundColor: "#EF4444", // Red-500 equivalent approximating image
+    backgroundColor: "#EF4444",
     paddingVertical: 16,
     borderRadius: 16,
     alignItems: "center",
@@ -271,11 +301,11 @@ const styles = StyleSheet.create({
   line: {
     flex: 1,
     height: 1,
-    backgroundColor: "#E5E7EB", // Gray-200
+    backgroundColor: "#E5E7EB",
   },
   orText: {
     paddingHorizontal: 16,
-    color: "#374151", // Gray-700
+    color: "#374151",
     fontSize: 14,
   },
   socialContainer: {
@@ -300,8 +330,8 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   footerLink: {
-    color: "#EF4444", // Match the button hue
+    color: "#EF4444",
     fontSize: 14,
     fontWeight: "500",
-  }
+  },
 });
