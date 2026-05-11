@@ -1,7 +1,7 @@
-﻿namespace DoAnTotNghiep.Application.Users.Recommendation
+namespace DoAnTotNghiep.Application.Users.Recommendation
 {
     public record GetRecommendationsDto(
-        Guid UsertId,
+        Guid UserId,
         string? DisplayName,
         int Age,
         string Bio,
