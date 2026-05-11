@@ -43,8 +43,10 @@ namespace DoAnTotNghiep.Application.Users.Commands.Login
             var session = new Session(
                 user.Id,
                 request.DeviceId,
-                request.IPAddress,
+                request.DeviceName,
+                request.IpAddress,
                 request.Platform,
+                request.AppVersion,
                 request.PushToken,
                 refreshToken
             );

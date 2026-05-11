@@ -7,7 +7,9 @@ using System;
 
 using DoAnTotNghiep.Application.Common;
 using DoAnTotNghiep.Application.Chat;
+using DoAnTotNghiep.Application.Notifications;
 using DoAnTotNghiep.Domain.Chat;
+using DoAnTotNghiep.Domain.Users;
 
 namespace DoAnTotNghiep.Web.Hubs;
 
@@ -18,13 +20,23 @@ public class AppHub : Hub
     private readonly ICurrentUserService _currentUserService;
     private readonly IChatMessageQueue _chatMessageQueue;
     private readonly IConversationRepository _conversationRepository;
+    private readonly INotificationService _notificationService;
+    private readonly IUserProfileRepository _userProfileRepository;
 
-    public AppHub(ILogger<AppHub> logger, ICurrentUserService currentUserService, IChatMessageQueue chatMessageQueue, IConversationRepository conversationRepository)
+    public AppHub(
+        ILogger<AppHub> logger, 
+        ICurrentUserService currentUserService, 
+        IChatMessageQueue chatMessageQueue, 
+        IConversationRepository conversationRepository,
+        INotificationService notificationService,
+        IUserProfileRepository userProfileRepository)
     {
         _logger = logger;
         _currentUserService = currentUserService;
         _chatMessageQueue = chatMessageQueue;
         _conversationRepository = conversationRepository;
+        _notificationService = notificationService;
+        _userProfileRepository = userProfileRepository;
     }
 
     public override async Task OnConnectedAsync()
@@ -88,6 +100,23 @@ public class AppHub : Hub
                 conversationId = conversationId,
                 timestamp = chatMsg.CreatedAt
             });
+
+            // Send Push Notification to Receiver
+            var senderProfile = await _userProfileRepository.GetByUserIdAsync(Guid.Parse(senderId));
+            if (senderProfile != null)
+            {
+                await _notificationService.SendPushToUserAsync(
+                    Guid.Parse(receiverId),
+                    senderProfile.BasicInfo.DisplayName,
+                    content,
+                    new Dictionary<string, string> 
+                    { 
+                        { "type", "chat" }, 
+                        { "senderId", senderId }, 
+                        { "conversationId", conversationId.ToString() } 
+                    }
+                );
+            }
         }
         catch (Exception ex)
         {

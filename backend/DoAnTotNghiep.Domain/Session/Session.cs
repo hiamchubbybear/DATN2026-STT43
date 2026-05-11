@@ -18,12 +18,14 @@ public class Session : BaseEntity
 
     public RefreshToken RefreshToken { get; set; } 
 
-    public Session(Guid userId, string? deviceId, string? ipAddress, string? platform, string? pushToken, RefreshToken refreshToken)
+    public Session(Guid userId, string? deviceId, string? deviceName, string? ipAddress, string? platform, string? appVersion, string? pushToken, RefreshToken refreshToken)
     {
         UserId = userId;
         DeviceId = deviceId;
+        DeviceName = deviceName;
         IpAddress = ipAddress;
         Platform = platform;
+        AppVersion = appVersion;
         PushToken = pushToken;
         RefreshToken = refreshToken;
     }

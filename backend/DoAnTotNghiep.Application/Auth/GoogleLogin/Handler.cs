@@ -78,10 +78,12 @@ public class GoogleLoginHandler : IRequestHandler<GoogleLoginCommand, AuthRespon
 
         var session = new Session(
             user.Id,
-            null, // Google login might not have device info in command yet
-            null,
-            "Mobile",
-            null,
+            request.DeviceId,
+            request.DeviceName,
+            request.IpAddress,
+            request.Platform,
+            request.AppVersion,
+            request.PushToken,
             refreshToken
         );
         await _sessionRepository.CreateSession(session);
