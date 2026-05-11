@@ -11,4 +11,5 @@ public interface IConversationRepository
     Task CreateAsync(Conversation conversation, CancellationToken cancellationToken = default);
     Task UpdateAsync(Conversation conversation, CancellationToken cancellationToken = default);
     Task<Conversation?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task DeleteAsync(Guid id, CancellationToken cancellationToken = default);
 }

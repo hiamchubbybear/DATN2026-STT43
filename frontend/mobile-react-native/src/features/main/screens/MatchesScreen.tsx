@@ -2,72 +2,113 @@ import React from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StyleSheet, Text, View, Image, TouchableOpacity, SectionList, RefreshControl, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../../../app/navigation/RootNavigator';
+import { apiClient } from '../../../services/api/apiClient';
 import { normalizeFont, radius, scale, spacing, verticalScale } from '../../../shared/utils/responsive';
 
-const matchCards = [
-  { id: 'm-1', name: 'Leilani, 19', image: require('../../../../assets/images/anh1.jpg'), section: 'Today' },
-  { id: 'm-2', name: 'Annabelle, 20', image: require('../../../../assets/images/anh2.jpg'), section: 'Today' },
-  { id: 'm-3', name: 'Reagan, 24', image: require('../../../../assets/images/anh3.jpg'), section: 'Today' },
-  { id: 'm-4', name: 'Adry, 25', image: require('../../../../assets/images/anh1.jpg'), section: 'Today' },
-  { id: 'm-5', name: 'Sofia, 21', image: require('../../../../assets/images/anh2.jpg'), section: 'Yesterday' },
-  { id: 'm-6', name: 'Cassie, 23', image: require('../../../../assets/images/anh3.jpg'), section: 'Yesterday' },
-];
+import { swipeService } from '../../../services/api/swipeService';
+import { Logger } from '../../../shared/utils/logger';
 
-const SECTION_ORDER = ['Today', 'Yesterday'] as const;
-const INITIAL_BATCH = 4;
-const LOAD_MORE_BATCH = 2;
+const defaultAvatar = require('../../../../assets/images/anh2.jpg');
 
 export const MatchesScreen = () => {
-  const [visibleCount, setVisibleCount] = React.useState(INITIAL_BATCH);
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const [matches, setMatches] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(true);
   const [refreshing, setRefreshing] = React.useState(false);
-  const [loadingMore, setLoadingMore] = React.useState(false);
 
-  const visibleItems = React.useMemo(() => matchCards.slice(0, visibleCount), [visibleCount]);
-  const sections = React.useMemo(() => {
-    return SECTION_ORDER
-      .map((section) => {
-        const items = visibleItems.filter((item) => item.section === section);
-        const rows: Array<Array<typeof matchCards[number]>> = [];
-
-        for (let index = 0; index < items.length; index += 2) {
-          rows.push(items.slice(index, index + 2));
-        }
-
-        return { title: section, data: rows };
-      })
-      .filter((section) => section.data.length > 0);
-  }, [visibleItems]);
-
-  React.useEffect(() => {
-    if (loadingMore) {
-      setLoadingMore(false);
+  const fetchData = React.useCallback(async (showLoading = true) => {
+    if (showLoading) setLoading(true);
+    try {
+      const data = await swipeService.getMatches();
+      setMatches(data);
+    } catch (err) {
+      Logger.error('Failed to fetch matches', err);
+    } finally {
+      if (showLoading) setLoading(false);
     }
-  }, [loadingMore, visibleCount]);
-
-  const handleRefresh = React.useCallback(() => {
-    setRefreshing(true);
-    setVisibleCount(INITIAL_BATCH);
-    setTimeout(() => setRefreshing(false), 300);
   }, []);
 
-  const handleLoadMore = React.useCallback(() => {
-    if (loadingMore || visibleCount >= matchCards.length) {
-      return;
-    }
-    setLoadingMore(true);
-    setVisibleCount((prev) => Math.min(prev + LOAD_MORE_BATCH, matchCards.length));
-  }, [loadingMore, visibleCount]);
+  React.useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
-  const renderItem = React.useCallback(({ item }: { item: Array<typeof matchCards[number]> }) => (
+  const handleRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    await fetchData(false);
+    setRefreshing(false);
+  }, [fetchData]);
+
+  const sections = React.useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    const groups: { [key: string]: any[] } = {
+      'Today': [],
+      'Yesterday': [],
+      'Earlier': []
+    };
+
+    matches.forEach(m => {
+      const matchDate = new Date(m.matchedAt);
+      matchDate.setHours(0, 0, 0, 0);
+
+      if (matchDate.getTime() === today.getTime()) {
+        groups['Today'].push(m);
+      } else if (matchDate.getTime() === yesterday.getTime()) {
+        groups['Yesterday'].push(m);
+      } else {
+        groups['Earlier'].push(m);
+      }
+    });
+
+    return Object.keys(groups)
+      .filter(key => groups[key].length > 0)
+      .map(key => {
+        const items = groups[key];
+        const rows: any[][] = [];
+        for (let i = 0; i < items.length; i += 2) {
+          rows.push(items.slice(i, i + 2));
+        }
+        return { title: key, data: rows };
+      });
+  }, [matches]);
+
+  const renderItem = React.useCallback(({ item }: { item: any[] }) => (
     <View style={styles.row}>
       {item.map((match) => (
-        <View key={match.id} style={styles.card}>
-          <Image source={match.image} style={styles.cardImage} />
+        <TouchableOpacity 
+          key={match.userId} 
+          style={styles.card}
+          activeOpacity={0.9}
+          onPress={async () => {
+            try {
+              const response = await apiClient.get(`/api/chat/conversation/${match.userId}`);
+              if (response.data?.success) {
+                navigation.navigate('ChatRoom', {
+                  conversationId: response.data.data,
+                  receiverId: match.userId,
+                  receiverName: match.displayName,
+                  receiverAvatar: match.avatarUrl
+                });
+              }
+            } catch (err) {
+              Logger.error('Failed to navigate to chat', err);
+            }
+          }}
+        >
+          <Image 
+            source={match.avatarUrl ? { uri: match.avatarUrl } : defaultAvatar} 
+            style={styles.cardImage} 
+          />
           <View style={styles.overlay}>
-            <Text style={styles.name}>{match.name}</Text>
+            <Text style={styles.name}>{match.displayName}</Text>
 
-            <View style={styles.iconRow}
-            >
+            <View style={styles.iconRow}>
               <View style={styles.roundIconDark}>
                 <Ionicons name="close" size={14} color="#FFFFFF" />
               </View>
@@ -76,15 +117,23 @@ export const MatchesScreen = () => {
               </View>
             </View>
           </View>
-        </View>
+        </TouchableOpacity>
       ))}
       {item.length === 1 ? <View style={styles.cardPlaceholder} /> : null}
     </View>
-  ), []);
+  ), [navigation]);
 
   const renderSectionHeader = React.useCallback(({ section }: { section: { title: string } }) => (
     <Text style={styles.sectionLabel}>{section.title}</Text>
   ), []);
+
+  if (loading && !refreshing) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#EE3F57" />
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -97,8 +146,6 @@ export const MatchesScreen = () => {
         renderSectionHeader={renderSectionHeader}
         stickySectionHeadersEnabled={false}
         showsVerticalScrollIndicator={false}
-        onEndReached={handleLoadMore}
-        onEndReachedThreshold={0.4}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -118,9 +165,7 @@ export const MatchesScreen = () => {
           </View>
         }
         ListFooterComponent={
-          <View style={styles.bottomSpacer}>
-            {loadingMore ? <ActivityIndicator color="#EE3F57" /> : null}
-          </View>
+          <View style={styles.bottomSpacer} />
         }
       />
     </SafeAreaView>
@@ -129,6 +174,7 @@ export const MatchesScreen = () => {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#F7F7F8' },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   container: { flex: 1, paddingHorizontal: spacing(20), paddingTop: spacing(4) },
   scrollContent: {
     paddingBottom: spacing(16),

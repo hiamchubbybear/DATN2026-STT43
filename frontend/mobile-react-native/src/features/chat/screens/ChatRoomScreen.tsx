@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TextInput, TouchableOpacity, FlatList, KeyboardAvoidingView, Platform, StyleSheet, SafeAreaView, Image } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, FlatList, KeyboardAvoidingView, Platform, StyleSheet, SafeAreaView, Modal, Alert } from 'react-native';
+import { Image } from 'expo-image';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../../app/navigation/RootNavigator';
 import { useChatStore } from '../../../store/chatStore';
 import { chatSignalRService } from '../../../services/api/chatSignalR';
 import { apiClient } from '../../../services/api/apiClient';
+import { chatService } from '../../../services/api/chatService';
 import { useAuthStore } from '../../../store/authStore';
 import { useToast } from '../../../shared/components/ToastProvider';
 import Svg, { Path, Circle, Rect } from 'react-native-svg';
@@ -64,13 +66,14 @@ const SingleCheckIcon = ({ color }: { color: string }) => (
 );
 
 export const ChatRoomScreen: React.FC<Props> = ({ route, navigation }) => {
-  const { conversationId, receiverId, receiverName } = route.params;
+  const { conversationId, receiverId, receiverName, receiverAvatar } = route.params;
   const { user } = useAuthStore();
   const { showToast } = useToast();
   const messages = useChatStore((state) => state.messages[conversationId]) || EMPTY_ARRAY;
   const addMessage = useChatStore((state) => state.addMessage);
   
   const [inputText, setInputText] = useState('');
+  const [isMenuVisible, setIsMenuVisible] = useState(false);
   const flatListRef = useRef<FlatList>(null);
 
   useEffect(() => {
@@ -128,6 +131,55 @@ export const ChatRoomScreen: React.FC<Props> = ({ route, navigation }) => {
         type: 'error'
       });
     }
+  };
+
+  const handleDeleteChat = () => {
+    setIsMenuVisible(false);
+    Alert.alert(
+      'Xóa cuộc trò chuyện',
+      'Bạn có chắc chắn muốn xóa cuộc trò chuyện này? Toàn bộ tin nhắn sẽ bị xóa vĩnh viễn.',
+      [
+        { text: 'Hủy', style: 'cancel' },
+        { 
+          text: 'Xóa', 
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await chatService.deleteConversation(conversationId);
+              useChatStore.getState().setMessages(conversationId, []);
+              
+              showToast({
+                title: 'Đã xóa',
+                message: 'Cuộc trò chuyện đã được xóa.',
+                type: 'success'
+              });
+              navigation.goBack();
+            } catch (error) {
+              console.error('Failed to delete conversation:', error);
+              showToast({
+                title: 'Lỗi',
+                message: 'Không thể xóa cuộc trò chuyện. Vui lòng thử lại.',
+                type: 'error'
+              });
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const handleReport = () => {
+    setIsMenuVisible(false);
+    Alert.alert(
+      'Báo cáo người dùng',
+      'Cảm ơn bạn đã báo cáo. Chúng tôi sẽ xem xét nội dung này sớm nhất có thể.',
+      [{ text: 'OK' }]
+    );
+  };
+
+  const handleViewProfile = () => {
+    setIsMenuVisible(false);
+    navigation.navigate('UserProfile', { userId: receiverId });
   };
 
   const renderMessage = ({ item, index }: { item: any, index: number }) => {
@@ -188,7 +240,10 @@ export const ChatRoomScreen: React.FC<Props> = ({ route, navigation }) => {
             <BackIcon />
           </TouchableOpacity>
           <View style={styles.avatarRing}>
-            <Image source={require('../../../../assets/images/anh2.jpg')} style={styles.avatar} />
+            <Image 
+              source={receiverAvatar ? { uri: receiverAvatar } : require('../../../../assets/images/anh2.jpg')} 
+              style={styles.avatar} 
+            />
           </View>
           <View style={styles.headerInfo}>
             <Text style={styles.headerName}>{receiverName}</Text>
@@ -198,10 +253,41 @@ export const ChatRoomScreen: React.FC<Props> = ({ route, navigation }) => {
             </View>
           </View>
         </View>
-        <TouchableOpacity style={styles.menuButton}>
+        <TouchableOpacity 
+          style={styles.menuButton}
+          onPress={() => setIsMenuVisible(true)}
+        >
           <MenuIcon />
         </TouchableOpacity>
       </View>
+
+      {/* Options Menu Modal */}
+      <Modal
+        visible={isMenuVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setIsMenuVisible(false)}
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlay} 
+          activeOpacity={1} 
+          onPress={() => setIsMenuVisible(false)}
+        >
+          <View style={styles.menuContainer}>
+            <TouchableOpacity style={styles.menuItem} onPress={handleViewProfile}>
+              <Text style={styles.menuItemText}>Xem thông tin</Text>
+            </TouchableOpacity>
+            <View style={styles.menuDivider} />
+            <TouchableOpacity style={styles.menuItem} onPress={handleReport}>
+              <Text style={styles.menuItemText}>Báo cáo người dùng</Text>
+            </TouchableOpacity>
+            <View style={styles.menuDivider} />
+            <TouchableOpacity style={styles.menuItem} onPress={handleDeleteChat}>
+              <Text style={[styles.menuItemText, { color: '#EE3F57' }]}>Xóa đoạn chat</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
 
       <KeyboardAvoidingView 
         style={styles.keyboardView} 
@@ -453,5 +539,38 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginLeft: 12,
     backgroundColor: '#FFFFFF',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'flex-start',
+    alignItems: 'flex-end',
+    paddingTop: 100, // Adjust based on header height
+    paddingRight: 20,
+  },
+  menuContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    width: 200,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+    overflow: 'hidden',
+  },
+  menuItem: {
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    backgroundColor: '#FFFFFF',
+  },
+  menuItemText: {
+    fontSize: 16,
+    color: '#111111',
+    fontWeight: '500',
+  },
+  menuDivider: {
+    height: 1,
+    backgroundColor: '#F3F4F6',
   },
 });
