@@ -1,4 +1,4 @@
-﻿using DoAnTotNghiep.Domain.Common;
+using DoAnTotNghiep.Domain.Common;
 using DoAnTotNghiep.Domain.Enum;
 using MongoDB.Bson.Serialization.Attributes;
 using System;
@@ -65,6 +65,11 @@ public class UserProfile(Guid userId) : BaseEntity
 
     public void UpdateLocation(double latitude, double longitude, string locationName)
     {
+        if (latitude < -90 || latitude > 90)
+            throw new ArgumentException("Invalid latitude");
+
+        if (longitude < -180 || longitude > 180)
+            throw new ArgumentException("Invalid longitude");
         Latitude = latitude;
         Longitude = longitude;
         LocationName = locationName?.Trim() ?? string.Empty;
@@ -88,11 +93,27 @@ public class UserProfile(Guid userId) : BaseEntity
 
     public void AddPhoto(Photo photo)
     {
+        if (photo == null)
+            throw new ArgumentNullException(nameof(photo));
+
         if (!Photos.Any())
         {
             photo.SetPrimary(true);
         }
-
+        else
+        {
+            if (photo.IsPrimary)
+            {
+                foreach (var p in Photos)
+                    p.SetPrimary(false);
+            }
+            else
+            {
+                if (!Photos.Any(p => p.IsPrimary))
+                    photo.SetPrimary(true);
+            }
+        }
+        
         photo.SetOrder(Photos.Count);
         Photos.Add(photo);
         SetUpdated();
@@ -183,6 +204,7 @@ public class BasicInfo
 
     [BsonSerializer(typeof(SafeEnumSerializer<Gender>))]
     public Gender Gender { get; private set; } = Gender.Other;
+    public int Age => DateTime.Now.Year - Dob.Year - (DateTime.UtcNow.DayOfYear < Dob.DayOfYear ? 1 : 0);
     public List<string> Languages { get; private set; } = new();
 
     public void Update(string name, DateTime dob, Gender gender, List<string> languages)
