@@ -14,7 +14,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using DoAnTotNghiep.Application.Users.Recommendation.Services;
 using DoAnTotNghiep.Infrastructure.Persistence.Geo;
-using DoAnTotNghiep.Infrastructure.Persistence.Redis;
+using StackExchange.Redis;
 
 namespace DoAnTotNghiep.Infrastructure;
 
@@ -25,7 +25,6 @@ public static class DependencyInjection
         services.AddSingleton<MongoDbContext>();
         services.AddSingleton<MongoDbInitializer>();
         services.AddScoped<ISwipeRepository, SwipeRepository>();
-        services.AddScoped<IBloomFilterService, BloomFilterService>();
         services.AddScoped<Domain.Users.IUserRepository, Repositories.UserRepository>();
         services.AddScoped<Domain.Users.ISessionRepository, Repositories.UserSessionRepository>();
         services.AddScoped<IJwtService, JwtService>();
@@ -38,18 +37,26 @@ public static class DependencyInjection
         services.AddScoped<IEmailService, MailKitEmailService>();
         services.AddScoped<IGoogleAuthService, GoogleAuthService>();
         services.AddScoped<IEmailTemplateService, EmailTemplateService>();
+        services.AddScoped<INotificationService, FirebaseNotificationService>();
         services.AddTransient<IPasswordResetToken, PasswordResetTokenRepository>();
         services.AddTransient<ITokenGenerator, TokenGenerateService>();
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
+        
         var redisSettings = configuration.GetSection("Redis").Get<RedisSettings>();
         
+        // Register IConnectionMultiplexer only if not already registered (to avoid conflicts with Program.cs)
+        if (services.All(x => x.ServiceType != typeof(IConnectionMultiplexer)))
+        {
+            services.AddSingleton<IConnectionMultiplexer>(sp =>
+                ConnectionMultiplexer.Connect(redisSettings?.ConnectionString ?? "localhost:6379"));
+        }
         services.AddScoped<IRecommendationScoringService, RecommendationScoringService>();
         services.AddScoped<IGeoService, GeoService>();
         services.AddScoped<ISeenUserService, SeenUserService>();
 
         services.AddMemoryCache();
-        services.AddSingleton<ICacheService>(sp => 
+        services.AddSingleton<ICacheService>(sp =>
         {
             var memoryCache = sp.GetRequiredService<IMemoryCache>();
             return new RedisContext(redisSettings ?? new RedisSettings(), memoryCache);

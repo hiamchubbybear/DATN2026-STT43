@@ -27,4 +27,12 @@ public class UserSessionRepository : ISessionRepository
     {
         await _sessions.ReplaceOneAsync(x => x.Id == session.Id, session);
     }
+
+    public async Task<List<string>> GetPushTokensByUserId(Guid userId)
+    {
+        var sessions = await _sessions.Find(x => x.UserId == userId && !x.IsRevoked && !string.IsNullOrEmpty(x.PushToken))
+            .ToListAsync();
+        
+        return sessions.Select(x => x.PushToken!).Distinct().ToList();
+    }
 }
