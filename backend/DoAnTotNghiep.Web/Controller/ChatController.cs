@@ -1,10 +1,12 @@
 using DoAnTotNghiep.Application.Chat.Queries;
+using DoAnTotNghiep.Application.Chat.Commands;
 using DoAnTotNghiep.Application.Common.Models;
 using DoAnTotNghiep.Domain.Chat;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace DoAnTotNghiep.Web.Controllers;
@@ -43,5 +45,13 @@ public class ChatController : ControllerBase
         var query = new GetOrCreateConversationQuery(targetUserId);
         var result = await _mediator.Send(query);
         return Ok(ApiResponse<Guid>.Succeeded(result));
+    }
+
+    [HttpDelete("conversation/{conversationId}")]
+    public async Task<IActionResult> DeleteConversation(Guid conversationId)
+    {
+        var command = new DeleteConversationCommand(conversationId);
+        await _mediator.Send(command);
+        return Ok(ApiResponse<bool>.Succeeded(true));
     }
 }

@@ -34,4 +34,9 @@ public class ChatMessageRepository : IChatMessageRepository
             .Limit(limit)
             .ToListAsync(cancellationToken);
     }
+
+    public async Task DeleteByConversationIdAsync(Guid conversationId, CancellationToken cancellationToken = default)
+    {
+        await _context.ChatMessages.DeleteManyAsync(x => x.ConversationId == conversationId, cancellationToken);
+    }
 }

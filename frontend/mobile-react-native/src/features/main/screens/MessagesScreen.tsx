@@ -1,11 +1,10 @@
 import React from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Image, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator, ScrollView, RefreshControl } from 'react-native';
+import { Image, StyleSheet, Text, TouchableOpacity, View, ScrollView, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../../app/navigation/RootNavigator';
-import { UserDiscoverDto, userService } from '../../../services/api/userService';
 import { apiClient } from '../../../services/api/apiClient';
 import { Logger } from '../../../shared/utils/logger';
 import { normalizeFont, radius, scale, spacing, verticalScale } from '../../../shared/utils/responsive';
@@ -14,20 +13,15 @@ const defaultAvatar = require('../../../../assets/images/anh1.jpg');
 
 export const MessagesScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const [users, setUsers] = React.useState<UserDiscoverDto[]>([]);
   const [conversations, setConversations] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
-
   const [refreshing, setRefreshing] = React.useState(false);
 
-  const fetchUsers = async (showLoading = true) => {
+  const fetchData = async (showLoading = true) => {
     if (showLoading) setLoading(true);
     setError(null);
     try {
-      const usersData = await userService.discoverUsers();
-      setUsers(usersData);
-      
       const convResponse = await apiClient.get('/api/chat/conversations');
       if (convResponse.data?.success) {
         setConversations(convResponse.data.data);
@@ -41,12 +35,12 @@ export const MessagesScreen = () => {
   };
 
   React.useEffect(() => {
-    fetchUsers();
+    fetchData();
   }, []);
 
   const onRefresh = React.useCallback(async () => {
     setRefreshing(true);
-    await fetchUsers(false);
+    await fetchData(false);
     setRefreshing(false);
   }, []);
 
@@ -73,49 +67,6 @@ export const MessagesScreen = () => {
           <Text style={styles.searchText}>Search</Text>
         </View>
 
-         <Text style={styles.sectionTitle}>Discover People (Test Chat)</Text>
-        <View style={styles.activityRow}>
-          {loading && !refreshing ? (
-            <ActivityIndicator size="small" color="#EE3F57" />
-          ) : error ? (
-            <Text style={styles.errorText}>{error}</Text>
-          ) : (
-            users.map((item) => (
-              <TouchableOpacity 
-                key={item.userId} 
-                style={styles.activityItem}
-                activeOpacity={0.7}
-                onPress={async () => {
-                  try {
-                    const response = await apiClient.get(`/api/chat/conversation/${item.userId}`);
-                    const convId = response.data?.data;
-                    if (convId) {
-                      navigation.navigate('ChatRoom', {
-                        conversationId: convId, 
-                        receiverId: item.userId,
-                        receiverName: item.displayName
-                      });
-                    }
-                  } catch (err) {
-                    Logger.error('Failed to get conversation', err);
-                  }
-                }}
-              >
-                <View style={styles.activityAvatarRing}>
-                  <Image 
-                    source={item.avatarUrl ? { uri: item.avatarUrl } : defaultAvatar} 
-                    style={styles.activityAvatar} 
-                  />
-                </View>
-                <Text style={styles.activityLabel} numberOfLines={1}>{item.displayName}</Text>
-              </TouchableOpacity>
-            ))
-          )}
-          {!loading && !error && users.length === 0 && (
-            <Text style={styles.emptyText}>No users found. Try registering another account!</Text>
-          )}
-        </View>
-
         <Text style={[styles.sectionTitle, styles.messagesTitle]}>Recent Chats</Text>
 
         {conversations.length > 0 ? (
@@ -126,7 +77,8 @@ export const MessagesScreen = () => {
               onPress={() => navigation.navigate('ChatRoom', {
                 conversationId: conv.id,
                 receiverId: conv.otherParticipantId,
-                receiverName: conv.otherParticipantName
+                receiverName: conv.otherParticipantName,
+                receiverAvatar: conv.otherParticipantAvatar
               })}
             >
               <Image 

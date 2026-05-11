@@ -48,4 +48,9 @@ public class ConversationRepository : IConversationRepository
     {
         return await _context.Conversations.Find(x => x.Id == id).FirstOrDefaultAsync(cancellationToken);
     }
+    
+    public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        await _context.Conversations.DeleteOneAsync(x => x.Id == id, cancellationToken);
+    }
 }
