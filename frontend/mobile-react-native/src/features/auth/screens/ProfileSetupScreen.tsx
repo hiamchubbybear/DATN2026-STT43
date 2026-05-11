@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigation } from '@react-navigation/native';
 import {
   StyleSheet,
   Text,
@@ -45,6 +46,7 @@ const SvgMinus = () => (
 );
 
 export default function ProfileSetupScreen() {
+  const navigation = useNavigation<any>();
   const { setProfileStatus, logout } = useAuthStore();
   const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
@@ -196,7 +198,7 @@ export default function ProfileSetupScreen() {
         message: 'Hồ sơ của bạn đã được hoàn tất!',
         type: 'success'
       });
-      setProfileStatus(true);
+      navigation.replace('Permission');
     } catch (error: any) {
       showToast({
         title: 'Lỗi',

@@ -13,17 +13,13 @@ import ResetPasswordScreen from '../../features/auth/screens/forgot-password/Res
 import { useAuthStore } from '../../store/authStore';
 import ProfileSetupScreen from '../../features/auth/screens/ProfileSetupScreen';
 import { HomeScreen } from '../../features/home/screens/HomeScreen';
-import { TestHubScreen } from '../../features/core/screens/TestHubScreen';
 import { MainBottomTabs, MainTabParamList } from './MainBottomTabs';
+import { PermissionScreen } from '../../features/onboarding/screens/PermissionScreen';
+import { DiscoverySettingScreen } from '../../features/onboarding/screens/DiscoverySettingScreen';
 import { SettingsScreen } from '../../features/main/screens/SettingsScreen';
 import { EditProfileScreen } from '../../features/main/screens/EditProfileScreen';
 import { EditGalleryScreen } from '../../features/main/screens/EditGalleryScreen';
-import { DiscoverySettingsScreen } from '../../features/main/screens/DiscoverySettingsScreen';
-import { MainScreen } from '../../features/main/screens/MainScreen';
-import { NotificationsMainScreen } from '../../features/main/screens/NotificationsMainScreen';
-import { MessagesScreen } from '../../features/main/screens/MessagesScreen';
-import { MatchesScreen } from '../../features/main/screens/MatchesScreen';
-import { ProfileMainScreen } from '../../features/main/screens/ProfileMainScreen';
+import { UserProfileScreen } from '../../features/main/screens/UserProfileScreen';
 import { ChatRoomScreen } from '../../features/chat/screens/ChatRoomScreen';
 
 export type RootStackParamList = {
@@ -37,20 +33,15 @@ export type RootStackParamList = {
   ForgotPasswordVerify: { email: string };
   ResetPassword: { email: string; token: string };
   ProfileSetup: undefined;
+  Permission: undefined;
+  DiscoverySetting: undefined;
   Home: undefined;
-  TestHub: undefined;
   MainTabs: NavigatorScreenParams<MainTabParamList> | undefined;
-  PreviewMainTabs: NavigatorScreenParams<MainTabParamList> | undefined;
   Settings: undefined;
   EditProfile: undefined;
   EditGallery: undefined;
-  DiscoverySettings: undefined;
-  DemoDiscover: undefined;
-  DemoNotifications: undefined;
-  DemoMessages: undefined;
-  DemoMatches: undefined;
-  DemoProfile: undefined;
-  ChatRoom: { conversationId: string; receiverId: string; receiverName: string };
+  UserProfile: { userId: string };
+  ChatRoom: { conversationId: string; receiverId: string; receiverName: string; receiverAvatar?: string };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -80,7 +71,11 @@ export const RootNavigator = () => {
           </>
         ) : !isProfileCompleted ? (
           // Setup Stack
-          <Stack.Screen name="ProfileSetup" component={ProfileSetupScreen} />
+          <>
+            <Stack.Screen name="ProfileSetup" component={ProfileSetupScreen} />
+            <Stack.Screen name="Permission" component={PermissionScreen} />
+            <Stack.Screen name="DiscoverySetting" component={DiscoverySettingScreen} />
+          </>
         ) : (
           // App Stack
           <>
@@ -106,24 +101,11 @@ export const RootNavigator = () => {
               component={EditGalleryScreen} 
             />
             <Stack.Screen 
-              name="DiscoverySettings" 
-              component={DiscoverySettingsScreen} 
+              name="UserProfile" 
+              component={UserProfileScreen} 
             />
           </>
         )}
-        <Stack.Screen 
-          name="TestHub" 
-          component={TestHubScreen} 
-        />
-        <Stack.Screen 
-          name="PreviewMainTabs" 
-          component={MainBottomTabs} 
-        />
-        <Stack.Screen name="DemoDiscover" component={MainScreen} />
-        <Stack.Screen name="DemoNotifications" component={NotificationsMainScreen} />
-        <Stack.Screen name="DemoMessages" component={MessagesScreen} />
-        <Stack.Screen name="DemoMatches" component={MatchesScreen} />
-        <Stack.Screen name="DemoProfile" component={ProfileMainScreen} />
         <Stack.Screen 
           name="ChatRoom" 
           component={ChatRoomScreen} 
