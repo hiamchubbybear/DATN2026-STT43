@@ -56,7 +56,6 @@ namespace DoAnTotNghiep.Application.Users.Commands.Login
                 RefreshToken = newRefreshToken.Token,
                 IsProfileCompleted = profile != null,
                 UserId = user.Id,
-                Username = user.Username,
                 Email = user.Email
             };
         }

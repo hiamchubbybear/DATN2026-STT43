@@ -6,10 +6,6 @@ public class CreateAccountCommandValidator : AbstractValidator<CreateAccountComm
 {
     public CreateAccountCommandValidator()
     {
-        RuleFor(v => v.Username)
-            .NotEmpty().WithMessage("Username is required.")
-            .MaximumLength(50).WithMessage("Username must not exceed 50 characters.");
-
         RuleFor(v => v.Email)
             .NotEmpty().WithMessage("Email is required.")
             .EmailAddress().WithMessage("Email is invalid.");

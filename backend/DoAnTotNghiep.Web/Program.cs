@@ -56,30 +56,32 @@ builder.Services.AddControllers()
     });
 
 var redisConfig = StackExchange.Redis.ConfigurationOptions.Parse(redisSettings!.ConnectionString);
-redisConfig.AbortOnConnectFail = false; // Allow reconnection
+redisConfig.AbortOnConnectFail = false;
+redisConfig.ConnectTimeout = 2000; // Short timeout for startup check
 
 try 
 {
     var muxer = StackExchange.Redis.ConnectionMultiplexer.Connect(redisConfig);
     builder.Services.AddSingleton<StackExchange.Redis.IConnectionMultiplexer>(muxer);
 
-    builder.Services.AddSignalR().AddStackExchangeRedis(options =>
+    if (muxer.IsConnected)
     {
-        options.Configuration = redisConfig;
-        options.Configuration.ChannelPrefix = "PsyConnect";
-    });
-    Log.Information("Redis backplane enabled.");
+        builder.Services.AddSignalR().AddStackExchangeRedis(options =>
+        {
+            options.Configuration = redisConfig;
+            options.Configuration.ChannelPrefix = "PsyConnect";
+        });
+        Log.Information("Redis backplane enabled and connected.");
+    }
+    else
+    {
+        Log.Warning("Redis configured but not connected. Using local SignalR backplane.");
+        builder.Services.AddSignalR();
+    }
 }
 catch (Exception ex)
 {
-    Log.Warning("Redis connection error! Services might be degraded. Error: {Msg}", ex.Message);
-    // Still try to register a multiplexer if possible, or handle it in services
-    try {
-        var lazyMuxer = StackExchange.Redis.ConnectionMultiplexer.Connect(redisConfig);
-        builder.Services.AddSingleton<StackExchange.Redis.IConnectionMultiplexer>(lazyMuxer);
-    } catch {
-        Log.Error("Critical: Could not even initialize a disconnected Redis multiplexer.");
-    }
+    Log.Warning("Redis connection failed! Using local SignalR. Error: {Msg}", ex.Message);
     builder.Services.AddSignalR();
 }
 

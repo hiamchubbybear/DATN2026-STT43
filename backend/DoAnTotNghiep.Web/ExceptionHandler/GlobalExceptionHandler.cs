@@ -35,6 +35,7 @@ public class GlobalExceptionHandler : IExceptionHandler
                 Title = GetTitle(appEx.StatusCode),
                 Status = appEx.StatusCode,
                 Detail = appEx.Message,
+                Message = appEx.Message,
                 ErrorCode = appEx.ErrorCode,
                 TraceId = traceId
             };
@@ -42,6 +43,13 @@ public class GlobalExceptionHandler : IExceptionHandler
             if (appEx is ValidationException valEx)
             {
                 response.Errors = valEx.Errors;
+                // Aggregate errors for a more useful message
+                var errorMessages = valEx.Errors.SelectMany(x => x.Value);
+                response.Message = string.Join(" ", errorMessages);
+                if (string.IsNullOrEmpty(response.Message))
+                {
+                    response.Message = "Dữ liệu nhập vào không hợp lệ.";
+                }
             }
 
             LogWarning(exception, traceId);
@@ -55,6 +63,7 @@ public class GlobalExceptionHandler : IExceptionHandler
                 Detail = _env.IsDevelopment()
                     ? exception.ToString()
                     : "Đã có lỗi hệ thống xảy ra.",
+                Message = "Đã có lỗi hệ thống xảy ra. Vui lòng thử lại sau.",
                 ErrorCode = Error_Code.UNKNOWN_ERROR,
                 TraceId = traceId
             };

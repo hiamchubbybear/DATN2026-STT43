@@ -1,40 +1,104 @@
-# Hệ Thống Ghép Đôi & Phát Hiện Lừa Đảo / Matchmaking & Scam Detection
+# Mixer - Dating App & Scam Detection System
 
 [![Backend CI/CD](https://github.com/hiamchubbybear/DATN2026-STT43/actions/workflows/backend-ci.yml/badge.svg?branch=main)](https://github.com/hiamchubbybear/DATN2026-STT43/actions/workflows/backend-ci.yml)
 ![Server Status](https://img.shields.io/endpoint?url=https://datn.chessy.dev/health&logo=statuspage&logoColor=white&cacheSeconds=60)
 
-## Bản dịch ngôn ngữ / Language editions
+## 🌟 Overview
+Mixer is a modern dating platform built with a focus on user safety and real-time interaction. It features a sophisticated matchmaking algorithm and an integrated AI-powered scam detection system to protect users from fraudulent activities.
 
-- Vietnamese (ghi chú chi tiết + vai trò của từng thành viên + stack)[`README_vi.md`](README_vi.md)
-- English (full overview + stack + process): [`README_en.md`](README_en.md)
+---
 
-## API và trạng thái server / API & Server Status
+## 📁 Project Structure
 
-- **Đường dẫn API**: `https://datn.chessy.dev`
-- **Tài liệu API**: Các endpoint API chi tiết [API_PLAN.md](API_PLAN.md)
+```bash
+├── backend/                  # ASP.NET Core 8 Web API (Clean Architecture)
+│   ├── DoAnTotNghiep.Web/          # Entry point & Controllers
+│   ├── DoAnTotNghiep.Application/  # Business logic & Handlers
+│   ├── DoAnTotNghiep.Domain/       # Core entities & Enums
+│   └── DoAnTotNghiep.Infrastructure/# Persistence (Mongo, Redis), Services
+├── frontend/                 # Client Applications
+│   ├── mobile-react-native/  # Expo / React Native App (iOS & Android)
+│   └── admin-react/          # React Admin Dashboard
+├── scripts/                  # Data seeding & Development tools (Ignored)
+├── docs/                     # Documentation
+│   └── technical/            # API Plans, Rules, and translations
+└── docker/                   # Deployment configurations
+```
 
-## Sắp ra mắt / Coming Soon
+---
 
-- **Admin Dashboard**: Giao diện quản lý toàn diện cho người điều hành hệ thống.
-- **Server Health Dashboard**: Hiển thị trạng thái của server và các thông tin liên quan.
-- **Mobile Application**: Phiên bản ứng dụng di động cho iOS và Android.
+## 🚀 Technology Stack
 
-## Quick summary
+### Backend
+- **Core**: ASP.NET Core 8
+- **Database**: MongoDB (Primary), Redis (Caching & Messaging)
+- **Real-time**: SignalR (Chat & Notifications)
+- **Monitoring**: Custom System Monitor (Metrics, Logs, Resource Usage)
+- **Auth**: JWT, Google OAuth
 
-- Frontend: ReactJS + React Native + Tailwind + WebSocket
-- Backend: ASP.NET Core 8 + WebSocket server + MongoDB + Redis + JWT
-- AI: Python + FastAPI + XGBoost + Sentence Transformers
-- Call system: WebRTC + STUN + Coturn, deployed via Docker / Nginx on VPS / Vercel
+### Frontend
+- **Mobile**: React Native (Expo), Redux/Zustand, Native Stack Navigation
+- **Admin**: React, Tailwind CSS, Lucide Icons
+- **Styling**: Vanilla CSS / Tailwind (Admin)
 
-## Vai trò trong nhóm / Team roles spotlight
+### AI & Security
+- **Detection**: Python, FastAPI, XGBoost
+- **Security**: Report & Review system with evidence photo support
 
-- Frontend: [Chu Phương Anh](https://github.com/Chuuuu21) (UI/UX, React web/mobile)
-- Backend: [Phan Công Danh](https://github.com/CongDanh06) & [Trần Huy](https://github.com/huynartLZ) (ASP.NET Core APIs + WebSocket)
-- Machine Learning: [Phùng Đình Quang Huy](https://github.com/HawkPoseidon) (AI model & Scam detection)
-- System / DevOps: [Trần Văn Huy](https://github.com/hiamchubbybear) (Docker, Cloudflared Tunnel, VPS + Vercel)
+---
 
-## Thông tin thêm / Additional info
+## ✨ Key Features
 
-- Xây dựng thêm các hướng dẫn chi tiết cho mỗi ngôn ngữ README với các bước bắt đầu, ví dụ môi trường, cổng và các script chạy cho web/mobile/backend/AI.
-- Tài liệu API base URLs, WebSocket paths, FastAPI inference routes, TURN hosts, và service monitoring dashboards để tham khảo nhanh chóng.
-- Xác định quy trình triển khai: Docker compose commands, Nginx config, VPS/Vercel steps, release checklist (env vars, migrations, smoke tests).
+- **Matchmaking**: Swipe right to match, left to pass. Sophisticated recommendation engine.
+- **Real-time Chat**: Instant messaging with SignalR.
+- **System Monitoring**: Admin dashboard for real-time backend health, memory usage, and logs.
+- **Safety First**: 
+    - User Reporting system with photo evidence.
+    - App Review & Feedback.
+    - Scam detection (In development).
+- **Profile Management**: Detailed profile setup with interests, lifestyle, and photo gallery.
+
+---
+
+## 🛠️ Getting Started
+
+### Prerequisites
+- .NET 8 SDK
+- Node.js (v18+)
+- MongoDB & Redis (Local or Cloud)
+
+### Run Backend
+```bash
+cd backend/DoAnTotNghiep.Web
+dotnet run
+```
+
+### Run Mobile
+```bash
+cd frontend/mobile-react-native
+npm install
+npx expo start
+```
+
+### Run Admin
+```bash
+cd frontend/admin-react
+npm install
+npm run dev
+```
+
+---
+
+## 📄 Documentation
+Detailed technical documentation can be found in the [docs/technical/](docs/technical/) directory:
+- [API Plan](docs/technical/api-plan.md)
+- [Repository Rules](docs/technical/repository-rules.md)
+
+## 👥 Team
+- **Frontend**: [Chu Phương Anh](https://github.com/Chuuuu21)
+- **Backend**: [Phan Công Danh](https://github.com/CongDanh06) & [Trần Huy](https://github.com/huynartLZ)
+- **Machine Learning**: [Phùng Đình Quang Huy](https://github.com/HawkPoseidon)
+- **DevOps**: [Trần Văn Huy](https://github.com/hiamchubbybear)
+
+---
+© 2026 Mixer Team - All Rights Reserved.

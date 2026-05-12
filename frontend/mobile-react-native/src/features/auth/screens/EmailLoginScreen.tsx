@@ -43,7 +43,7 @@ export default function EmailLoginScreen() {
 
       if (authData && authData.accessToken) {
         setAuth(
-          authData.user || { id: authData.userId || '', email, username: '' },
+          authData.user || { id: authData.userId || '', email },
           authData.accessToken,
           authData.refreshToken,
           authData.isProfileCompleted,

@@ -33,12 +33,6 @@ export const SignUpScreen = () => {
                         >
                             <Text style={styles.primaryButtonText}>Continue with email</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity 
-                            style={[styles.actionButton, styles.secondaryButton]}
-                            activeOpacity={0.8}
-                        >
-                            <Text style={styles.secondaryButtonText}>Use phone number</Text>
-                        </TouchableOpacity>
                     </View>
 
                     <View style={styles.dividerRow}>
@@ -49,13 +43,7 @@ export const SignUpScreen = () => {
 
                     <View style={styles.socialRow}>
                         <TouchableOpacity style={styles.socialBtn} activeOpacity={0.7}>
-                           <IconFacebook size={28} />
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.socialBtn} activeOpacity={0.7}>
                            <IconGoogle size={28} />
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.socialBtn} activeOpacity={0.7}>
-                           <IconApple size={28} />
                         </TouchableOpacity>
                     </View>
                 </View>

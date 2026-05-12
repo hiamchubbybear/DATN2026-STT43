@@ -102,20 +102,23 @@ public class AppHub : Hub
             });
 
             // Send Push Notification to Receiver
-            var senderProfile = await _userProfileRepository.GetByUserIdAsync(Guid.Parse(senderId));
-            if (senderProfile != null)
+            if (Guid.TryParse(senderId, out var sId) && Guid.TryParse(receiverId, out var rId))
             {
-                await _notificationService.SendPushToUserAsync(
-                    Guid.Parse(receiverId),
-                    senderProfile.BasicInfo.DisplayName,
-                    content,
-                    new Dictionary<string, string> 
-                    { 
-                        { "type", "chat" }, 
-                        { "senderId", senderId }, 
-                        { "conversationId", conversationId.ToString() } 
-                    }
-                );
+                var senderProfile = await _userProfileRepository.GetByUserIdAsync(sId);
+                if (senderProfile != null)
+                {
+                    await _notificationService.SendPushToUserAsync(
+                        rId,
+                        senderProfile.BasicInfo.DisplayName,
+                        content,
+                        new Dictionary<string, string> 
+                        { 
+                            { "type", "chat" }, 
+                            { "senderId", senderId }, 
+                            { "conversationId", conversationId.ToString() } 
+                        }
+                    );
+                }
             }
         }
         catch (Exception ex)

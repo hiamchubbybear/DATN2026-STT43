@@ -34,7 +34,7 @@ namespace DoAnTotNghiep.Application.Auth.ForgotAccount
                 new
                 {
                     Resetlink = "", Token = token, ExpireMinutes = EXPIRE_TIME_FORGOT_PASSWORD_TOKEN,
-                    UserName = existing.Username
+                    UserName = existing.Email
                 });
             await emailService.SendAsync(
                 email,

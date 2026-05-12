@@ -97,6 +97,8 @@ public class MongoDbContext
     public IMongoCollection<DoAnTotNghiep.Domain.Chat.Conversation> Conversations => _database.GetCollection<DoAnTotNghiep.Domain.Chat.Conversation>("conversations");
     public IMongoCollection<UserSwipe> UserSwipes => _database.GetCollection<UserSwipe>("user_swipes");
     public IMongoCollection<UserMatch> UserMatches => _database.GetCollection<UserMatch>("user_matches");
+    public IMongoCollection<UserReport> UserReports => _database.GetCollection<UserReport>("user_reports");
+    public IMongoCollection<AppReview> AppReviews => _database.GetCollection<AppReview>("app_reviews");
 }
 
 public class MongoDbInitializer

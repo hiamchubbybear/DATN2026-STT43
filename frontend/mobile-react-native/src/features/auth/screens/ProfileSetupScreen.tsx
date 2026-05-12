@@ -236,8 +236,22 @@ export default function ProfileSetupScreen() {
               style={styles.inputLarge}
               placeholder="YYYY-MM-DD"
               value={dob}
-              onChangeText={setDob}
+              onChangeText={(text) => {
+                // Remove any non-numeric characters
+                const cleaned = text.replace(/\D/g, '');
+                let formatted = cleaned;
+                
+                // Format: YYYY-MM-DD
+                if (cleaned.length > 4 && cleaned.length <= 6) {
+                  formatted = `${cleaned.slice(0, 4)}-${cleaned.slice(4)}`;
+                } else if (cleaned.length > 6) {
+                  formatted = `${cleaned.slice(0, 4)}-${cleaned.slice(4, 6)}-${cleaned.slice(6, 8)}`;
+                }
+                
+                setDob(formatted);
+              }}
               keyboardType="numeric"
+              maxLength={10}
               placeholderTextColor="#9CA3AF"
               autoFocus
             />

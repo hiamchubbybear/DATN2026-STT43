@@ -30,7 +30,7 @@ public class Handler(
         await cache.SetAsync<string>(cacheKey, token, TimeSpan.FromHours(24));
 
         var body = await emailTemplateService.RenderAsync(CREATE_ACCOUNT,
-            new { UserName = user.Username, Email = user.Email, Token = token });
+            new { UserName = user.Email, Email = user.Email, Token = token });
         
         await emailService.SendAsync(
             user.Email,

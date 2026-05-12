@@ -28,10 +28,8 @@ namespace DoAnTotNghiep.Application.CreateUser
 
             var passwordHash = ipasswordHasher.Hash(password: request.Password);
             string email = request.Email;
-            string username = request.Username;
             var user = new UserAccount(
                 hashPassword: passwordHash,
-                username: request.Username,
                 email: email
             );
             await userRepository.CreateAccount(user);
@@ -42,7 +40,7 @@ namespace DoAnTotNghiep.Application.CreateUser
             await cache.SetAsync<string>(cacheKey, token, TimeSpan.FromHours(24));
 
             var body = await emailTemplateService.RenderAsync(CREATE_ACCOUNT,
-                new { UserName = username, Email = email, Token = token });
+                new { UserName = email, Email = email, Token = token });
             await emailService.SendAsync(
                 email,
                 "Welcome to DATN",

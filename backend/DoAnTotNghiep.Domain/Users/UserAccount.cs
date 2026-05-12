@@ -6,12 +6,11 @@ using MongoDB.Bson.Serialization.Attributes;
 namespace DoAnTotNghiep.Domain.Users;
 
 [BsonIgnoreExtraElements]
-public class UserAccount(string username, string email, string? hashPassword = null, AuthProvider provider = AuthProvider.Local, string? providerId = null) : BaseEntity
+public class UserAccount(string email, string? hashPassword = null, AuthProvider provider = AuthProvider.Local, string? providerId = null) : BaseEntity
 {
     [BsonConstructor]
-    private UserAccount() : this(null!, null!) { }
+    private UserAccount() : this(null!) { }
 
-    public string Username { get; private set; } = username;
     public string? HashPassword { get; private set; } = hashPassword;
     public string Email { get; private set; } = email;
     public bool IsVerified { get; private set; } = false;

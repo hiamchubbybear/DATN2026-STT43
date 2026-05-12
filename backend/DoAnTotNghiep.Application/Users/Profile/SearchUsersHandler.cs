@@ -21,7 +21,7 @@ public class SearchUsersHandler(IUserRepository userRepository, IUserProfileRepo
             .Where(u => u.Id != currentUserId)
             .Select(u => {
                 var profile = profileDict.GetValueOrDefault(u.Id);
-                var displayName = profile?.BasicInfo.DisplayName ?? u.Username;
+                var displayName = profile?.BasicInfo.DisplayName ?? u.Email;
                 var avatarUrl = profile?.Photos.OrderBy(p => p.Order).FirstOrDefault(p => p.IsPrimary)?.Url 
                                 ?? profile?.Photos.OrderBy(p => p.Order).FirstOrDefault()?.Url;
                 

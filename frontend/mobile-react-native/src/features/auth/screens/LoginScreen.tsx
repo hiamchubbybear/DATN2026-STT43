@@ -141,16 +141,17 @@ export const LoginScreen = () => {
           type: 'success'
         });
         setAuth(
-          authData.user || { id: authData.userId || '', email: '', username: '' },
+          authData.user || { id: authData.userId || '', email: '' },
           authData.accessToken, 
           authData.refreshToken,
           authData.isProfileCompleted
         );
         console.log("✅ [API] Đăng nhập thành công! RootNavigator sẽ tự chuyển màn hình.");
       } else {
+        const errorMsg = data?.message || data?.Message || data?.detail || data?.Detail || "Đăng nhập thất bại (Invalid structure)";
         showToast({
           title: "Lỗi",
-          message: data.message || "Đăng nhập thất bại (Invalid structure)",
+          message: errorMsg,
           type: "error"
         });
       }
@@ -238,11 +239,11 @@ export const LoginScreen = () => {
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={styles.testBtn}
-            onPress={() => navigation.navigate('TestHub')}
-            activeOpacity={0.7}
+            style={styles.secondaryBtn}
+            onPress={() => navigation.navigate("EmailLogin")} // Assuming we want login by default
+            activeOpacity={0.8}
           >
-            <Text style={styles.testBtnText}>Enter Developer Mode</Text>
+            <Text style={styles.secondaryBtnText}>Already have an account? Log In</Text>
           </TouchableOpacity>
         </View>
 
@@ -372,18 +373,19 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: '700',
   },
-  testBtn: {
+  secondaryBtn: {
     width: '100%',
     backgroundColor: '#FFFFFF',
+    paddingVertical: 18,
     borderRadius: 20,
+    alignItems: 'center',
     borderWidth: 1.5,
     borderColor: '#F4F4F5',
-    paddingVertical: 16,
-    alignItems: 'center',
+    marginTop: 8,
   },
-  testBtnText: {
-    color: '#71717A',
-    fontSize: 15,
+  secondaryBtnText: {
+    color: '#18181B',
+    fontSize: 16,
     fontWeight: '600',
   },
   dividerContainer: {

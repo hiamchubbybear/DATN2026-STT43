@@ -10,7 +10,6 @@ import { normalizeFont, radius, scale, spacing, verticalScale } from '../../../s
 import { useToast } from '../../../shared/components/ToastProvider';
 
 export default function EmailSignUpDetailsScreen() {
-  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -19,7 +18,7 @@ export default function EmailSignUpDetailsScreen() {
   const { showToast } = useToast();
 
   const handleSignUp = async () => {
-    if (!username || !email || !password) {
+    if (!email || !password) {
       showToast({
         title: 'Thiếu thông tin',
         message: 'Vui lòng điền đầy đủ các trường',
@@ -28,9 +27,22 @@ export default function EmailSignUpDetailsScreen() {
       return;
     }
 
+    // Password validation: at least 8 chars, at least one letter and one number
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
+    if (!passwordRegex.test(password)) {
+      showToast({
+        title: 'Mật khẩu yếu',
+        message: 'Mật khẩu phải có ít nhất 8 ký tự, bao gồm cả chữ cái và chữ số.',
+        type: 'error'
+      });
+      return;
+    }
+
     try {
       setLoading(true);
-      await authService.register(username, email, password);
+      // We send "" for username as it's no longer used but API might still expect it for now
+      // Actually, I'll update the service and API too.
+      await authService.register(email, password);
       // Registration successful, backend automatically sends email
       navigation.navigate('EmailSignUpVerify', { email });
     } catch (error: any) {
@@ -57,7 +69,7 @@ export default function EmailSignUpDetailsScreen() {
                 <Path d="M15 18l-6-6 6-6" stroke="#F43F5E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </Svg>
             </TouchableOpacity>
-          </View>s
+          </View>
           
           <View style={styles.content}>
             <Text style={styles.title}>Create Account</Text>
@@ -66,21 +78,6 @@ export default function EmailSignUpDetailsScreen() {
             </Text>
 
             <View style={styles.inputContainer}>
-              <Svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={styles.icon}>
-                <Path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" stroke="#6B7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                <Path d="M12 11a4 4 0 100-8 4 4 0 000 8z" stroke="#6B7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </Svg>
-              <TextInput
-                style={styles.input}
-                placeholder="Username"
-                placeholderTextColor="#9CA3AF"
-                value={username}
-                onChangeText={setUsername}
-                autoCapitalize="none"
-              />
-            </View>
-
-            <View style={[styles.inputContainer, styles.marginTop]}>
               <Svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={styles.icon}>
                 <Path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke="#6B7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 <Path d="M22 6l-10 7L2 6" stroke="#6B7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -114,10 +111,10 @@ export default function EmailSignUpDetailsScreen() {
           </View>
 
           <TouchableOpacity 
-            style={[styles.button, (!username || !email || !password || loading) && styles.buttonDisabled]} 
+            style={[styles.button, (!email || !password || loading) && styles.buttonDisabled]} 
             onPress={handleSignUp}
             activeOpacity={0.8}
-            disabled={!username || !email || !password || loading}
+            disabled={!email || !password || loading}
           >
             {loading ? <ActivityIndicator color="#FFF" /> : <Text style={styles.buttonText}>Sign Up</Text>}
           </TouchableOpacity>

@@ -46,6 +46,7 @@ public static class DependencyInjection
         services.AddTransient<ITokenGenerator, TokenGenerateService>();
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
+        services.AddScoped<Domain.Users.IFeedbackRepository, Repositories.FeedbackRepository>();
         
         var redisSettings = configuration.GetSection("Redis").Get<RedisSettings>();
         

@@ -119,10 +119,7 @@ public class UserProfile(Guid userId) : BaseEntity
                     photo.SetPrimary(true);
             }
         }
-<<<<<<< HEAD
         
-=======
->>>>>>> feat/auth-profile-updates
         photo.SetOrder(Photos.Count);
         Photos.Add(photo);
         SetUpdated();

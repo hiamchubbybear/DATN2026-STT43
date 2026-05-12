@@ -49,9 +49,7 @@ public class GoogleLoginHandler : IRequestHandler<GoogleLoginCommand, AuthRespon
 
         if (user == null)
         {
-            var username = payload.Email.Split('@')[0];
             user = new UserAccount(
-                username: username,
                 email: payload.Email,
                 hashPassword: null,
                 provider: AuthProvider.Google,
@@ -94,7 +92,6 @@ public class GoogleLoginHandler : IRequestHandler<GoogleLoginCommand, AuthRespon
             RefreshToken = refreshToken.Token,
             IsProfileCompleted = profile != null,
             UserId = user.Id,
-            Username = user.Username,
             Email = user.Email
         };
     }

@@ -79,6 +79,23 @@ logs
 coverage/
 jest-cache/
 
+# Temp and logs
 tmp/
 temp/
 *.tmp
+
+# Postman collections
+DatingApp_Huy_PostmanCollection.json
+API_PostmanCollection.json
+
+# Scripts and tools
+scripts/
+
+# Secrets and Google Services
+**/Secrets/
+backend/DoAnTotNghiep.Web/Secrets/*
+frontend/mobile-react-native/google-services.json
+frontend/mobile-react-native/GoogleService-Info.plist
+*.plist
+google-services.json
+GoogleService-Info.plist
