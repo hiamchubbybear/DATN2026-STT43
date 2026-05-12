@@ -39,6 +39,7 @@ builder.Services.Configure<KeySettings>(builder.Configuration.GetSection("Key"))
 builder.Services.AddJwtAuthentication(secretKey);
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
+builder.Services.AddCors();
 builder.Services.AddApplication();
 builder.Services.AddSingleton(mongoSettings!);
 builder.Services.AddSingleton(redisSettings!);

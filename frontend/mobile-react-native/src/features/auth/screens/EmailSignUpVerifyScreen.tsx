@@ -25,6 +25,14 @@ export default function VerifyScreen() {
   const inputRef = React.useRef<TextInput>(null);
 
   useEffect(() => {
+    const timerId = setTimeout(() => {
+      inputRef.current?.focus();
+    }, 300);
+
+    return () => clearTimeout(timerId);
+  }, []);
+
+  useEffect(() => {
     if (timer > 0) {
       const interval = setInterval(() => setTimer((t) => t - 1), 1000);
       return () => clearInterval(interval);
@@ -154,6 +162,8 @@ export default function VerifyScreen() {
               maxLength={6}
               autoCapitalize="characters"
               autoCorrect={false}
+              autoFocus
+              showSoftInputOnFocus
               style={styles.hiddenInput}
               caretHidden
             />

@@ -24,6 +24,7 @@
     },
     "android": {
       "package": "com.tranvanhuy16032004.datn2026",
+      "usesCleartextTraffic": true,
       "intentFilters": [
         {
           "action": "VIEW",

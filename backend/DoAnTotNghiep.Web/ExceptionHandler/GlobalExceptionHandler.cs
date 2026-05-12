@@ -2,9 +2,10 @@ using System.ComponentModel.DataAnnotations;
 using DoAnTotNghiep.Application;
 using DoAnTotNghiep.Domain.Common;
 using DoAnTotNghiep.Web.ExceptionHandler;
+using FluentValidation;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
-using ValidationException = DoAnTotNghiep.Web.ExceptionHandler.ValidationException;
+using AppValidationException = DoAnTotNghiep.Web.ExceptionHandler.ValidationException;
 
 public class GlobalExceptionHandler : IExceptionHandler
 {
@@ -28,7 +29,34 @@ public class GlobalExceptionHandler : IExceptionHandler
 
         ApiErrorResponse response;
 
-        if (exception is AppException appEx)
+        if (exception is FluentValidation.ValidationException fluentValidationEx)
+        {
+            var errors = fluentValidationEx.Errors
+                .GroupBy(e => e.PropertyName)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Select(e => e.ErrorMessage).Distinct().ToArray()
+                );
+
+            response = new ApiErrorResponse
+            {
+                Title = "Bad Request",
+                Status = 400,
+                Detail = fluentValidationEx.Message,
+                Message = string.Join(" ", errors.SelectMany(x => x.Value)),
+                ErrorCode = Error_Code.VALIDATION_FAILED,
+                TraceId = traceId,
+                Errors = errors
+            };
+
+            if (string.IsNullOrWhiteSpace(response.Message))
+            {
+                response.Message = "Du lieu nhap vao khong hop le.";
+            }
+
+            LogWarning(exception, traceId);
+        }
+        else if (exception is AppException appEx)
         {
             response = new ApiErrorResponse
             {
@@ -40,7 +68,7 @@ public class GlobalExceptionHandler : IExceptionHandler
                 TraceId = traceId
             };
 
-            if (appEx is ValidationException valEx)
+            if (appEx is AppValidationException valEx)
             {
                 response.Errors = valEx.Errors;
                 // Aggregate errors for a more useful message
