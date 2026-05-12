@@ -16,7 +16,10 @@
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSPhotoLibraryUsageDescription": "This app requires access to your photo library to let you upload and share profile photos.",
-        "NSCameraUsageDescription": "This app requires access to your camera to let you take and upload profile photos."
+        "NSCameraUsageDescription": "This app requires access to your camera to let you take and upload profile photos.",
+        "NSLocationWhenInUseUsageDescription": "Mixer uses your location to show you nearby potential matches.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Mixer uses your location to show you nearby potential matches and update your discovery area.",
+        "NSLocationAlwaysUsageDescription": "Mixer uses your location to show you nearby potential matches even when the app is in the background."
       }
     },
     "android": {
@@ -44,7 +47,10 @@
       "permissions": [
         "android.permission.CAMERA",
         "android.permission.READ_EXTERNAL_STORAGE",
-        "android.permission.WRITE_EXTERNAL_STORAGE"
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_BACKGROUND_LOCATION"
       ]
     },
     "web": {

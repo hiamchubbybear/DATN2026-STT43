@@ -93,7 +93,8 @@ apiClient.interceptors.response.use(
     
     if (error.response) {
       // Server responded with an error
-      message = error.response.data?.message || error.response.data?.error || `Server Error (${error.response.status})`;
+      const data = error.response.data;
+      message = data?.message || data?.Message || data?.detail || data?.Detail || data?.error || `Server Error (${error.response.status})`;
     } else if (error.request) {
       // Request made but no response (Network error)
       message = 'Cannot connect to the server. Please check your internet connection.';

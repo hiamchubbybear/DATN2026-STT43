@@ -7,6 +7,7 @@ import { NativeStackNavigationProp, NativeStackScreenProps } from '@react-naviga
 import { RootStackParamList } from '../../../app/navigation/RootNavigator';
 import { profileService } from '../../../services/api/profileService';
 import { Logger } from '../../../shared/utils/logger';
+import { UserReportModal } from '../../../shared/components/UserReportModal';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'UserProfile'>;
 
@@ -35,6 +36,7 @@ export const UserProfileScreen = () => {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [showAllPhotos, setShowAllPhotos] = React.useState(false);
+  const [reportVisible, setReportVisible] = React.useState(false);
 
   const loadProfile = React.useCallback(async () => {
     try {
@@ -113,7 +115,20 @@ export const UserProfileScreen = () => {
           <TouchableOpacity style={[styles.backFab, { top: insets.top + 10 }]} onPress={() => navigation.goBack()}>
             <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
           </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.fab, styles.fabRight, { top: insets.top + 10 }]} 
+            onPress={() => setReportVisible(true)}
+          >
+            <Ionicons name="flag-outline" size={22} color="#FFFFFF" />
+          </TouchableOpacity>
         </View>
+
+        <UserReportModal 
+          visible={reportVisible}
+          onClose={() => setReportVisible(false)}
+          targetUserId={userId}
+          targetUserName={displayName}
+        />
 
         <View style={styles.card}>
           <View style={styles.nameRow}>
@@ -244,12 +259,28 @@ const styles = StyleSheet.create({
   backFab: {
     position: 'absolute',
     left: 16,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(0,0,0,0.3)',
+    width: 42,
+    height: 42,
+    borderRadius: 14,
+    backgroundColor: 'rgba(0,0,0,0.4)',
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+  },
+  fab: {
+    position: 'absolute',
+    width: 42,
+    height: 42,
+    borderRadius: 14,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+  },
+  fabRight: {
+    right: 16,
   },
   card: {
     marginTop: -24,

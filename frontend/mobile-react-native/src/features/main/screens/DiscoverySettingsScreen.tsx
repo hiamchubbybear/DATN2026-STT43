@@ -6,7 +6,9 @@ import {
   TouchableOpacity, 
   ScrollView, 
   ActivityIndicator, 
+  Dimensions,
 } from 'react-native';
+import MultiSlider from '@ptomasroos/react-native-multi-slider';
 import Slider from '@react-native-community/slider';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -15,12 +17,13 @@ import { profileService } from '../../../services/api/profileService';
 import { useToast } from '../../../shared/components/ToastProvider';
 import { Logger } from '../../../shared/utils/logger';
 
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
 export const DiscoverySettingsScreen = () => {
   const navigation = useNavigation();
   const { showToast } = useToast();
   
-  const [minAge, setMinAge] = useState(18);
-  const [maxAge, setMaxAge] = useState(100);
+  const [ageRange, setAgeRange] = useState([18, 100]);
   const [maxDistance, setMaxDistance] = useState(50);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -33,8 +36,7 @@ export const DiscoverySettingsScreen = () => {
     try {
       setLoading(true);
       const data = await profileService.getMyProfile();
-      setMinAge(data.minAgePreference || 18);
-      setMaxAge(data.maxAgePreference || 100);
+      setAgeRange([data.minAgePreference || 18, data.maxAgePreference || 100]);
       setMaxDistance(data.maxDistanceKm || 50);
     } catch (error) {
       Logger.error('Failed to fetch discovery settings', error);
@@ -50,23 +52,23 @@ export const DiscoverySettingsScreen = () => {
       
       await profileService.updateProfile({
         ...currentProfile,
-        minAgePreference: minAge,
-        maxAgePreference: maxAge,
+        minAgePreference: ageRange[0],
+        maxAgePreference: ageRange[1],
         maxDistanceKm: maxDistance,
       });
       
       showToast({
         type: 'success',
-        text1: 'Settings Saved',
-        text2: 'Discovery preferences updated'
+        title: 'Settings Saved',
+        message: 'Discovery preferences updated'
       });
       navigation.goBack();
     } catch (error) {
       Logger.error('Failed to update discovery settings', error);
       showToast({
         type: 'error',
-        text1: 'Error',
-        text2: 'Could not save settings'
+        title: 'Error',
+        message: 'Could not save settings'
       });
     } finally {
       setSaving(false);
@@ -101,34 +103,23 @@ export const DiscoverySettingsScreen = () => {
         <View style={styles.section}>
           <View style={styles.prefHeader}>
             <Text style={styles.label}>Age Range</Text>
-            <Text style={styles.value}>{minAge} - {maxAge}</Text>
+            <Text style={styles.value}>{ageRange[0]} - {ageRange[1]}</Text>
           </View>
           
-          <View style={styles.sliderGroup}>
-            <Text style={styles.sliderLabel}>Minimum Age</Text>
-            <Slider
-              style={styles.slider}
-              minimumValue={18}
-              maximumValue={maxAge}
+          <View style={styles.sliderContainer}>
+            <MultiSlider
+              values={ageRange}
+              sliderLength={SCREEN_WIDTH - 80}
+              onValuesChange={setAgeRange}
+              min={18}
+              max={100}
               step={1}
-              value={minAge}
-              onValueChange={setMinAge}
-              minimumTrackTintColor="#F43F5E"
-              maximumTrackTintColor="#F3F4F6"
-              thumbTintColor="#F43F5E"
-            />
-            
-            <Text style={styles.sliderLabel}>Maximum Age</Text>
-            <Slider
-              style={styles.slider}
-              minimumValue={minAge}
-              maximumValue={100}
-              step={1}
-              value={maxAge}
-              onValueChange={setMaxAge}
-              minimumTrackTintColor="#F43F5E"
-              maximumTrackTintColor="#F3F4F6"
-              thumbTintColor="#F43F5E"
+              allowOverlap={false}
+              snapped
+              selectedStyle={{ backgroundColor: '#F43F5E' }}
+              unselectedStyle={{ backgroundColor: '#F3F4F6' }}
+              markerStyle={styles.marker}
+              pressedMarkerStyle={styles.markerPressed}
             />
           </View>
         </View>
@@ -227,13 +218,30 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#F43F5E',
   },
-  sliderGroup: {
-    gap: 10,
+  sliderContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    height: 60,
   },
-  sliderLabel: {
-    fontSize: 13,
-    color: '#6B7280',
-    marginBottom: -5,
+  marker: {
+    backgroundColor: '#FFFFFF',
+    height: 24,
+    width: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#F43F5E',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 3,
+  },
+  markerPressed: {
+    height: 28,
+    width: 28,
+    borderRadius: 14,
+    backgroundColor: '#F43F5E',
   },
   slider: {
     width: '100%',

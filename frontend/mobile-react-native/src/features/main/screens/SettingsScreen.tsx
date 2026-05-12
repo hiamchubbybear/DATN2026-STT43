@@ -24,9 +24,12 @@ const SettingsItem = ({ icon, label, color = '#111827', onPress, showArrow = tru
   </TouchableOpacity>
 );
 
+import { AppRatingModal } from '../../../shared/components/AppRatingModal';
+
 export const SettingsScreen = () => {
   const { logout } = useAuthStore();
   const navigation = useNavigation();
+  const [ratingVisible, setRatingVisible] = React.useState(false);
 
   const handleLogout = () => {
     Alert.alert('Đăng xuất', 'Bạn có chắc chắn muốn đăng xuất khỏi ứng dụng?', [
@@ -41,7 +44,7 @@ export const SettingsScreen = () => {
       'Hành động này không thể hoàn tác. Tất cả dữ liệu của bạn sẽ bị xóa vĩnh viễn.', 
       [
         { text: 'Hủy', style: 'cancel' },
-        { text: 'Xóa vĩnh viễn', style: 'destructive', onPress: () => console.log('Delete account requested') },
+        { text: 'Xóa vĩnh vễn', style: 'destructive', onPress: () => console.log('Delete account requested') },
       ]
     );
   };
@@ -74,6 +77,8 @@ export const SettingsScreen = () => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Hỗ trợ</Text>
           <SettingsItem icon="help-circle-outline" label="Trợ giúp & Hỗ trợ" color="#3B82F6" />
+          <SettingsItem icon="bug-outline" label="Báo cáo sự cố" color="#F43F5E" onPress={() => console.log('Report problem')} />
+          <SettingsItem icon="star-outline" label="Đánh giá ứng dụng" color="#F59E0B" onPress={() => setRatingVisible(true)} />
           <SettingsItem icon="information-circle-outline" label="Về chúng tôi" color="#6B7280" />
         </View>
 
@@ -97,6 +102,11 @@ export const SettingsScreen = () => {
 
         <Text style={styles.versionText}>Phiên bản 1.0.0 (BETA)</Text>
       </ScrollView>
+
+      <AppRatingModal 
+        visible={ratingVisible} 
+        onClose={() => setRatingVisible(false)} 
+      />
     </SafeAreaView>
   );
 };
@@ -148,6 +158,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#FAFAFA',
   },
   row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingVertical: spacing(16),
     paddingHorizontal: spacing(20),
     borderBottomWidth: 1,

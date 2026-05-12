@@ -219,19 +219,23 @@ export const EditProfileScreen = () => {
         </View>
       </ScrollView>
 
-      {/* Section Modals */}
-      <Modal visible={!!activeModal} animationType="slide">
-        <View style={styles.flex}>
-          <View style={[styles.modalHeader, { paddingTop: Math.max(insets.top, 20) }]}>
-            <TouchableOpacity onPress={() => setActiveModal(null)}>
+      {/* Section Overlays - Optimized to allow Toasts and avoid Modal stacking issues */}
+      {activeModal && (
+        <View style={[StyleSheet.absoluteFill, styles.sectionOverlay, { paddingTop: insets.top }]}>
+          <View style={styles.modalHeader}>
+            <TouchableOpacity onPress={() => setActiveModal(null)} style={styles.closeButton}>
               <Ionicons name="close" size={24} color="#111827" />
             </TouchableOpacity>
             <Text style={styles.modalHeaderTitle}>Edit {activeModal}</Text>
-            <View style={{ width: 24 }} />
+            <View style={{ width: 44 }} />
           </View>
           
-          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.flex}>
-            <ScrollView contentContainerStyle={styles.modalScroll}>
+          <KeyboardAvoidingView 
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
+            style={styles.flex}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+          >
+            <ScrollView contentContainerStyle={styles.modalScroll} showsVerticalScrollIndicator={false}>
               {activeModal === 'basicInfo' && (
                 <BasicInfoSection 
                   displayName={displayName} setDisplayName={setDisplayName}
@@ -286,7 +290,7 @@ export const EditProfileScreen = () => {
             </ScrollView>
           </KeyboardAvoidingView>
         </View>
-      </Modal>
+      )}
 
       <EditSelectionModal 
         visible={modalVisible}
@@ -371,5 +375,15 @@ const styles = StyleSheet.create({
   },
   modalScroll: {
     padding: 20,
+  },
+  sectionOverlay: {
+    backgroundColor: '#FFFFFF',
+    zIndex: 100,
+  },
+  closeButton: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   }
 });

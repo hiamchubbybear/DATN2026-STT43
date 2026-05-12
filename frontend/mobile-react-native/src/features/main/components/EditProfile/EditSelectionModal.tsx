@@ -29,47 +29,57 @@ export const EditSelectionModal = ({
     return selectedValues === option;
   };
 
-  return (
-    <Modal visible={visible} transparent animationType="slide">
-      <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={onClose}>
-        <View style={styles.modalContent}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>{title}</Text>
-            <TouchableOpacity onPress={onClose}>
-              <Ionicons name="close" size={24} color="#111827" />
-            </TouchableOpacity>
-          </View>
-          
-          <FlatList
-            data={options}
-            keyExtractor={(item) => item}
-            renderItem={({ item }) => (
-              <TouchableOpacity style={styles.optionItem} onPress={() => onSelect(item)}>
-                <Text style={styles.optionText}>{item}</Text>
-                {isSelected(item) && (
-                  <Ionicons name="checkmark" size={20} color="#EE3F57" />
-                )}
-              </TouchableOpacity>
-            )}
-            contentContainerStyle={styles.listContent}
-          />
+  if (!visible) return null;
 
-          {isMultiSelect && (
-            <TouchableOpacity style={styles.modalDoneButton} onPress={onClose}>
-              <Text style={styles.modalDoneText}>Done</Text>
+  return (
+    <View style={styles.container}>
+      <TouchableOpacity 
+        style={styles.modalOverlay} 
+        activeOpacity={1} 
+        onPress={onClose}
+      />
+      <View style={styles.modalContent}>
+        <View style={styles.modalHeader}>
+          <Text style={styles.modalTitle}>{title}</Text>
+          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+            <Ionicons name="close" size={24} color="#111827" />
+          </TouchableOpacity>
+        </View>
+        
+        <FlatList
+          data={options}
+          keyExtractor={(item) => item}
+          renderItem={({ item }) => (
+            <TouchableOpacity style={styles.optionItem} onPress={() => onSelect(item)}>
+              <Text style={styles.optionText}>{item}</Text>
+              {isSelected(item) && (
+                <Ionicons name="checkmark" size={20} color="#EE3F57" />
+              )}
             </TouchableOpacity>
           )}
-        </View>
-      </TouchableOpacity>
-    </Modal>
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+        />
+
+        {isMultiSelect && (
+          <TouchableOpacity style={styles.modalDoneButton} onPress={onClose}>
+            <Text style={styles.modalDoneText}>Done</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+  container: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 200,
     justifyContent: 'flex-end',
+  },
+  modalOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.5)',
   },
   modalContent: {
     backgroundColor: '#FFFFFF',
@@ -77,6 +87,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 32,
     maxHeight: '80%',
     paddingBottom: 20,
+    zIndex: 201,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -85,6 +96,9 @@ const styles = StyleSheet.create({
     padding: 24,
     borderBottomWidth: 1,
     borderBottomColor: '#F3F4F6',
+  },
+  closeButton: {
+    padding: 4,
   },
   modalTitle: {
     fontSize: 18,

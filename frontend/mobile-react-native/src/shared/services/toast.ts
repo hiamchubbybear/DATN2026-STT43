@@ -1,3 +1,5 @@
+import { Alert } from 'react-native';
+
 export type ToastType = 'success' | 'error' | 'info';
 
 export interface ToastOptions {
@@ -25,7 +27,12 @@ export function registerToastHandler(next: ToastHandler | null) {
 
 export const toast = {
   show(options: ToastOptions | LegacyToastOptions) {
-    if (!handler) return;
+    if (!handler) {
+      const t = ('title' in options ? options.title : (options as any).text1) || 'Notice';
+      const m = ('message' in options ? options.message : (options as any).text2) || '';
+      Alert.alert(t, m);
+      return;
+    }
 
     if ('title' in options && 'message' in options) {
       handler(options);

@@ -8,10 +8,11 @@ import {
   Dimensions,
 } from 'react-native';
 import Slider from '@react-native-community/slider';
-import { spacing, radius, normalizeFont, scale } from '../../../shared/utils/responsive';
 import Svg, { Path } from 'react-native-svg';
+import MultiSlider from '@ptomasroos/react-native-multi-slider';
+import { spacing, radius, normalizeFont, scale } from '../../../shared/utils/responsive';
 
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const IconClose = () => (
   <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -19,17 +20,31 @@ const IconClose = () => (
   </Svg>
 );
 
+// Map display gender names to backend numeric values
+// Male = 1, Female = 2, Everyone = 3
+const GENDER_MAP: Record<string, number> = {
+  'Male': 1,
+  'Female': 2,
+  'Everyone': 3,
+};
+
+const REVERSE_GENDER_MAP: Record<number, string> = {
+  1: 'Male',
+  2: 'Female',
+  3: 'Everyone',
+};
+
 interface FilterModalProps {
   visible: boolean;
   onClose: () => void;
   onApply: (filters: {
-    gender?: string;
+    gender?: number;
     minAge?: number;
     maxAge?: number;
     distance?: number;
   }) => void;
   initialFilters: {
-    gender?: string;
+    gender?: any; // can be string or number
     minAge?: number;
     maxAge?: number;
     distance?: number;
@@ -37,24 +52,32 @@ interface FilterModalProps {
 }
 
 export const FilterModal = ({ visible, onClose, onApply, initialFilters }: FilterModalProps) => {
-  const [gender, setGender] = useState(initialFilters.gender || 'Everyone');
+  // Convert initial gender to numeric if it's a string
+  const initialGenderValue = typeof initialFilters.gender === 'string' 
+    ? GENDER_MAP[initialFilters.gender] || 3 
+    : initialFilters.gender || 3;
+
+  const [gender, setGender] = useState(initialGenderValue);
   const [distance, setDistance] = useState(initialFilters.distance || 50);
-  const [maxAge, setMaxAge] = useState(initialFilters.maxAge || 35);
+  const [ageRange, setAgeRange] = useState([
+    initialFilters.minAge || 18, 
+    initialFilters.maxAge || 35
+  ]);
 
   const handleApply = () => {
     onApply({
       gender,
       distance,
-      minAge: 18,
-      maxAge,
+      minAge: ageRange[0],
+      maxAge: ageRange[1],
     });
     onClose();
   };
 
   const handleReset = () => {
-    setGender('Everyone');
+    setGender(3); // Everyone
     setDistance(50);
-    setMaxAge(35);
+    setAgeRange([18, 35]);
   };
 
   return (
@@ -79,14 +102,14 @@ export const FilterModal = ({ visible, onClose, onApply, initialFilters }: Filte
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Show Me</Text>
             <View style={styles.optionsContainer}>
-              {['Male', 'Female', 'Everyone'].map((option) => (
+              {[1, 2, 3].map((val) => (
                 <TouchableOpacity
-                  key={option}
-                  style={[styles.optionButton, gender === option && styles.optionActive]}
-                  onPress={() => setGender(option)}
+                  key={val}
+                  style={[styles.optionButton, gender === val && styles.optionActive]}
+                  onPress={() => setGender(val)}
                 >
-                  <Text style={[styles.optionText, gender === option && styles.optionTextActive]}>
-                    {option === 'Everyone' ? 'Everyone' : option === 'Male' ? 'Men' : 'Women'}
+                  <Text style={[styles.optionText, gender === val && styles.optionTextActive]}>
+                    {val === 3 ? 'Everyone' : val === 1 ? 'Men' : 'Women'}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -114,19 +137,24 @@ export const FilterModal = ({ visible, onClose, onApply, initialFilters }: Filte
           <View style={styles.section}>
             <View style={styles.row}>
               <Text style={styles.sectionTitle}>Age Range</Text>
-              <Text style={styles.valueText}>18 - {maxAge}</Text>
+              <Text style={styles.valueText}>{ageRange[0]} - {ageRange[1]}</Text>
             </View>
-            <Slider
-              style={styles.slider}
-              minimumValue={18}
-              maximumValue={80}
-              step={1}
-              value={maxAge}
-              onValueChange={setMaxAge}
-              minimumTrackTintColor="#F43F5E"
-              maximumTrackTintColor="#E5E7EB"
-              thumbTintColor="#F43F5E"
-            />
+            <View style={styles.sliderContainer}>
+              <MultiSlider
+                values={ageRange}
+                sliderLength={SCREEN_WIDTH - 64}
+                onValuesChange={setAgeRange}
+                min={18}
+                max={80}
+                step={1}
+                allowOverlap={false}
+                snapped
+                selectedStyle={{ backgroundColor: '#F43F5E' }}
+                unselectedStyle={{ backgroundColor: '#E5E7EB' }}
+                markerStyle={styles.marker}
+                pressedMarkerStyle={styles.markerPressed}
+              />
+            </View>
           </View>
 
           <View style={styles.footer}>
@@ -219,6 +247,31 @@ const styles = StyleSheet.create({
   slider: {
     width: '100%',
     height: 40,
+  },
+  sliderContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    height: 60,
+  },
+  marker: {
+    backgroundColor: '#FFFFFF',
+    height: 24,
+    width: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#F43F5E',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 3,
+  },
+  markerPressed: {
+    height: 28,
+    width: 28,
+    borderRadius: 14,
+    backgroundColor: '#F43F5E',
   },
   footer: {
     paddingHorizontal: spacing(24),
