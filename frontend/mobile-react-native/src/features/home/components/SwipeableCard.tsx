@@ -17,8 +17,8 @@ import { IconHeart } from '../../../shared/components/icons/IconHeart';
 import { IconClose } from '../../../shared/components/icons/IconClose';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
-const SWIPE_UP_THRESHOLD = -SCREEN_HEIGHT * 0.15; 
-const SWIPE_DOWN_THRESHOLD = SCREEN_HEIGHT * 0.15;
+const SWIPE_UP_THRESHOLD = -SCREEN_HEIGHT * 0.1; // Reduced from 0.15 to 0.1 for easier swipe
+const SWIPE_DOWN_THRESHOLD = SCREEN_HEIGHT * 0.1;
 
 export interface SwipeableCardRef {
   swipe: (type: SwipeType) => void;
@@ -42,10 +42,11 @@ export const SwipeableCard = React.memo(forwardRef<SwipeableCardRef, SwipeableCa
       'worklet';
       // Like is DOWN (+), Dislike is UP (-)
       const destY = type === SwipeType.Like ? SCREEN_HEIGHT : -SCREEN_HEIGHT;
+      
       // Faster, snappier spring for swiping out
       translateY.value = withSpring(destY, { 
-        damping: 25, 
-        stiffness: 150, 
+        damping: 20, 
+        stiffness: 200, 
         mass: 0.5 
       }, (finished) => {
         if (finished) {
@@ -62,14 +63,16 @@ export const SwipeableCard = React.memo(forwardRef<SwipeableCardRef, SwipeableCa
     }));
 
     const panGesture = Gesture.Pan()
-      .minDistance(5)
-      .activeOffsetY([-5, 5])
+      .minDistance(10) // Slightly increased to avoid accidental pans
+      .activeOffsetY([-10, 10]) // Increased sensitivity area
       .onUpdate((event) => {
         translateY.value = event.translationY;
-        translateX.value = event.translationX * 0.2;
-        rotate.value = event.translationX * 0.08;
+        // Reduce horizontal effect to keep it "straight"
+        translateX.value = event.translationX * 0.1;
+        rotate.value = event.translationX * 0.05;
       })
       .onEnd((event) => {
+        // Enforce vertical priority
         if (event.translationY > SWIPE_DOWN_THRESHOLD) {
           swipeOut(SwipeType.Like);
         } else if (event.translationY < SWIPE_UP_THRESHOLD) {

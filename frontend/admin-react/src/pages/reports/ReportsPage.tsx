@@ -1,133 +1,38 @@
-import { useMemo, useState } from 'react';
-import avatarUser1 from '../../assets/avatar-user-1.svg';
-import avatarUser2 from '../../assets/avatar-user-2.svg';
-import avatarUser3 from '../../assets/avatar-user-3.svg';
+import { useEffect, useState } from 'react';
+import { adminApi } from '../../shared/services/api';
 import userIcon from '../../assets/user.png';
 import heartIcon from '../../assets/heart.png';
 import monthlyActiveIcon from '../../assets/Monthly-Active.png';
 
-type ReportRow = {
-  id: string;
-  reporterName: string;
-  reporterId: string;
-  reporterAvatar: string;
-  profileName: string;
-  reason: string;
-  reasonClass: string;
-  date: string;
-  status: 'PENDING' | 'RESOLVED';
-  priority: 'HIGH' | 'NORMAL';
-  reached: string;
-  meta: string;
-};
-
-const reportRows: ReportRow[] = [
-  {
-    id: 'RP-1029',
-    reporterName: 'Luna Tran',
-    reporterId: '#U21384',
-    reporterAvatar: avatarUser1,
-    profileName: 'Kai Nguyen',
-    reason: 'Harassment',
-    reasonClass: 'bg-[#FEE4E2] text-[#EE3F57]',
-    date: 'Apr 11, 2026 • 09:24',
-    status: 'PENDING',
-    priority: 'HIGH',
-    reached: 'Reached by 42 users',
-    meta: 'Target: Nearby Matches • 9m ago',
-  },
-  {
-    id: 'RP-1031',
-    reporterName: 'Minh Le',
-    reporterId: '#U21902',
-    reporterAvatar: avatarUser2,
-    profileName: 'Noah Vu',
-    reason: 'Spam',
-    reasonClass: 'bg-[#FFF3E0] text-[#F27121]',
-    date: 'Apr 11, 2026 • 10:17',
-    status: 'PENDING',
-    priority: 'HIGH',
-    reached: 'Reached by 18 users',
-    meta: 'Target: New Members • 4m ago',
-  },
-  {
-    id: 'RP-1022',
-    reporterName: 'Anna Pham',
-    reporterId: '#U20883',
-    reporterAvatar: avatarUser3,
-    profileName: 'Jason Ho',
-    reason: 'Fake Profile',
-    reasonClass: 'bg-[#FEE4E2] text-[#EE3F57]',
-    date: 'Apr 10, 2026 • 18:40',
-    status: 'RESOLVED',
-    priority: 'NORMAL',
-    reached: 'Reached by 63 users',
-    meta: 'Target: All Users • Yesterday',
-  },
-  {
-    id: 'RP-1018',
-    reporterName: 'Gia Bao',
-    reporterId: '#U20441',
-    reporterAvatar: avatarUser1,
-    profileName: 'Mika Pham',
-    reason: 'Harassment',
-    reasonClass: 'bg-[#FEE4E2] text-[#EE3F57]',
-    date: 'Apr 09, 2026 • 14:08',
-    status: 'RESOLVED',
-    priority: 'HIGH',
-    reached: 'Reached by 52 users',
-    meta: 'Target: Premium Tier • 1d ago',
-  },
-  {
-    id: 'RP-1009',
-    reporterName: 'Quynh Anh',
-    reporterId: '#U19870',
-    reporterAvatar: avatarUser2,
-    profileName: 'Rin Do',
-    reason: 'Spam',
-    reasonClass: 'bg-[#FFF3E0] text-[#F27121]',
-    date: 'Apr 08, 2026 • 11:20',
-    status: 'PENDING',
-    priority: 'NORMAL',
-    reached: 'Reached by 27 users',
-    meta: 'Target: New Members • 2d ago',
-  },
-  {
-    id: 'RP-1003',
-    reporterName: 'Duc Nguyen',
-    reporterId: '#U19024',
-    reporterAvatar: avatarUser3,
-    profileName: 'Nora Le',
-    reason: 'Fake Profile',
-    reasonClass: 'bg-[#FEE4E2] text-[#EE3F57]',
-    date: 'Apr 07, 2026 • 08:15',
-    status: 'RESOLVED',
-    priority: 'HIGH',
-    reached: 'Reached by 71 users',
-    meta: 'Target: All Users • 3d ago',
-  },
-];
-
-const pageSize = 3;
-
 export default function ReportsPage() {
-  const [activeTab, setActiveTab] = useState<'ALL' | 'HIGH'>('ALL');
-  const [page, setPage] = useState(1);
+  const [reports, setReports] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredRows = useMemo(
-    () => (activeTab === 'ALL' ? reportRows : reportRows.filter((row) => row.priority === 'HIGH')),
-    [activeTab],
-  );
+  useEffect(() => {
+    fetchReports();
+  }, []);
 
-  const totalPages = Math.max(1, Math.ceil(filteredRows.length / pageSize));
+  const fetchReports = async () => {
+    try {
+        const res = await adminApi.getReports();
+        setReports(res.data);
+    } catch (e) {
+        console.error(e);
+    } finally {
+        setLoading(false);
+    }
+  };
 
-  const paginatedRows = useMemo(() => {
-    const start = (page - 1) * pageSize;
-    return filteredRows.slice(start, start + pageSize);
-  }, [filteredRows, page]);
-
-  const from = filteredRows.length === 0 ? 0 : (page - 1) * pageSize + 1;
-  const to = Math.min(page * pageSize, filteredRows.length);
+  const handleResolve = async (id: string) => {
+    try {
+        await adminApi.resolveReport(id);
+        alert('Đã xử lý báo cáo');
+        fetchReports();
+    } catch (e) {
+        alert('Lỗi khi xử lý báo cáo');
+    }
+  };
+, filteredRows.length);
 
   return (
     <div className="space-y-6 bg-[#F3F3F3]">
@@ -227,61 +132,58 @@ export default function ReportsPage() {
               </tr>
             </thead>
             <tbody>
-              {paginatedRows.map((row) => (
-                <tr key={row.id} className="rounded-xl bg-[#F9FAFB] text-sm text-slate-700">
-                  <td className="rounded-l-xl px-2 py-3">
-                    <div className="flex items-center gap-3">
-                      <img src={row.reporterAvatar} alt={row.reporterName} className="h-9 w-9 rounded-full object-cover" />
-                      <div>
-                        <p className="font-semibold text-slate-800">{row.reporterName}</p>
-                        <p className="text-xs text-slate-500">{row.reporterId}</p>
+              {loading ? (
+                <tr><td colSpan={6} className="text-center py-10 text-slate-400">Đang tải dữ liệu...</td></tr>
+              ) : (
+                reports.map((row) => (
+                  <tr key={row.id} className="rounded-xl bg-[#F9FAFB] text-sm text-slate-700">
+                    <td className="rounded-l-xl px-2 py-3">
+                      <div className="flex items-center gap-3">
+                        <div className="h-9 w-9 rounded-full bg-slate-200 flex items-center justify-center font-bold text-xs text-slate-500">
+                            {row.reporterId.substring(0, 2).toUpperCase()}
+                        </div>
+                        <div>
+                          <p className="font-semibold text-slate-800">Reporter</p>
+                          <p className="text-xs text-slate-500">{row.reporterId}</p>
+                        </div>
                       </div>
-                    </div>
-                  </td>
-                  <td className="px-2 py-3">
-                    <div className="flex items-center gap-3">
-                      <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white">
-                        <img src={userIcon} alt={row.profileName} className="h-4 w-4 object-contain" />
+                    </td>
+                    <td className="px-2 py-3">
+                      <div className="flex items-center gap-3">
+                        <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white">
+                          <img src={userIcon} alt="Target" className="h-4 w-4 object-contain" />
+                        </span>
+                        <div>
+                          <p className="font-semibold text-slate-800">Target User</p>
+                          <p className="text-xs text-slate-500">{row.targetUserId}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-2 py-3">
+                      <span className="rounded-full px-2.5 py-1 text-xs font-semibold bg-red-100 text-red-600">{row.reason}</span>
+                    </td>
+                    <td className="px-2 py-3 text-sm text-slate-600">{new Date(row.createdAt).toLocaleDateString()}</td>
+                    <td className="px-2 py-3">
+                      <span className="inline-flex items-center gap-2 text-xs font-semibold text-slate-600">
+                        <span className={`h-2.5 w-2.5 rounded-full ${row.status === 0 ? 'bg-[#EE3F57]' : 'bg-emerald-500'}`} />
+                        {row.status === 0 ? 'PENDING' : 'RESOLVED'}
                       </span>
-                      <div>
-                        <p className="font-semibold text-slate-800">{row.profileName}</p>
-                        <p className="text-xs text-slate-500">{row.meta}</p>
+                    </td>
+                    <td className="rounded-r-xl px-2 py-3">
+                      <div className="flex items-center gap-2">
+                        {row.status === 0 && (
+                            <button 
+                                onClick={() => handleResolve(row.id)}
+                                className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-600 hover:bg-[#EE3F57] hover:text-white transition"
+                            >
+                                RESOLVE
+                            </button>
+                        )}
                       </div>
-                    </div>
-                  </td>
-                  <td className="px-2 py-3">
-                    <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${row.reasonClass}`}>{row.reason}</span>
-                  </td>
-                  <td className="px-2 py-3 text-sm text-slate-600">{row.date}</td>
-                  <td className="px-2 py-3">
-                    <span className="inline-flex items-center gap-2 text-xs font-semibold text-slate-600">
-                      <span className={`h-2.5 w-2.5 rounded-full ${row.status === 'PENDING' ? 'bg-[#EE3F57]' : 'bg-emerald-500'}`} />
-                      {row.status}
-                    </span>
-                  </td>
-                  <td className="rounded-r-xl px-2 py-3">
-                    <div className="flex items-center gap-2">
-                      <button type="button" className="rounded-full bg-white p-2" aria-label="Match action">
-                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-[#8A2387]">
-                          <path d="m12 20-1.45-1.32C5.4 14.04 2 10.94 2 7.15 2 4.05 4.42 2 7.4 2c1.74 0 3.41.81 4.6 2.09C13.19 2.81 14.86 2 16.6 2 19.58 2 22 4.05 22 7.15c0 3.79-3.4 6.89-8.55 11.54L12 20Z" fill="currentColor"/>
-                        </svg>
-                      </button>
-                      <button type="button" className="rounded-full bg-white p-2" aria-label="Decline action">
-                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-[#F27121]">
-                          <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" />
-                          <path d="M8.5 15.5 15.5 8.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                        </svg>
-                      </button>
-                      <button
-                        type="button"
-                        className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-600"
-                      >
-                        VIEW DETAILS
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

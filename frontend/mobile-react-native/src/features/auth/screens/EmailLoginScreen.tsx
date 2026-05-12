@@ -25,6 +25,7 @@ import { useToast } from '../../../shared/components/ToastProvider';
 export default function EmailLoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [focusedInput, setFocusedInput] = useState<'email' | 'password' | null>(null);
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -121,12 +122,15 @@ export default function EmailLoginScreen() {
                 placeholderTextColor="#9CA3AF"
                 value={password}
                 onChangeText={setPassword}
-                secureTextEntry
+                secureTextEntry={!showPassword}
                 autoCapitalize="none"
                 autoCorrect={false}
                 onFocus={() => setFocusedInput('password')}
                 onBlur={() => setFocusedInput(null)}
               />
+              <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
+                <Ionicons name={showPassword ? "eye-off-outline" : "eye-outline"} size={20} color={focusedInput === 'password' ? "#F43F5E" : "#6B7280"} />
+              </TouchableOpacity>
             </View>
 
             <TouchableOpacity

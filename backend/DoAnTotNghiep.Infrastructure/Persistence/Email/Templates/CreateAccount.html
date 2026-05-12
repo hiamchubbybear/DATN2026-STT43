@@ -1,65 +1,52 @@
 <!DOCTYPE html>
-
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Đăng ký thành công</title>
+    <title>Xác thực tài khoản</title>
 </head>
 <body style="margin:0; padding:0; background-color:#f4f6f8; font-family:Arial, sans-serif;">
-
 <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f6f8; padding:20px 0;">
     <tr>
         <td align="center">
-
-            ```
-            <!-- Container -->
-            <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff; border-radius:8px; overflow:hidden;">
-
+            <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff; border-radius:8px; overflow:hidden; border: 1px solid #e5e7eb;">
                 <!-- Header -->
                 <tr>
-                    <td style="background:#4CAF50; padding:20px; text-align:center; color:white; font-size:20px; font-weight:bold;">
-                        Đăng ký thành công
+                    <td style="background:#F43F5E; padding:30px; text-align:center; color:white; font-size:24px; font-weight:bold;">
+                        Xác thực tài khoản của bạn
                     </td>
                 </tr>
 
                 <!-- Body -->
                 <tr>
-                    <td style="padding:30px; color:#333333; font-size:14px; line-height:1.6;">
-
+                    <td style="padding:40px; color:#374151; font-size:16px; line-height:1.6;">
                         <p>Xin chào <strong>{{UserName}}</strong>,</p>
+                        <p>Chào mừng bạn đến với <strong>DATN-2026</strong>! Để hoàn tất việc đăng ký, vui lòng sử dụng mã xác thực dưới đây:</p>
+                        
+                        <div style="text-align:center; margin: 30px 0;">
+                            <div style="display:inline-block; background:#F3F4F6; padding:15px 30px; border-radius:12px; border: 2px dashed #F43F5E;">
+                                <span style="font-size:32px; font-weight:bold; letter-spacing:5px; color:#111827;">{{Token}}</span>
+                            </div>
+                            <p style="font-size:13px; color:#6B7280; margin-top:10px;">Mã này có hiệu lực trong vòng 24 giờ.</p>
+                        </div>
 
-                        <p>
-                            Tài khoản của bạn tại <strong>DATN-2026</strong> đã được tạo thành công.
-                        </p>
-
-                        <p>
-                            Chúng tôi rất vui khi bạn trở thành một phần của hệ thống. Bạn có thể bắt đầu sử dụng các tính năng ngay từ bây giờ.
-                        </p>
-
-                        <p>
-                            Nếu bạn không thực hiện đăng ký này, vui lòng bỏ qua email này.
-                        </p>
-
-                        <p style="margin-top:30px;">
+                        <p>Nếu bạn không thực hiện yêu cầu này, bạn có thể an tâm bỏ qua email này.</p>
+                        
+                        <p style="margin-top:40px; border-top: 1px solid #E5E7EB; padding-top:20px;">
                             Trân trọng,<br>
-                            <strong>DATN-2026 Team</strong>
+                            <strong>Đội ngũ DATN-2026</strong>
                         </p>
                     </td>
                 </tr>
 
                 <!-- Footer -->
                 <tr>
-                    <td style="background:#f0f0f0; text-align:center; padding:15px; font-size:12px; color:#888;">
-                        © DATN-2026. All rights reserved.
+                    <td style="background:#F9FAFB; text-align:center; padding:20px; font-size:12px; color:#9CA3AF;">
+                        © 2026 DATN-2026. Tất cả các quyền được bảo lưu.
                     </td>
                 </tr>
-
             </table>
-            ```
-
         </td>
     </tr>
 </table>
-
 </body>
 </html>

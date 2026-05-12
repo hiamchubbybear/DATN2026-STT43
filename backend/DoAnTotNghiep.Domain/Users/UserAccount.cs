@@ -18,6 +18,25 @@ public class UserAccount(string email, string? hashPassword = null, AuthProvider
     public AuthProvider Provider { get; private set; } = provider;
     public string? ProviderId { get; private set; } = providerId;
     
+    public bool IsBanned { get; private set; } = false;
+    public DateTime? BannedUntil { get; private set; }
+    public string? BanReason { get; private set; }
+
+    public void Ban(string reason, DateTime? until = null)
+    {
+        IsBanned = true;
+        BanReason = reason;
+        BannedUntil = until;
+        SetUpdated();
+    }
+
+    public void Unban()
+    {
+        IsBanned = false;
+        BanReason = null;
+        BannedUntil = null;
+        SetUpdated();
+    }
 
     public void MarkAsVerified()
     {

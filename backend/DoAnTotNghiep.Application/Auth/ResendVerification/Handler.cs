@@ -34,7 +34,7 @@ public class Handler(
         
         await emailService.SendAsync(
             user.Email,
-            "Resend Verification - Welcome to DATN",
+            "Gửi lại mã xác thực - DATN 2026",
             body,
             true
         );

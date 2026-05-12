@@ -7,7 +7,7 @@ import monthlyActiveIcon from '../../assets/Monthly-Active.png';
 import heartIcon from '../../assets/heart.png';
 import useOutsideClick from '../../shared/hooks/useOutsideClick';
 
-export type MenuItem = 'Dashboard' | 'User Management' | 'Reports' | 'Notifications' | 'Reviews' | 'Test Upload' | 'System Monitor';
+export type MenuItem = 'Dashboard' | 'User Management' | 'Verifications' | 'Reports' | 'System Config' | 'Audit Logs' | 'Notifications' | 'Reviews' | 'System Monitor' | 'Test Upload';
 
 type AdminLayoutProps = {
   activeItem: MenuItem;
@@ -16,12 +16,15 @@ type AdminLayoutProps = {
   children: React.ReactNode;
 };
 
-const sideItems: MenuItem[] = ['Dashboard', 'User Management', 'Reports', 'Notifications', 'Reviews', 'System Monitor', 'Test Upload'];
+const sideItems: MenuItem[] = ['Dashboard', 'User Management', 'Verifications', 'Reports', 'System Config', 'Audit Logs', 'Notifications', 'Reviews', 'System Monitor', 'Test Upload'];
 
 const sideItemIcon: Record<MenuItem, string> = {
   Dashboard: logoImage,
   'User Management': userIcon,
+  Verifications: logoImage,
   Reports: monthlyActiveIcon,
+  'System Config': monthlyActiveIcon,
+  'Audit Logs': logoImage,
   Notifications: notificationIcon,
   Reviews: heartIcon,
   'System Monitor': monthlyActiveIcon,

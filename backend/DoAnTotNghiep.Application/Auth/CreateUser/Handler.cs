@@ -43,7 +43,7 @@ namespace DoAnTotNghiep.Application.CreateUser
                 new { UserName = email, Email = email, Token = token });
             await emailService.SendAsync(
                 email,
-                "Welcome to DATN",
+                "Xác thực tài khoản - DATN 2026",
                 body,
                 true
             );

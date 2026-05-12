@@ -51,7 +51,7 @@ export default function ProfileSetupScreen() {
   const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1);
-  const totalSteps = 9;
+  const totalSteps = 10;
 
   // Form states
   const [displayName, setDisplayName] = useState('');
@@ -61,8 +61,9 @@ export default function ProfileSetupScreen() {
   const [education, setEducation] = useState('');
   const [occupation, setOccupation] = useState('');
   const [bio, setBio] = useState('');
-  const [drinking, setDrinking] = useState('');
-  const [smoking, setSmoking] = useState('');
+  const [drinking, setDrinking] = useState('Not for me');
+  const [smoking, setSmoking] = useState('Non-smoker');
+  const [socialLevel, setSocialLevel] = useState('Socially active');
   const [hobbies, setHobbies] = useState<string[]>([]);
   const [languages, setLanguages] = useState<string[]>(['Vietnamese']);
   const [photos, setPhotos] = useState<string[]>([]);
@@ -84,7 +85,7 @@ export default function ProfileSetupScreen() {
       });
       return;
     }
-    if (step === 9 && photos.length === 0) {
+    if (step === 10 && photos.length === 0) {
       showToast({
         title: 'Thiếu ảnh',
         message: 'Vui lòng thêm ít nhất một ảnh đại diện.',
@@ -177,6 +178,7 @@ export default function ProfileSetupScreen() {
         bio,
         drinking,
         smoking,
+        socialLevel,
         hobbies,
         languages: languages.length > 0 ? languages : ['English'],
       });
@@ -188,7 +190,6 @@ export default function ProfileSetupScreen() {
             await profileService.uploadPhoto(uri);
           } catch (e) {
             console.error("Failed to upload photo:", uri, e);
-            // Optionally tell the user some photos failed, but we still completed the profile.
           }
         }
       }
@@ -237,17 +238,13 @@ export default function ProfileSetupScreen() {
               placeholder="YYYY-MM-DD"
               value={dob}
               onChangeText={(text) => {
-                // Remove any non-numeric characters
                 const cleaned = text.replace(/\D/g, '');
                 let formatted = cleaned;
-                
-                // Format: YYYY-MM-DD
                 if (cleaned.length > 4 && cleaned.length <= 6) {
                   formatted = `${cleaned.slice(0, 4)}-${cleaned.slice(4)}`;
                 } else if (cleaned.length > 6) {
                   formatted = `${cleaned.slice(0, 4)}-${cleaned.slice(4, 6)}-${cleaned.slice(6, 8)}`;
                 }
-                
                 setDob(formatted);
               }}
               keyboardType="numeric"
@@ -341,7 +338,57 @@ export default function ProfileSetupScreen() {
           </>
         );
       case 7:
-        const hobbyList = ['Photography', 'Travel', 'Coffee', 'Music', 'Gaming', 'Reading', 'Sports', 'Cooking', 'Art'];
+        return (
+          <>
+            <Text style={styles.title}>Lifestyle</Text>
+            <Text style={styles.subtitle}>Help others get to know your lifestyle better. (Optional)</Text>
+            
+            <Text style={styles.sectionLabel}>Do you drink?</Text>
+            <View style={styles.chipsContainer}>
+              {['Not for me', 'Socially', 'Frequently', 'Sober'].map((item) => (
+                <TouchableOpacity
+                  key={item}
+                  style={[styles.chip, drinking === item && styles.chipActive]}
+                  onPress={() => setDrinking(item)}
+                >
+                  <Text style={[styles.chipText, drinking === item && styles.chipTextActive]}>{item}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <Text style={[styles.sectionLabel, { marginTop: 20 }]}>Do you smoke?</Text>
+            <View style={styles.chipsContainer}>
+              {['Non-smoker', 'Socially', 'Frequently', 'Trying to quit'].map((item) => (
+                <TouchableOpacity
+                  key={item}
+                  style={[styles.chip, smoking === item && styles.chipActive]}
+                  onPress={() => setSmoking(item)}
+                >
+                  <Text style={[styles.chipText, smoking === item && styles.chipTextActive]}>{item}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <Text style={[styles.sectionLabel, { marginTop: 20 }]}>Social level</Text>
+            <View style={styles.chipsContainer}>
+              {['Homebody', 'Socially active', 'Party animal'].map((item) => (
+                <TouchableOpacity
+                  key={item}
+                  style={[styles.chip, socialLevel === item && styles.chipActive]}
+                  onPress={() => setSocialLevel(item)}
+                >
+                  <Text style={[styles.chipText, socialLevel === item && styles.chipTextActive]}>{item}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </>
+        );
+      case 8:
+        const hobbyList = [
+          'Photography', 'Travel', 'Coffee', 'Music', 'Gaming', 'Reading', 'Sports', 'Cooking', 'Art',
+          'Hiking', 'Movies', 'Dancing', 'Fitness', 'Yoga', 'Wine', 'Foodie', 'Animals', 'Technology',
+          'Fashion', 'Netflix', 'Gardening', 'Swimming', 'Coding', 'Tattoos', 'Cars', 'Outdoors'
+        ];
         return (
           <>
             <Text style={styles.title}>Hobbies & Interests</Text>
@@ -362,8 +409,11 @@ export default function ProfileSetupScreen() {
             </View>
           </>
         );
-      case 8:
-        const langList = ['Vietnamese', 'English', 'Korean', 'Japanese', 'Chinese', 'French', 'Spanish'];
+      case 9:
+        const langList = [
+          'Vietnamese', 'English', 'Korean', 'Japanese', 'Chinese', 'French', 'Spanish', 
+          'German', 'Italian', 'Russian', 'Thai', 'Cantonese', 'Mandarin'
+        ];
         return (
           <>
             <Text style={styles.title}>Languages I know</Text>
@@ -384,9 +434,8 @@ export default function ProfileSetupScreen() {
             </View>
           </>
         );
-      case 9:
-        // Render a 9-slot grid
-        const slots = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+      case 10:
+        const slots = [0, 1, 2, 3, 4, 5];
         return (
           <>
             <Text style={styles.title}>Add Recent Photos</Text>
@@ -408,7 +457,7 @@ export default function ProfileSetupScreen() {
                         <TouchableOpacity 
                           style={styles.photoPlaceholder} 
                           onPress={pickImage}
-                          disabled={index > photos.length} // Force consecutive uploads
+                          disabled={index > photos.length}
                         >
                         </TouchableOpacity>
                         <TouchableOpacity 
@@ -424,16 +473,13 @@ export default function ProfileSetupScreen() {
                 );
               })}
             </View>
-            <Text style={[styles.subtitle, { textAlign: 'center', marginTop: 24, fontSize: 14 }]}>
-              Add a video, pic, or Loop to get 4% closer to completing your profile and you may even get more Likes.
-            </Text>
           </>
         );
     }
   };
 
   const progressPercentage = (step / totalSteps) * 100;
-  const isOptionalStep = step >= 5 && step <= 7;
+  const isOptionalStep = step >= 5 && step <= 9;
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -528,6 +574,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: spacing(32),
     paddingTop: spacing(20),
+    paddingBottom: spacing(40),
   },
   content: {
     flex: 1,
@@ -544,6 +591,12 @@ const styles = StyleSheet.create({
     lineHeight: verticalScale(22),
     marginBottom: spacing(32),
   },
+  sectionLabel: {
+    fontSize: normalizeFont(16),
+    fontWeight: '700',
+    color: '#374151',
+    marginBottom: spacing(12),
+  },
   inputLarge: {
     borderBottomWidth: 2,
     borderBottomColor: '#E5E7EB',
@@ -559,7 +612,7 @@ const styles = StyleSheet.create({
     borderColor: '#E5E7EB',
     borderRadius: radius(12),
     paddingHorizontal: spacing(12),
-    borderBottomWidth: 1, // override borderBottomWidth from inputLarge
+    borderBottomWidth: 1, 
     marginTop: spacing(8),
   },
   inputGroup: {

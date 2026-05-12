@@ -1,159 +1,153 @@
+import { useEffect, useState } from 'react';
+import { adminApi } from '../../shared/services/api';
+import { 
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, Legend
+} from 'recharts';
 import userIcon from '../../assets/user.png';
 import monthlyActiveIcon from '../../assets/Monthly-Active.png';
 import heartIcon from '../../assets/heart.png';
 
-type KpiCard = {
-  title: string;
-  value: string;
-  delta: string;
-  icon: string;
-};
-
-const kpis: KpiCard[] = [
-  { title: 'Total Users', value: '1,284,092', delta: '+12.5%', icon: userIcon },
-  { title: 'Monthly Active', value: '842,100', delta: '+4.2%', icon: monthlyActiveIcon },
-  { title: 'Successful Matches', value: '45,392', delta: '+28%', icon: heartIcon },
-];
-
-const ageDemographics = [
-  { label: '18-24', male: 74, female: 61 },
-  { label: '25-34', male: 92, female: 80 },
-  { label: '35-44', male: 77, female: 69 },
-  { label: '45-54', male: 58, female: 50 },
-  { label: '55-64', male: 43, female: 36 },
-  { label: '65+', male: 31, female: 26 },
-];
-
-const trendMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'];
-
 export default function DashboardPage() {
-  return (
-    <div className="space-y-6">
-      <section className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h2 className="text-fluid-xl font-bold text-slate-800">System Performance</h2>
-          <p className="mt-1 text-fluid-sm text-slate-500">Real-time data orchestration across growth, safety and engagement indicators.</p>
-        </div>
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    totalMatches: 0,
+    totalReports: 0,
+    activeUsers: 0
+  });
+  const [advancedData, setAdvancedData] = useState<any>({ growth: [], categories: [] });
+  const [loading, setLoading] = useState(true);
 
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            className="rounded-xl border border-[#D0D5DD] bg-white px-4 py-2 text-sm font-medium text-slate-600"
-          >
-            Last 30 Days
-          </button>
-          <button
-            type="button"
-            className="inline-flex items-center gap-2 rounded-xl bg-[#E1306C] px-4 py-2 text-sm font-semibold text-white"
-          >
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-4 w-4">
-              <path d="M12 4v10m0 0 4-4m-4 4-4-4M5 18h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            Export PDF
-          </button>
+  useEffect(() => {
+    Promise.all([
+      adminApi.getStats(),
+      adminApi.getAdvancedStats()
+    ]).then(([s, a]) => {
+      setStats(s.data);
+      setAdvancedData(a.data);
+      setLoading(false);
+    });
+  }, []);
+
+  const kpis = [
+    { title: 'Total Users', value: stats.totalUsers.toLocaleString(), delta: '+100%', icon: userIcon, color: '#EE3F57' },
+    { title: 'Matches', value: stats.totalMatches.toLocaleString(), delta: 'Live', icon: heartIcon, color: '#E1306C' },
+    { title: 'Active (MAU)', value: stats.activeUsers.toLocaleString(), delta: 'Realtime', icon: monthlyActiveIcon, color: '#8A2387' },
+  ];
+
+  const COLORS = ['#EE3F57', '#F970A9', '#ADAFBB'];
+
+  return (
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <header className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-800">Hệ thống Giám sát Mixer</h2>
+          <p className="text-slate-500 text-sm">Phân tích tăng trưởng và chỉ số an toàn thời gian thực</p>
         </div>
-      </section>
+        <div className="flex gap-2">
+            <div className="bg-emerald-500/10 text-emerald-600 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-2">
+                <span className="h-2 w-2 bg-emerald-500 rounded-full animate-pulse" />
+                SERVER ONLINE
+            </div>
+        </div>
+      </header>
 
       <section className="grid gap-4 md:grid-cols-3">
         {kpis.map((item) => (
-          <article key={item.title} className="rounded-2xl bg-white p-5 shadow-[0_16px_34px_-24px_rgba(0,0,0,0.16)]">
+          <article key={item.title} className="rounded-2xl bg-white p-6 shadow-sm border border-slate-100 hover:shadow-md transition">
             <div className="mb-4 flex items-center justify-between">
-              <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[#E1306C]/10">
-                <img src={item.icon} alt={item.title} className="h-7 w-7 object-contain" />
+              <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl" style={{ backgroundColor: `${item.color}15` }}>
+                <img src={item.icon} alt={item.title} className="h-6 w-6 object-contain" />
               </span>
-              <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">{item.delta}</span>
+              <span className="text-xs font-bold px-2 py-1 bg-slate-100 rounded-lg text-slate-500">{item.delta}</span>
             </div>
-            <p className="text-fluid-sm text-slate-500">{item.title}</p>
-            <p className="mt-1 text-fluid-lg font-bold text-slate-800">{item.value}</p>
+            <p className="text-sm font-medium text-slate-500">{item.title}</p>
+            <p className="mt-1 text-2xl font-bold text-slate-800">{item.value}</p>
           </article>
         ))}
       </section>
 
-      <section className="grid gap-4 xl:grid-cols-5">
-        <article className="rounded-2xl bg-white p-5 shadow-[0_16px_34px_-24px_rgba(0,0,0,0.16)] xl:col-span-3">
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-fluid-base font-semibold text-slate-800">User Growth Momentum</h3>
-            <span className="rounded-full bg-[#E1306C]/10 px-3 py-1 text-fluid-xs font-semibold text-[#E1306C]">2024 Year to Date</span>
-          </div>
-          <div className="rounded-xl bg-gradient-to-b from-[#E1306C]/10 to-white p-3">
-            <svg viewBox="0 0 600 260" className="h-56 w-full">
-              <defs>
-                <linearGradient id="trendGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#E1306C" stopOpacity="0.32" />
-                  <stop offset="100%" stopColor="#E1306C" stopOpacity="0" />
-                </linearGradient>
-              </defs>
-              <path
-                d="M20 210 C80 180, 120 190, 170 150 C220 110, 270 130, 330 95 C390 60, 440 80, 500 45 C530 28, 555 35, 580 25 L580 240 L20 240 Z"
-                fill="url(#trendGradient)"
-              />
-              <path
-                d="M20 210 C80 180, 120 190, 170 150 C220 110, 270 130, 330 95 C390 60, 440 80, 500 45 C530 28, 555 35, 580 25"
-                stroke="#E1306C"
-                strokeWidth="4"
-                fill="none"
-                strokeLinecap="round"
-              />
-              {trendMonths.map((month, index) => (
-                <text key={month} x={40 + index * 78} y={254} fontSize="12" fill="#98A2B3">
-                  {month}
-                </text>
-              ))}
-            </svg>
+      <div className="grid gap-6 lg:grid-cols-5">
+        <article className="rounded-2xl bg-white p-6 shadow-sm border border-slate-100 lg:col-span-3">
+          <h3 className="text-lg font-bold text-slate-800 mb-6">Biểu đồ Tăng trưởng</h3>
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={advancedData.growth}>
+                <defs>
+                  <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#EE3F57" stopOpacity={0.1}/>
+                    <stop offset="95%" stopColor="#EE3F57" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} />
+                <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} />
+                <Tooltip contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)'}} />
+                <Area type="monotone" dataKey="users" stroke="#EE3F57" strokeWidth={3} fillOpacity={1} fill="url(#colorUsers)" />
+              </AreaChart>
+            </ResponsiveContainer>
           </div>
         </article>
 
-        <article className="rounded-2xl bg-white p-5 shadow-[0_16px_34px_-24px_rgba(0,0,0,0.16)] xl:col-span-2">
-          <h3 className="mb-4 text-fluid-base font-semibold text-slate-800">Safety Report Distribution</h3>
-          <div className="flex flex-col items-center">
-            <div className="relative h-48 w-48 rounded-full bg-[conic-gradient(#E1306C_0_65%,#F970A9_65%_90%,#F2F4F7_90%_100%)] p-7">
-              <div className="flex h-full w-full flex-col items-center justify-center rounded-full bg-white text-center">
-                <p className="text-fluid-xs text-slate-500">2.4k</p>
-                <p className="text-fluid-sm font-semibold text-slate-700">TOTAL REPORTS</p>
-              </div>
-            </div>
-            <div className="mt-5 grid w-full gap-2 text-fluid-sm text-slate-600">
-              <p className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-[#E1306C]" />Harassment (65%)</p>
-              <p className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-[#F970A9]" />Fake Profile (25%)</p>
-              <p className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-[#D0D5DD]" />Other (10%)</p>
-            </div>
+        <article className="rounded-2xl bg-white p-6 shadow-sm border border-slate-100 lg:col-span-2">
+          <h3 className="text-lg font-bold text-slate-800 mb-6">Phân bổ Báo cáo</h3>
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={advancedData.categories}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={80}
+                  paddingAngle={5}
+                  dataKey="value"
+                >
+                  {advancedData.categories.map((entry: any, index: number) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend iconType="circle" layout="vertical" align="right" verticalAlign="middle" />
+              </PieChart>
+            </ResponsiveContainer>
           </div>
         </article>
-      </section>
-
-      <section className="rounded-2xl bg-white p-5 shadow-[0_16px_34px_-24px_rgba(0,0,0,0.16)]">
-        <h3 className="mb-4 text-fluid-base font-semibold text-slate-800">Age Demographics</h3>
-        <div className="grid grid-cols-3 gap-3 md:grid-cols-6">
-          {ageDemographics.map((item) => (
-            <div key={item.label} className="flex flex-col items-center">
-              <div className="mb-2 flex h-44 w-full max-w-[70px] items-end gap-1 rounded-xl bg-[#F8F9FB] p-2">
-                <div className="w-1/2 rounded-t bg-[#D92D20]" style={{ height: `${item.male}%` }} />
-                <div className="w-1/2 rounded-t bg-[#F970A9]" style={{ height: `${item.female}%` }} />
-              </div>
-              <span className="text-fluid-xs font-medium text-slate-500">{item.label}</span>
-            </div>
-          ))}
-        </div>
-        <div className="mt-4 flex items-center gap-5 text-fluid-sm text-slate-600">
-          <span className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-[#D92D20]" />Male</span>
-          <span className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-[#F970A9]" />Female</span>
-        </div>
-      </section>
-
+      </div>
+      
       <section className="grid gap-4 md:grid-cols-2">
-        <article className="rounded-2xl bg-white p-5 shadow-[0_16px_34px_-24px_rgba(0,0,0,0.16)]">
-          <h3 className="text-fluid-base font-semibold text-slate-800">Insights of the Day</h3>
-          <p className="mt-2 text-fluid-sm leading-6 text-slate-600">
-            Peak user sessions appear between 20:00 and 22:00, with profile-complete users showing 1.8x higher engagement and faster first-match conversion.
-          </p>
-        </article>
-
-        <article className="rounded-2xl bg-white p-5 shadow-[0_16px_34px_-24px_rgba(0,0,0,0.16)]">
-          <h3 className="text-fluid-base font-semibold text-slate-800">Moderation Health</h3>
-          <p className="mt-2 text-fluid-sm leading-6 text-slate-600">
-            AI moderation currently auto-resolves 82% of flagged cases with low false-positive rates, while manual escalation SLA remains under 2 hours.
-          </p>
-        </article>
+         <article className="bg-[#8A2387] rounded-2xl p-6 text-white overflow-hidden relative">
+            <div className="relative z-10">
+                <h3 className="text-lg font-bold mb-2">Thông báo toàn hệ thống</h3>
+                <p className="text-white/70 text-sm mb-4">Gửi tin nhắn broadcast đến tất cả người dùng ngay lập tức.</p>
+                <button className="bg-white text-[#8A2387] px-6 py-2 rounded-xl font-bold hover:bg-white/90 transition">
+                    Soạn thông báo
+                </button>
+            </div>
+            <div className="absolute -right-10 -bottom-10 opacity-20 transform rotate-12">
+                 <img src={monthlyActiveIcon} className="w-48 h-48" />
+            </div>
+         </article>
+         
+         <article className="bg-slate-900 rounded-2xl p-6 text-white flex flex-col justify-between">
+            <div>
+                <h3 className="text-lg font-bold mb-2">Tình trạng hệ thống</h3>
+                <div className="space-y-3 mt-4">
+                    <div className="flex justify-between items-center text-sm">
+                        <span className="text-slate-400">Database (MongoDB)</span>
+                        <span className="text-emerald-400 font-mono">Healthy</span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm">
+                        <span className="text-slate-400">Cache (Redis)</span>
+                        <span className="text-emerald-400 font-mono">Healthy</span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm">
+                        <span className="text-slate-400">SignalR Backplane</span>
+                        <span className="text-emerald-400 font-mono">Connected</span>
+                    </div>
+                </div>
+            </div>
+         </article>
       </section>
     </div>
   );

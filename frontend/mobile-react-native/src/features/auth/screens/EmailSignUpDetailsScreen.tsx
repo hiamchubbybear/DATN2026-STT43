@@ -5,6 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../../app/navigation/RootNavigator';
 import Svg, { Path } from 'react-native-svg';
+import { Ionicons } from '@expo/vector-icons';
 import { authService } from '../../../services/api/authService';
 import { normalizeFont, radius, scale, spacing, verticalScale } from '../../../shared/utils/responsive';
 import { useToast } from '../../../shared/components/ToastProvider';
@@ -12,16 +13,28 @@ import { useToast } from '../../../shared/components/ToastProvider';
 export default function EmailSignUpDetailsScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { showToast } = useToast();
 
   const handleSignUp = async () => {
-    if (!email || !password) {
+    if (!email || !password || !confirmPassword) {
       showToast({
         title: 'Thiếu thông tin',
         message: 'Vui lòng điền đầy đủ các trường',
+        type: 'error'
+      });
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      showToast({
+        title: 'Lỗi xác nhận',
+        message: 'Mật khẩu xác nhận không trùng khớp',
         type: 'error'
       });
       return;
@@ -40,8 +53,6 @@ export default function EmailSignUpDetailsScreen() {
 
     try {
       setLoading(true);
-      // We send "" for username as it's no longer used but API might still expect it for now
-      // Actually, I'll update the service and API too.
       await authService.register(email, password);
       // Registration successful, backend automatically sends email
       navigation.navigate('EmailSignUpVerify', { email });
@@ -104,17 +115,39 @@ export default function EmailSignUpDetailsScreen() {
                 placeholderTextColor="#9CA3AF"
                 value={password}
                 onChangeText={setPassword}
-                secureTextEntry
+                secureTextEntry={!showPassword}
                 autoCapitalize="none"
               />
+              <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
+                <Ionicons name={showPassword ? "eye-off-outline" : "eye-outline"} size={20} color="#6B7280" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={[styles.inputContainer, styles.marginTop]}>
+              <Svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={styles.icon}>
+                <Path d="M19 11H5c-1.1 0-2 .9-2 2v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7c0-1.1-.9-2-2-2z" stroke="#6B7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                <Path d="M7 11V7c0-2.76 2.24-5 5-5s5 2.24 5 5v4" stroke="#6B7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </Svg>
+              <TextInput
+                style={styles.input}
+                placeholder="Confirm Password"
+                placeholderTextColor="#9CA3AF"
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                secureTextEntry={!showConfirmPassword}
+                autoCapitalize="none"
+              />
+              <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)} style={styles.eyeIcon}>
+                <Ionicons name={showConfirmPassword ? "eye-off-outline" : "eye-outline"} size={20} color="#6B7280" />
+              </TouchableOpacity>
             </View>
           </View>
 
           <TouchableOpacity 
-            style={[styles.button, (!email || !password || loading) && styles.buttonDisabled]} 
+            style={[styles.button, (!email || !password || !confirmPassword || loading) && styles.buttonDisabled]} 
             onPress={handleSignUp}
             activeOpacity={0.8}
-            disabled={!email || !password || loading}
+            disabled={!email || !password || !confirmPassword || loading}
           >
             {loading ? <ActivityIndicator color="#FFF" /> : <Text style={styles.buttonText}>Sign Up</Text>}
           </TouchableOpacity>
@@ -183,6 +216,9 @@ const styles = StyleSheet.create({
     fontSize: normalizeFont(16),
     color: '#111111',
     height: '100%',
+  },
+  eyeIcon: {
+    padding: spacing(4),
   },
   button: {
     backgroundColor: '#F43F5E',

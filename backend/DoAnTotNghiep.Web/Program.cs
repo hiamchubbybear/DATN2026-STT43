@@ -50,6 +50,38 @@ builder.Services.AddHealthChecks()
     .AddRedis(redisSettings!.ConnectionString, name: "redis", tags: ["cache", "ready"]);
 
 builder.Services.AddInfrastructure(builder.Configuration);
+
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "Mixer API - Mobile", Version = "v1" });
+    c.SwaggerDoc("admin", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "Mixer API - Admin Dashboard", Version = "admin" });
+    
+    c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    {
+        Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
+        Name = "Authorization",
+        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+        Type = Microsoft.OpenApi.Models.OpenApiSecuritySchemeType.ApiKey,
+        Scheme = "Bearer"
+    });
+
+    c.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+    {
+        {
+            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            {
+                Reference = new Microsoft.OpenApi.Models.OpenApiSecurityReference
+                {
+                    Type = Microsoft.OpenApi.Models.OpenApiSecurityReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new string[] { }
+        }
+    });
+});
+
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
@@ -97,6 +129,12 @@ var app = builder.Build();
 app.UseExceptionHandler();
 if (app.Environment.IsDevelopment())
 {
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Mixer API - Mobile");
+        c.SwaggerEndpoint("/swagger/admin/swagger.json", "Mixer API - Admin");
+    });
     // app.UseDeveloperExceptionPage();
 }
 else 

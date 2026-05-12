@@ -27,6 +27,7 @@
       <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
       <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
       <PackageReference Include="Serilog.Sinks.MongoDB" Version="7.2.0" />
+      <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.7" />
     </ItemGroup>
 
 </Project>
