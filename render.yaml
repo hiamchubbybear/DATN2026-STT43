@@ -84,26 +84,9 @@ services:
       - key: PORT
         value: "8000"
 
-  # ----------------------------------------------------------------            
-  # 3. Admin Portal (React + Vite)
-  # ----------------------------------------------------------------            
-  - type: web
-    name: datn-admin-portal
-    runtime: static
-    region: singapore
-    plan: free
-    rootDir: frontend/admin-react
-    buildCommand: npm install && npm run build
-    publishPath: dist
-    envVars:
-      - key: VITE_API_URL
-        fromService:
-          name: datn-backend
-          type: web
-          property: host
 
   # ----------------------------------------------------------------            
-  # 4. Redis (Optional - Render Managed Redis)
+  # 3. Redis (Optional - Render Managed Redis)
   # ----------------------------------------------------------------            
   - type: redis
     name: datn-redis
