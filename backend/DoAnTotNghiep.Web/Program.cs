@@ -44,6 +44,13 @@ builder.Services.AddJwtAuthentication(secretKey);
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 builder.Services.AddCors();
+builder.Services.Configure<Microsoft.AspNetCore.HttpOverrides.ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor | 
+                               Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto;
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
 builder.Services.AddApplication();
 builder.Services.AddSingleton(mongoSettings!);
 builder.Services.AddSingleton(redisSettings!);
@@ -147,7 +154,9 @@ else
     app.UseHttpsRedirection();
 }
 
+app.UseForwardedHeaders();
 app.UseSerilogRequestLogging();
+app.UseWebSockets();
 app.UseDefaultFiles();
 app.UseStaticFiles();
 

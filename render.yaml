@@ -60,7 +60,7 @@ services:
       - key: AiService__BaseUrl
         fromService:
           name: datn-ai-service
-          type: web
+          type: pvt
           property: hostport
       - key: Secret__GmailNotification
         sync: false
@@ -68,7 +68,7 @@ services:
   # ----------------------------------------------------------------            
   # 2. AI Anti-Spoofing Service (Python FastAPI)
   # ----------------------------------------------------------------            
-  - type: web
+  - type: pvt
     name: datn-ai-service
     runtime: docker
     region: singapore

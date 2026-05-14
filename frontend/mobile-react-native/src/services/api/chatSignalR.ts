@@ -23,11 +23,21 @@ class ChatSignalRService {
       }
 
       // Use the API Base URL from env, or fallback to the local backend port
-      const backendUrl = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:5017';
+      let backendUrl = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:5017';
+      if (backendUrl.endsWith('/')) {
+        backendUrl = backendUrl.slice(0, -1);
+      }
       
       this.hubConnection = new signalR.HubConnectionBuilder()
         .withUrl(`${backendUrl}/hubs/app`, {
-          accessTokenFactory: () => useAuthStore.getState().accessToken || '',
+          accessTokenFactory: () => {
+            const token = useAuthStore.getState().accessToken;
+            if (!token) console.warn('SignalR: No access token found in store');
+            return token || '';
+          },
+          // Skip negotiation is recommended when forcing WebSockets to avoid 404/Sticky Session issues
+          skipNegotiation: true,
+          transport: signalR.HttpTransportType.WebSockets
         })
         .withAutomaticReconnect()
         .configureLogging(signalR.LogLevel.Information)
@@ -35,10 +45,14 @@ class ChatSignalRService {
 
       this.registerEvents();
 
+      console.log('SignalR: Attempting to connect to', `${backendUrl}/hubs/app`);
       await this.hubConnection.start();
-      console.log('SignalR Connected!');
-    } catch (err) {
-      console.error('Error connecting to SignalR:', err);
+      console.log('SignalR: Connected successfully!');
+    } catch (err: any) {
+      console.error('SignalR: Connection failed:', err);
+      // Log more details if available
+      if (err?.message) console.error('SignalR Error Message:', err.message);
+      if (err?.statusCode) console.error('SignalR Status Code:', err.statusCode);
     } finally {
       this.isConnecting = false;
     }
@@ -80,6 +94,12 @@ class ChatSignalRService {
   }
 
   public async sendMessage(conversationId: string, receiverId: string, content: string, reqId: string) {
+    // If not connected, try to start connection first
+    if (!this.hubConnection || this.hubConnection.state !== signalR.HubConnectionState.Connected) {
+      console.log('SignalR not connected, attempting to reconnect...');
+      await this.startConnection();
+    }
+
     if (this.hubConnection?.state === signalR.HubConnectionState.Connected) {
       try {
         await this.hubConnection.invoke('SendMessage', conversationId, receiverId, content, reqId);
@@ -88,7 +108,7 @@ class ChatSignalRService {
         throw err;
       }
     } else {
-      console.warn('No SignalR connection. Cannot send message.');
+      console.warn('No SignalR connection after retry. Cannot send message.');
       throw new Error('Not connected');
     }
   }
