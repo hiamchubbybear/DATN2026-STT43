@@ -50,6 +50,12 @@ public class UserAccount(string email, string? hashPassword = null, AuthProvider
         SetUpdated();
     }
 
+    public void SetRole(string role)
+    {
+        Role = role;
+        SetUpdated();
+    }
+
     public void LinkWithGoogle(string providerId)
     {
         Provider = AuthProvider.Google;

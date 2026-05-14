@@ -1,28 +1,34 @@
-﻿using DoAnTotNghiep.Domain.Users;
+using DoAnTotNghiep.Application.Common;
+using DoAnTotNghiep.Domain.Users;
 using MediatR;
 
-namespace DoAnTotNghiep.Application.Auth.Logout
+namespace DoAnTotNghiep.Application.Users.Commands.Logout;
+
+public class LogoutCommandHandler : IRequestHandler<LogoutCommand, bool>
 {
-    public class LogoutCommandHandler : IRequestHandler<LogoutCommand, bool>
+    private readonly ISessionRepository _sessionRepo;
+    private readonly ICacheService _cacheService;
+
+    public LogoutCommandHandler(ISessionRepository sessionRepo, ICacheService cacheService)
     {
-        private readonly ISessionRepository _repository;
+        _sessionRepo = sessionRepo;
+        _cacheService = cacheService;
+    }
 
-        public LogoutCommandHandler(ISessionRepository repository)
+    public async Task<bool> Handle(LogoutCommand request, CancellationToken cancellationToken)
+    {
+        // 1. Thu hồi Refresh Token trong DB
+        var session = await _sessionRepo.GetByRefreshToken(request.RefreshToken);
+        if (session != null)
         {
-            _repository = repository;
+            session.IsRevoked = true;
+            await _sessionRepo.UpdateSession(session);
         }
-        public async Task<bool> Handle(LogoutCommand request, CancellationToken cancellationToken)
-        {
-            var session = await _repository.GetByRefreshToken(request.RefreshToken);
-            if (session == null)
-            {
-                return false;
-            }
-            session.RefreshToken.Revoke();
 
-            await _repository.UpdateSession(session);
+        // 2. Blacklist Access Token trong Redis (TTL 15 phút - mặc định của Access Token)
+        // Trong thực tế nên giải mã token để lấy thời gian hết hạn chính xác
+        await _cacheService.SetAsync($"blacklist:{request.AccessToken}", "revoked", TimeSpan.FromMinutes(15));
 
-            return true;
-        }
+        return true;
     }
 }

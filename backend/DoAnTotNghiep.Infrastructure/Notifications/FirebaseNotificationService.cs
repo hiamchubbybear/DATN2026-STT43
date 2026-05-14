@@ -69,7 +69,7 @@ public class FirebaseNotificationService : INotificationService
 
     public async Task SendPushToUserAsync(Guid userId, string title, string body, Dictionary<string, string>? data = null)
     {
-        var tokens = await _sessionRepository.GetPushTokensByUserId(userId);
+        var tokens = await _sessionRepository.GetFcmTokensByUserId(userId);
         if (tokens == null || !tokens.Any()) return;
 
         foreach (var token in tokens)

@@ -47,7 +47,7 @@ namespace DoAnTotNghiep.Application.Users.Commands.Login
                 request.IpAddress,
                 request.Platform,
                 request.AppVersion,
-                request.PushToken,
+                request.FcmToken,
                 refreshToken
             );
             await _sessionRepo.CreateSession(session);

@@ -9,7 +9,9 @@ using DoAnTotNghiep.Application.Common.Models;
 using DoAnTotNghiep.Application.Users.Commands.Login;
 using DoAnTotNghiep.Application.Auth.VerifyResetToken;
 using MediatR;
-using DoAnTotNghiep.Application.Auth.Logout;
+using DoAnTotNghiep.Application.Users.Commands.Logout;
+using Microsoft.Extensions.Localization;
+using DoAnTotNghiep.Web.Resources;
 
 namespace DoAnTotNghiep.Web.Controllers;
 
@@ -18,10 +20,12 @@ namespace DoAnTotNghiep.Web.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly IMediator _mediator;
+    private readonly IStringLocalizer<SharedResource> _localizer;
 
-    public AuthController(IMediator mediator)
+    public AuthController(IMediator mediator, IStringLocalizer<SharedResource> localizer)
     {
         _mediator = mediator;
+        _localizer = localizer;
     }
 
     [HttpPost("login")]
@@ -29,7 +33,7 @@ public class AuthController : ControllerBase
     {
         command.IpAddress ??= HttpContext.Connection.RemoteIpAddress?.ToString();
         var response = await _mediator.Send(command);
-        return Ok(ApiResponse<AuthResponse>.Succeeded(response, "Login successful"));
+        return Ok(ApiResponse<AuthResponse>.Succeeded(response, _localizer["LoginSuccess"]));
     }
 
     [HttpPost("google-login")]
@@ -105,6 +109,7 @@ public class AuthController : ControllerBase
     [HttpPost("logout")]
     public async Task<IActionResult> Logout(LogoutCommand request)
     {
+        request.AccessToken ??= HttpContext.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
         var result = await _mediator.Send(request);
         if (!result)
         {

@@ -10,14 +10,14 @@ namespace DoAnTotNghiep.Application.Users.Commands.Login
 {
     public class LoginCommand : IRequest<AuthResponse>
     {
-        public string Email { get; set; }
-        [SensitiveData] public string Password { get; set; }
+        public string Email { get; set; } = null!;
+        [SensitiveData] public string Password { get; set; } = null!;
         
         public string? DeviceId { get; set; }
         public string? DeviceName { get; set; }
         public string? Platform { get; set; }
         public string? AppVersion { get; set; }
-        public string? PushToken { get; set; }
+        public string? FcmToken { get; set; }
         public string? IpAddress { get; set; }
         public bool IsRevoked { get; set; }
     }

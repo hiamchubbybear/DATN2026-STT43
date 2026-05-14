@@ -6,8 +6,8 @@ namespace DoAnTotNghiep.Application.Users.Commands.Login;
 
 public class AuthResponse
 {
-    public string AccessToken { get; set; }
-    public string RefreshToken { get; set; }
+    public string AccessToken { get; set; } = null!;
+    public string RefreshToken { get; set; } = null!;
     public bool IsProfileCompleted { get; set; }
     public Guid UserId { get; set; }
     public string Email { get; set; } = string.Empty;

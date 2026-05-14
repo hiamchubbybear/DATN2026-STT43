@@ -1,0 +1,10 @@
+**/.dockerignore
+**/.git
+**/.gitignore
+**/.vs
+**/.vscode
+**/bin
+**/obj
+**/logs
+**/Secrets
+*.sln.DotSettings.user

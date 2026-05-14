@@ -22,6 +22,7 @@ public class SwipeActionHandler : IRequestHandler<SwipeActionCommand, SwipeActio
     private readonly INotificationService _notificationService;
     private readonly IUserProfileRepository _userProfileRepository;
     private readonly IMetricsService _metrics;
+    private readonly IFraudDetectionService _fraudDetectionService;
 
     public SwipeActionHandler(
         ISwipeRepository swipeRepository,
@@ -29,7 +30,8 @@ public class SwipeActionHandler : IRequestHandler<SwipeActionCommand, SwipeActio
         ICacheService cacheService,
         INotificationService notificationService,
         IUserProfileRepository userProfileRepository,
-        IMetricsService metrics)
+        IMetricsService metrics,
+        IFraudDetectionService fraudDetectionService)
     {
         _swipeRepository = swipeRepository;
         _currentUserService = currentUserService;
@@ -37,12 +39,19 @@ public class SwipeActionHandler : IRequestHandler<SwipeActionCommand, SwipeActio
         _notificationService = notificationService;
         _userProfileRepository = userProfileRepository;
         _metrics = metrics;
+        _fraudDetectionService = fraudDetectionService;
     }
 
     public async Task<SwipeActionResponse> Handle(SwipeActionCommand request, CancellationToken cancellationToken)
     {
         if (_currentUserService.UserId == null) return new SwipeActionResponse(false);
         var currentUserId = Guid.Parse(_currentUserService.UserId);
+
+        // 0. Fraud detection check (Fast swiping)
+        if (await _fraudDetectionService.IsSwipingTooFastAsync(currentUserId, cancellationToken))
+        {
+            throw new System.Exception("Slow down! You're swiping too fast.");
+        }
 
         // 1. Check if already swiped
         var existingSwipe = await _swipeRepository.GetSwipeAsync(currentUserId, request.TargetId);

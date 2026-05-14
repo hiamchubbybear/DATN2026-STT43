@@ -3,7 +3,12 @@ using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
 using DoAnTotNghiep.Domain.Users;
 using DoAnTotNghiep.Domain.Admin;
+using DoAnTotNghiep.Domain.Enum;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.SignalR;
+using DoAnTotNghiep.Web.Hubs;
+using MediatR;
+using DoAnTotNghiep.Application.Users.Reports;
 
 namespace DoAnTotNghiep.Web.Controller;
 
@@ -11,27 +16,137 @@ namespace DoAnTotNghiep.Web.Controller;
 [Route("api/admin")]
 [ApiExplorerSettings(GroupName = "admin")]
 [Tags("Admin")]
-// [Authorize(Roles = "Admin")] // Bật lại sau khi setup Role Admin
+[Authorize(Roles = "Admin")]
 public class AdminController : ControllerBase
 {
     private readonly MongoDbContext _context;
+    private readonly DoAnTotNghiep.Application.Common.IPasswordHasher _hasher;
+    private readonly DoAnTotNghiep.Application.Notifications.INotificationService _notificationService;
+    private readonly IHubContext<AppHub> _hubContext;
+    private readonly IMediator _mediator;
 
-    public AdminController(MongoDbContext context)
+    public AdminController(
+        MongoDbContext context, 
+        DoAnTotNghiep.Application.Common.IPasswordHasher hasher,
+        DoAnTotNghiep.Application.Notifications.INotificationService notificationService,
+        IHubContext<AppHub> hubContext,
+        IMediator mediator)
     {
         _context = context;
+        _hasher = hasher;
+        _notificationService = notificationService;
+        _hubContext = hubContext;
+        _mediator = mediator;
+    }
+
+    private Guid GetAdminId()
+    {
+        var sub = User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value 
+                  ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        return sub != null ? Guid.Parse(sub) : Guid.Empty;
+    }
+
+    private string GetAdminEmail()
+    {
+        return User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value ?? "system@mixer.com";
     }
 
     [HttpGet("users")]
-    public async Task<IActionResult> GetUsers([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+    public async Task<IActionResult> GetUsers(
+        [FromQuery] string? search, 
+        [FromQuery] string? role,
+        [FromQuery] bool? isBanned,
+        [FromQuery] bool? isVerified,
+        [FromQuery] string? gender,
+        [FromQuery] int page = 1, 
+        [FromQuery] int pageSize = 12)
     {
-        var users = await _context.UserAccounts.Find(_ => true)
+        var builder = Builders<UserAccount>.Filter;
+        var filter = builder.Empty;
+
+        if (!string.IsNullOrEmpty(search))
+        {
+            var searchRegex = new MongoDB.Bson.BsonRegularExpression(search, "i");
+            
+            // Search in UserProfiles first to get matching UserIds
+            var matchingProfileIds = await _context.UserProfiles
+                .Find(Builders<UserProfile>.Filter.Regex(p => p.BasicInfo.DisplayName, searchRegex))
+                .Project(p => p.UserId)
+                .ToListAsync();
+
+            filter &= builder.Or(
+                builder.Regex(u => u.Email, searchRegex),
+                builder.In(u => u.Id, matchingProfileIds)
+            );
+        }
+
+        if (!string.IsNullOrEmpty(role))
+        {
+            filter &= builder.Eq(u => u.Role, role);
+        }
+
+        if (isBanned.HasValue)
+        {
+            filter &= builder.Eq(u => u.IsBanned, isBanned.Value);
+        }
+
+        if (isVerified.HasValue)
+        {
+            filter &= builder.Eq(u => u.IsVerified, isVerified.Value);
+        }
+
+        if (!string.IsNullOrEmpty(gender))
+        {
+            var userIdsWithGender = await _context.UserProfiles
+                .Find(p => p.BasicInfo.Gender.ToString() == gender)
+                .Project(p => p.UserId)
+                .ToListAsync();
+            filter &= builder.In(u => u.Id, userIdsWithGender);
+        }
+
+        var users = await _context.UserAccounts.Find(filter)
+            .SortByDescending(u => u.CreatedAt)
             .Skip((page - 1) * pageSize)
             .Limit(pageSize)
             .ToListAsync();
 
-        var total = await _context.UserAccounts.CountDocumentsAsync(_ => true);
+        var total = await _context.UserAccounts.CountDocumentsAsync(filter);
 
-        return Ok(new { total, users, page, pageSize });
+        // Fetch profiles for these users to enrich the list
+        var userIds = users.Select(u => u.Id).ToList();
+        var profiles = await _context.UserProfiles.Find(p => userIds.Contains(p.UserId)).ToListAsync();
+        var profileMap = profiles.ToDictionary(p => p.UserId);
+
+        var enrichedUsers = users.Select(u => {
+            profileMap.TryGetValue(u.Id, out var profile);
+            return new {
+                u.Id,
+                u.Email,
+                u.Role,
+                u.IsBanned,
+                u.IsVerified,
+                u.CreatedAt,
+                DisplayName = !string.IsNullOrEmpty(profile?.BasicInfo?.DisplayName) 
+                    ? profile.BasicInfo.DisplayName 
+                    : u.Email.Split('@')[0],
+                Gender = profile?.BasicInfo?.Gender.ToString() ?? "N/A",
+                Avatar = profile?.Photos?.OrderBy(p => p.Order).FirstOrDefault()?.Url,
+                Location = !string.IsNullOrEmpty(profile?.LocationName) ? profile.LocationName : "Not set"
+            };
+        });
+
+        return Ok(new { total, users = enrichedUsers, page, pageSize });
+    }
+
+    [HttpGet("users/{userId}")]
+    public async Task<IActionResult> GetUserDetails(Guid userId)
+    {
+        var user = await _context.UserAccounts.Find(u => u.Id == userId).FirstOrDefaultAsync();
+        if (user == null) return NotFound();
+
+        var profile = await _context.UserProfiles.Find(p => p.UserId == userId).FirstOrDefaultAsync();
+        
+        return Ok(new { user, profile });
     }
 
     [HttpPost("users/{userId}/ban")]
@@ -43,9 +158,9 @@ public class AdminController : ControllerBase
         user.Ban(request.Reason, request.Until);
         await _context.UserAccounts.ReplaceOneAsync(u => u.Id == userId, user);
 
-        // Log action
-        var adminId = Guid.Empty; // Lấy từ User claims sau
-        var log = new AuditLog(adminId, "Admin", "BAN_USER", userId.ToString(), request.Reason, HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown");
+        var adminId = GetAdminId();
+        var adminEmail = GetAdminEmail();
+        var log = new AuditLog(adminId, adminEmail, "BAN_USER", userId.ToString(), request.Reason, HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown");
         await _context.AuditLogs.InsertOneAsync(log);
 
         return Ok();
@@ -60,27 +175,85 @@ public class AdminController : ControllerBase
         user.Unban();
         await _context.UserAccounts.ReplaceOneAsync(u => u.Id == userId, user);
 
+        var adminId = GetAdminId();
+        var adminEmail = GetAdminEmail();
+        var log = new AuditLog(adminId, adminEmail, "UNBAN_USER", userId.ToString(), "User unbanned", "");
+        await _context.AuditLogs.InsertOneAsync(log);
+
         return Ok();
     }
 
     [HttpGet("reports")]
     public async Task<IActionResult> GetReports()
     {
-        var reports = await _context.UserReports.Find(_ => true).ToListAsync();
+        var reports = await _context.UserReports.Find(_ => true).SortByDescending(r => r.CreatedAt).ToListAsync();
         return Ok(reports);
     }
 
+    [HttpPost("users")]
+    public async Task<IActionResult> CreateUser([FromBody] AdminCreateUserRequest request)
+    {
+        // Check if user already exists
+        var existing = await _context.UserAccounts.Find(u => u.Email == request.Email).FirstOrDefaultAsync();
+        if (existing != null) return BadRequest(new { message = "Email already exists" });
+
+        // Create Account
+        var passwordHash = _hasher.Hash(request.Password);
+        var user = new UserAccount(request.Email, passwordHash, AuthProvider.Local);
+        user.SetRole(request.Role);
+        user.MarkAsVerified();
+        await _context.UserAccounts.InsertOneAsync(user);
+
+        // Create Profile
+        var profile = new UserProfile(user.Id);
+        var gender = Enum.Parse<Gender>(request.Gender);
+        profile.UpdateBasicInfo(request.DisplayName, DateTime.UtcNow.AddYears(-20), gender, ["Vietnamese"]);
+        await _context.UserProfiles.InsertOneAsync(profile);
+
+        // Log Action
+        var adminId = GetAdminId();
+        var adminEmail = GetAdminEmail();
+        var log = new AuditLog(adminId, adminEmail, "CREATE_USER", user.Id.ToString(), $"Created user {request.Email}", "");
+        await _context.AuditLogs.InsertOneAsync(log);
+
+        return Ok(new { id = user.Id, email = user.Email });
+    }
+
     [HttpPost("reports/{id}/resolve")]
-    public async Task<IActionResult> ResolveReport(Guid id)
+    public async Task<IActionResult> ResolveReport(Guid id, [FromBody] ResolveReportRequest request)
+    {
+        var command = new ResolveReportCommand(
+            id,
+            request.AdminFeedback,
+            request.BanUser,
+            request.BanReason,
+            request.BanUntil
+        );
+
+        var result = await _mediator.Send(command);
+        if (!result) return NotFound();
+
+        // Log Action
+        var adminId = GetAdminId();
+        var adminEmail = GetAdminEmail();
+        var log = new AuditLog(adminId, adminEmail, "RESOLVE_REPORT", id.ToString(), $"Action: {(request.BanUser ? "Ban" : "Resolve")}, Feedback: {request.AdminFeedback}", "");
+        await _context.AuditLogs.InsertOneAsync(log);
+
+        return Ok();
+    }
+
+    [HttpPost("reports/{id}/dismiss")]
+    public async Task<IActionResult> DismissReport(Guid id)
     {
         var report = await _context.UserReports.Find(r => r.Id == id).FirstOrDefaultAsync();
         if (report == null) return NotFound();
 
-        // Giả sử có status Resolved trong domain
-        // report.Resolve();
-        // await _context.UserReports.ReplaceOneAsync(r => r.Id == id, report);
+        report.Dismiss();
+        await _context.UserReports.ReplaceOneAsync(r => r.Id == id, report);
 
-        var log = new AuditLog(Guid.Empty, "Admin", "RESOLVE_REPORT", id.ToString(), "Báo cáo đã được xử lý", "");
+        var adminId = GetAdminId();
+        var adminEmail = GetAdminEmail();
+        var log = new AuditLog(adminId, adminEmail, "DISMISS_REPORT", id.ToString(), "Report dismissed", "");
         await _context.AuditLogs.InsertOneAsync(log);
 
         return Ok();
@@ -102,13 +275,34 @@ public class AdminController : ControllerBase
         v.Approve();
         await _context.UserVerifications.ReplaceOneAsync(x => x.Id == id, v);
 
-        // Update UserAccount status if needed
         var user = await _context.UserAccounts.Find(u => u.Id == v.UserId).FirstOrDefaultAsync();
         if (user != null)
         {
             user.MarkAsVerified();
             await _context.UserAccounts.ReplaceOneAsync(u => u.Id == user.Id, user);
         }
+
+        var adminId = GetAdminId();
+        var adminEmail = GetAdminEmail();
+        var log = new AuditLog(adminId, adminEmail, "APPROVE_VERIFICATION", id.ToString(), $"Approved user {v.UserId}", "");
+        await _context.AuditLogs.InsertOneAsync(log);
+
+        return Ok();
+    }
+
+    [HttpPost("verifications/{id}/reject")]
+    public async Task<IActionResult> RejectVerification(Guid id, [FromBody] RejectVerificationRequest request)
+    {
+        var v = await _context.UserVerifications.Find(x => x.Id == id).FirstOrDefaultAsync();
+        if (v == null) return NotFound();
+
+        v.Reject(request.Reason);
+        await _context.UserVerifications.ReplaceOneAsync(x => x.Id == id, v);
+
+        var adminId = GetAdminId();
+        var adminEmail = GetAdminEmail();
+        var log = new AuditLog(adminId, adminEmail, "REJECT_VERIFICATION", id.ToString(), $"Rejected user {v.UserId}. Reason: {request.Reason}", "");
+        await _context.AuditLogs.InsertOneAsync(log);
 
         return Ok();
     }
@@ -129,6 +323,11 @@ public class AdminController : ControllerBase
         config.UpdateValue(value);
         await _context.SystemConfigs.ReplaceOneAsync(c => c.Key == key, config);
 
+        var adminId = GetAdminId();
+        var adminEmail = GetAdminEmail();
+        var log = new AuditLog(adminId, adminEmail, "UPDATE_CONFIG", key, $"New value: {value}", "");
+        await _context.AuditLogs.InsertOneAsync(log);
+
         return Ok();
     }
 
@@ -139,42 +338,26 @@ public class AdminController : ControllerBase
         return Ok(logs);
     }
 
-    [HttpGet("stats/advanced")]
-    public async Task<IActionResult> GetAdvancedStats()
-    {
-        // Mock dữ liệu biểu đồ cho UI chuyên nghiệp
-        var growth = new[]
-        {
-            new { day = "T2", users = 120, matches = 45 },
-            new { day = "T3", users = 150, matches = 52 },
-            new { day = "T4", users = 180, matches = 61 },
-            new { day = "T5", users = 170, matches = 58 },
-            new { day = "T6", users = 210, matches = 75 },
-            new { day = "T7", users = 250, matches = 90 },
-            new { day = "CN", users = 300, matches = 110 }
-        };
-
-        var categories = new[]
-        {
-            new { label = "Quấy rối", value = 65 },
-            new { label = "Ảnh giả", value = 25 },
-            new { label = "Lừa đảo", value = 10 }
-        };
-
-        return Ok(new { growth, categories });
-    }
 
     [HttpDelete("users/{userId}/photos/{photoId}")]
-    public async Task<IActionResult> DeleteUserPhoto(Guid userId, string photoId)
+    public async Task<IActionResult> DeleteUserPhoto(Guid userId, Guid photoId)
     {
         var profile = await _context.UserProfiles.Find(p => p.UserId == userId).FirstOrDefaultAsync();
         if (profile == null) return NotFound();
 
-        // Giả sử có phương thức RemovePhoto trong domain
-        // profile.RemovePhoto(photoId); 
-        // await _context.UserProfiles.ReplaceOneAsync(p => p.UserId == userId, profile);
+        try 
+        {
+            profile.RemovePhoto(photoId); 
+            await _context.UserProfiles.ReplaceOneAsync(p => p.UserId == userId, profile);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
 
-        var log = new AuditLog(Guid.Empty, "Admin", "DELETE_PHOTO", $"{userId}/{photoId}", "Xóa ảnh vi phạm tiêu chuẩn", "");
+        var adminId = GetAdminId();
+        var adminEmail = GetAdminEmail();
+        var log = new AuditLog(adminId, adminEmail, "DELETE_PHOTO", $"{userId}/{photoId}", "Xóa ảnh vi phạm tiêu chuẩn", "");
         await _context.AuditLogs.InsertOneAsync(log);
 
         return Ok();
@@ -185,12 +368,41 @@ public class AdminController : ControllerBase
     {
         var totalUsers = await _context.UserAccounts.CountDocumentsAsync(_ => true);
         
-        var broadcast = new BroadcastNotification(request.Title, request.Content, "All", Guid.Empty, (int)totalUsers);
+        // Save to database for history
+        var broadcast = new BroadcastNotification(request.Title, request.Content, "All", GetAdminId(), (int)totalUsers);
         await _context.BroadcastNotifications.InsertOneAsync(broadcast);
 
-        // Logic gửi Push qua FCM sẽ ở đây...
+        // Actually send push notification via Firebase
+        await _notificationService.BroadcastNotificationAsync(request.Title, request.Content);
 
-        return Ok(new { sentTo = totalUsers });
+        // Send via SignalR for real-time popup
+        await _hubContext.Clients.All.SendAsync("ReceiveNotification", new 
+        { 
+            title = request.Title, 
+            message = request.Content,
+            type = "BROADCAST",
+            timestamp = DateTime.UtcNow
+        });
+
+        return Ok(new { sentTo = totalUsers, status = "Push & SignalR Sent" });
+    }
+
+    [HttpPost("users/{userId}/push")]
+    public async Task<IActionResult> SendUserPush(Guid userId, [FromBody] BroadcastRequest request)
+    {
+        // 1. Send via Firebase
+        await _notificationService.SendPushToUserAsync(userId, request.Title, request.Content);
+
+        // 2. Send via SignalR for real-time popup
+        await _hubContext.Clients.Group($"User_{userId}").SendAsync("ReceiveNotification", new 
+        { 
+            title = request.Title, 
+            message = request.Content,
+            type = "ADMIN_DIRECT",
+            timestamp = DateTime.UtcNow
+        });
+
+        return Ok(new { message = "Push notification and SignalR event sent to user." });
     }
 
     [HttpGet("stats")]
@@ -199,25 +411,220 @@ public class AdminController : ControllerBase
         var totalUsers = await _context.UserAccounts.CountDocumentsAsync(_ => true);
         var totalMatches = await _context.UserMatches.CountDocumentsAsync(_ => true);
         var totalReports = await _context.UserReports.CountDocumentsAsync(_ => true);
+        var pendingVerifications = await _context.UserVerifications.CountDocumentsAsync(v => v.Status == VerificationStatus.Pending);
         
         return Ok(new
         {
             totalUsers,
             totalMatches,
             totalReports,
-            activeUsers = 0 // Mock cho UI
+            pendingVerifications,
+            activeUsers = totalUsers // Simplified
         });
     }
+
+    [HttpGet("stats/advanced")]
+    public async Task<IActionResult> GetAdvancedStats()
+    {
+        // Mocking some data for the charts since we don't have historical aggregates yet
+        var growth = new[] {
+            new { day = "Mon", users = 12 },
+            new { day = "Tue", users = 19 },
+            new { day = "Wed", users = 15 },
+            new { day = "Thu", users = 22 },
+            new { day = "Fri", users = 30 },
+            new { day = "Sat", users = 25 },
+            new { day = "Sun", users = 35 }
+        };
+
+        var categories = new[] {
+            new { name = "Harassment", value = 45 },
+            new { name = "Spam", value = 25 },
+            new { name = "Fake Account", value = 20 },
+            new { name = "Inappropriate Content", value = 10 }
+        };
+
+        return Ok(new { growth, categories });
+    }
+
+    [HttpGet("health")]
+    public async Task<IActionResult> GetHealth()
+    {
+        try 
+        {
+            // Check DB
+            await _context.UserAccounts.CountDocumentsAsync(_ => false, new CountOptions { MaxTime = TimeSpan.FromSeconds(2) });
+            
+            return Ok(new {
+                status = "Healthy",
+                database = "Connected",
+                serverTime = DateTime.UtcNow,
+                version = "1.0.0"
+            });
+        }
+        catch (Exception ex)
+        {
+            return Ok(new { status = "Unhealthy", database = "Disconnected", error = ex.Message });
+        }
+    }
+
+    [HttpGet("monitoring/system-info")]
+    public IActionResult GetSystemInfo()
+    {
+        var process = System.Diagnostics.Process.GetCurrentProcess();
+        var memoryUsage = process.PrivateMemorySize64 / 1024 / 1024; // MB
+        var uptime = DateTime.Now - process.StartTime;
+
+        return Ok(new {
+            memoryUsage = $"{memoryUsage} MB",
+            uptime = $"{(int)uptime.TotalDays}d {uptime.Hours}h {uptime.Minutes}m",
+            os = System.Runtime.InteropServices.RuntimeInformation.OSDescription,
+            cpuCount = Environment.ProcessorCount
+        });
+    }
+
+    [HttpGet("monitoring/logs")]
+    public IActionResult GetLogs([FromQuery] int count = 50)
+    {
+        try 
+        {
+            var logPath = Path.Combine(AppContext.BaseDirectory, "logs");
+            if (!Directory.Exists(logPath)) return Ok(new string[] { "Log directory not found" });
+
+            var logFile = Directory.GetFiles(logPath, "mixer-*.log")
+                .OrderByDescending(f => f)
+                .FirstOrDefault();
+
+            if (logFile == null) return Ok(new string[] { "Log file not found" });
+
+            // Read with shared access to avoid locking issues
+            using var fs = new FileStream(logFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            using var sr = new StreamReader(fs);
+            
+            var lines = new List<string>();
+            string? line;
+            while ((line = sr.ReadLine()) != null)
+            {
+                lines.Add(line);
+            }
+
+            return Ok(lines.TakeLast(count));
+        }
+        catch (Exception ex)
+        {
+            return Ok(new string[] { $"Error reading logs: {ex.Message}" });
+        }
+    }
+
+    [HttpGet("reviews")]
+    public async Task<IActionResult> GetAppReviews()
+    {
+        var reviews = await _context.AppReviews.Find(_ => true).SortByDescending(r => r.CreatedAt).ToListAsync();
+        
+        // Enrich with user info
+        var userIds = reviews.Select(r => r.UserId).ToList();
+        var profiles = await _context.UserProfiles.Find(p => userIds.Contains(p.UserId)).ToListAsync();
+        var profileMap = profiles.ToDictionary(p => p.UserId);
+
+        var enriched = reviews.Select(r => {
+            profileMap.TryGetValue(r.UserId, out var p);
+            return new {
+                r.Id,
+                r.UserId,
+                r.Rating,
+                r.Comment,
+                r.CreatedAt,
+                UserName = p?.BasicInfo?.DisplayName ?? "Unknown User",
+                Avatar = p?.Photos?.OrderBy(x => x.Order).FirstOrDefault()?.Url
+            };
+        });
+
+        return Ok(enriched);
+    }
+    [HttpPost("reviews/{id}/reply")]
+    public async Task<IActionResult> ReplyToReview(Guid id, [FromBody] ReplyToReviewRequest request)
+    {
+        var review = await _context.AppReviews.Find(r => r.Id == id).FirstOrDefaultAsync();
+        if (review == null) return NotFound();
+
+        review.Reply(request.Reply);
+        await _context.AppReviews.ReplaceOneAsync(r => r.Id == id, review);
+
+        // Log the reply
+        var adminId = GetAdminId();
+        var adminEmail = GetAdminEmail();
+        var log = new AuditLog(adminId, adminEmail, "REPLY_TO_REVIEW", id.ToString(), request.Reply, "");
+        await _context.AuditLogs.InsertOneAsync(log);
+
+        return Ok();
+    }
+
+    [HttpPost("users/{userId}/notify")]
+    public async Task<IActionResult> SendUserNotification(Guid userId, [FromBody] BroadcastRequest request)
+    {
+        await _notificationService.SendPushToUserAsync(userId, request.Title, request.Content);
+        
+        var adminId = GetAdminId();
+        var adminEmail = GetAdminEmail();
+        var log = new AuditLog(adminId, adminEmail, "SEND_USER_NOTIFICATION", userId.ToString(), request.Content, request.Title);
+        await _context.AuditLogs.InsertOneAsync(log);
+
+        return Ok();
+    }
+
+    [HttpPost("users/{userId}/quick-ban")]
+    public async Task<IActionResult> QuickBanUser(Guid userId, [FromBody] BanRequest request)
+    {
+        var user = await _context.UserAccounts.Find(u => u.Id == userId).FirstOrDefaultAsync();
+        if (user == null) return NotFound();
+
+        user.Ban(request.Reason, request.Until);
+        await _context.UserAccounts.ReplaceOneAsync(u => u.Id == userId, user);
+
+        var adminId = GetAdminId();
+        var adminEmail = GetAdminEmail();
+        var log = new AuditLog(adminId, adminEmail, "QUICK_BAN", userId.ToString(), request.Reason, "");
+        await _context.AuditLogs.InsertOneAsync(log);
+
+        return Ok();
+    }
+}
+
+public class AdminCreateUserRequest
+{
+    public string Email { get; set; } = null!;
+    public string Password { get; set; } = null!;
+    public string DisplayName { get; set; } = null!;
+    public string Gender { get; set; } = null!;
+    public string Role { get; set; } = "Client";
 }
 
 public class BanRequest
 {
-    public string Reason { get; set; }
+    public string Reason { get; set; } = null!;
     public DateTime? Until { get; set; }
 }
 
 public class BroadcastRequest
 {
-    public string Title { get; set; }
-    public string Content { get; set; }
+    public string Title { get; set; } = null!;
+    public string Content { get; set; } = null!;
+}
+
+public class ResolveReportRequest
+{
+    public string? AdminFeedback { get; set; }
+    public bool BanUser { get; set; }
+    public string? BanReason { get; set; }
+    public DateTime? BanUntil { get; set; }
+}
+
+public class RejectVerificationRequest
+{
+    public string Reason { get; set; } = null!;
+}
+
+public class ReplyToReviewRequest
+{
+    public string Reply { get; set; } = null!;
 }

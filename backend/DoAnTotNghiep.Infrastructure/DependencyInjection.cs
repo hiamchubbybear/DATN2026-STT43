@@ -26,8 +26,8 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddSingleton<MongoDbContext>();
-        services.AddSingleton<MongoDbInitializer>();
+        services.AddSingleton<IMongoDbContext, MongoDbContext>();
+        services.AddScoped<MongoDbInitializer>();
         services.AddScoped<ISwipeRepository, SwipeRepository>();
         services.AddScoped<Domain.Users.IUserRepository, Repositories.UserRepository>();
         services.AddScoped<Domain.Users.ISessionRepository, Repositories.UserSessionRepository>();
@@ -47,6 +47,7 @@ public static class DependencyInjection
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddScoped<Domain.Users.IFeedbackRepository, Repositories.FeedbackRepository>();
+        services.AddScoped<Domain.Users.IUserReportRepository, Repositories.UserReportRepository>();
         
         var redisSettings = configuration.GetSection("Redis").Get<RedisSettings>();
         
@@ -74,6 +75,11 @@ public static class DependencyInjection
         var r2 = configuration.GetSection("CloudflareR2").Get<R2Settings>() ?? new R2Settings();
         services.AddSingleton(r2);
         services.AddScoped<IFileStorageService, R2StorageService>();
+        services.AddScoped<IFileService, FileService>();
+        services.AddScoped<IFraudDetectionService, FraudDetection.FraudDetectionService>();
+        services.AddScoped<IContentModerationService, Moderation.ContentModerationService>();
+        
+        services.AddHttpClient<IAiVerificationService, AiVerification.AiVerificationService>();
 
         return services;
     }

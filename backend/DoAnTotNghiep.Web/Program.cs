@@ -12,6 +12,7 @@ using Serilog;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Serializers;
+using Microsoft.OpenApi.Models;
 
 // Register MongoDB Guid Serializer globally before any other DB operations
 #pragma warning disable CS0618 // Type or member is obsolete
@@ -27,6 +28,9 @@ Log.Logger = new LoggerConfiguration()
     .Enrich.FromLogContext()
     .Enrich.WithMachineName()
     .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj} {Properties:j}{NewLine}{Exception}")
+    .WriteTo.File("logs/mixer-.log", 
+        rollingInterval: RollingInterval.Day,
+        outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj} {NewLine}{Exception}")
     .CreateLogger();
 
 
@@ -44,6 +48,7 @@ builder.Services.AddApplication();
 builder.Services.AddSingleton(mongoSettings!);
 builder.Services.AddSingleton(redisSettings!);
 builder.Services.AddSingleton<MongoDbContext>();
+builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
 
 builder.Services.AddHealthChecks()
     .AddMongoDb(_ => new MongoDB.Driver.MongoClient(mongoSettings!.ConnectionString), name: "mongodb", tags: ["db", "ready"])
@@ -54,26 +59,26 @@ builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "Mixer API - Mobile", Version = "v1" });
-    c.SwaggerDoc("admin", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "Mixer API - Admin Dashboard", Version = "admin" });
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Mixer API - Mobile", Version = "v1" });
+    c.SwaggerDoc("admin", new OpenApiInfo { Title = "Mixer API - Admin Dashboard", Version = "admin" });
     
-    c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
         Name = "Authorization",
-        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
-        Type = Microsoft.OpenApi.Models.OpenApiSecuritySchemeType.ApiKey,
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.ApiKey,
         Scheme = "Bearer"
     });
 
-    c.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         {
-            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            new OpenApiSecurityScheme
             {
-                Reference = new Microsoft.OpenApi.Models.OpenApiSecurityReference
+                Reference = new OpenApiReference
                 {
-                    Type = Microsoft.OpenApi.Models.OpenApiSecurityReferenceType.SecurityScheme,
+                    Type = ReferenceType.SecurityScheme,
                     Id = "Bearer"
                 }
             },
@@ -161,7 +166,16 @@ app.UseCors(x => x
     .AllowAnyHeader()
     .AllowCredentials());
 
+var supportedCultures = new[] { "vi", "en" };
+var localizationOptions = new RequestLocalizationOptions()
+    .SetDefaultCulture(supportedCultures[0])
+    .AddSupportedCultures(supportedCultures)
+    .AddSupportedUICultures(supportedCultures);
+
+app.UseRequestLocalization(localizationOptions);
+
 app.UseAuthentication();
+app.UseMiddleware<DoAnTotNghiep.Web.Middleware.TokenBlacklistMiddleware>();
 app.UseAuthorization();
 
 app.MapHealthChecks("/health", new HealthCheckOptions

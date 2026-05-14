@@ -39,7 +39,7 @@ public class Handler(
         var profile = await profileRepository.GetByUserIdAsync(user.Id);
         
         // Create session
-        var session = new Session(user.Id, "VerifiedDevice", "Unknown", "Unknown", "Mobile", "1.0.0", null, refreshToken);
+        var session = new Session(user.Id, "VerifiedDevice", "Unknown", "Unknown", "Mobile", "1.0.0", request.FcmToken, refreshToken);
         await sessionRepository.CreateSession(session);
         
         await cache.RemoveAsync(cacheKey);

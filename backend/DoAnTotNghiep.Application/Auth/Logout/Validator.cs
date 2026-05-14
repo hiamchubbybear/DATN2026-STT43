@@ -1,4 +1,5 @@
 using FluentValidation;
+using DoAnTotNghiep.Application.Users.Commands.Logout;
 
 namespace DoAnTotNghiep.Application.Auth.Logout
 {

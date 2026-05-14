@@ -22,6 +22,8 @@ public class AppHub : Hub
     private readonly IConversationRepository _conversationRepository;
     private readonly INotificationService _notificationService;
     private readonly IUserProfileRepository _userProfileRepository;
+    private readonly IFraudDetectionService _fraudDetectionService;
+    private readonly IContentModerationService _contentModerationService;
 
     public AppHub(
         ILogger<AppHub> logger, 
@@ -29,7 +31,9 @@ public class AppHub : Hub
         IChatMessageQueue chatMessageQueue, 
         IConversationRepository conversationRepository,
         INotificationService notificationService,
-        IUserProfileRepository userProfileRepository)
+        IUserProfileRepository userProfileRepository,
+        IFraudDetectionService fraudDetectionService,
+        IContentModerationService contentModerationService)
     {
         _logger = logger;
         _currentUserService = currentUserService;
@@ -37,6 +41,8 @@ public class AppHub : Hub
         _conversationRepository = conversationRepository;
         _notificationService = notificationService;
         _userProfileRepository = userProfileRepository;
+        _fraudDetectionService = fraudDetectionService;
+        _contentModerationService = contentModerationService;
     }
 
     public override async Task OnConnectedAsync()
@@ -69,11 +75,29 @@ public class AppHub : Hub
     // 1. Messaging
     public async Task SendMessage(Guid conversationId, string receiverId, string content, string reqId)
     {
-        var senderId = _currentUserService.UserId;
-        if (string.IsNullOrEmpty(senderId)) return;
+        var senderIdStr = _currentUserService.UserId;
+        if (string.IsNullOrEmpty(senderIdStr) || !Guid.TryParse(senderIdStr, out var senderId)) return;
+
+        // Fraud detection check
+        var (isSpam, reason) = await _fraudDetectionService.AnalyzeMessageAsync(senderId, content);
+        if (isSpam)
+        {
+            _logger.LogWarning("Fraud detected for User {UserId}: {Reason}", senderId, reason);
+            await Clients.Caller.SendAsync("Ack", new { reqId = reqId, status = "FAILED", reason = reason });
+            return;
+        }
+
+        // Content moderation check
+        var (isInappropriate, modReason) = await _contentModerationService.ModerateTextAsync(content);
+        if (isInappropriate)
+        {
+            _logger.LogWarning("Inappropriate content blocked from User {UserId}: {Reason}", senderId, modReason);
+            await Clients.Caller.SendAsync("Ack", new { reqId = reqId, status = "FAILED", reason = modReason });
+            return;
+        }
 
         // Create ChatMessage Domain Entity
-        var chatMsg = ChatMessage.CreatePlaintext(conversationId, senderId, reqId, content);
+        var chatMsg = ChatMessage.CreatePlaintext(conversationId, senderIdStr, reqId, content);
 
         // GUARANTEE PERSISTENCE: Enqueue to background worker first!
         await _chatMessageQueue.EnqueueMessageAsync(chatMsg);
@@ -94,7 +118,7 @@ public class AppHub : Hub
             // Route message to all active devices of the receiver via Redis Backplane
             await Clients.Group($"User_{receiverId}").SendAsync("ReceiveMessage", new 
             { 
-                senderId = senderId, 
+                senderId = senderIdStr, 
                 payload = content,
                 reqId = reqId,
                 conversationId = conversationId,
@@ -102,9 +126,9 @@ public class AppHub : Hub
             });
 
             // Send Push Notification to Receiver
-            if (Guid.TryParse(senderId, out var sId) && Guid.TryParse(receiverId, out var rId))
+            if (Guid.TryParse(receiverId, out var rId))
             {
-                var senderProfile = await _userProfileRepository.GetByUserIdAsync(sId);
+                var senderProfile = await _userProfileRepository.GetByUserIdAsync(senderId);
                 if (senderProfile != null)
                 {
                     await _notificationService.SendPushToUserAsync(
@@ -114,7 +138,7 @@ public class AppHub : Hub
                         new Dictionary<string, string> 
                         { 
                             { "type", "chat" }, 
-                            { "senderId", senderId }, 
+                            { "senderId", senderIdStr }, 
                             { "conversationId", conversationId.ToString() } 
                         }
                     );

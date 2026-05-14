@@ -7,4 +7,5 @@ public class VerifyEmailCommand : IRequest<AuthResponse>
 {
     public required string Email { get; set; }
     public required string Token { get; set; }
+    public string? FcmToken { get; set; }
 }

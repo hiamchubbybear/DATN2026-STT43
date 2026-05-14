@@ -3,11 +3,15 @@ using DoAnTotNghiep.Application.Users.Photos;
 using DoAnTotNghiep.Application.Users.Photos.DeletePhoto;
 using DoAnTotNghiep.Application.Users.Photos.ReorderPhotos;
 using DoAnTotNghiep.Application.Users.Photos.SetPrimaryPhoto;
+using DoAnTotNghiep.Application.Users.Reports;
+using DoAnTotNghiep.Application.Users.Verification;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using DoAnTotNghiep.Domain.Users;
+using DoAnTotNghiep.Application.Common;
 
 namespace DoAnTotNghiep.Web.Controllers;
 
@@ -16,13 +20,14 @@ namespace DoAnTotNghiep.Web.Controllers;
 public class UserController : ControllerBase
 {
     private readonly IMediator _mediator;
+    private readonly IMongoDbContext _context;
 
-    public UserController(IMediator mediator)
+    public UserController(IMediator mediator, IMongoDbContext context)
     {
         _mediator = mediator;
+        _context = context;
     }
 
-    // Handlers will be mapped later
     private Guid GetUserId()
     {
         var userIdClaim = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value
@@ -30,12 +35,6 @@ public class UserController : ControllerBase
             
         if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
         {
-            Console.WriteLine("--- CLAIMS DEBUG ---");
-            foreach (var claim in User.Claims)
-            {
-                Console.WriteLine($"Claim: {claim.Type} = {claim.Value}");
-            }
-            Console.WriteLine("--------------------");
             throw new UnauthorizedAccessException();
         }
         return userId;
@@ -69,105 +68,89 @@ public class UserController : ControllerBase
     [HttpPatch("me/profile")]
     public async Task<IActionResult> UpdateProfile([FromBody] Application.Users.Profile.UpdateProfileCommand command)
     {
-        // Inject userId from token into the command
         var cmdWithUser = command with { UserId = GetUserId() };
         await _mediator.Send(cmdWithUser);
         return Ok(ApiResponse<string>.Succeeded(string.Empty, "Profile updated"));
     }
 
     [Authorize]
-    [HttpPatch("me/preferences")]
-    public async Task<IActionResult> UpdatePreferences([FromBody] Application.Users.Profile.UpdatePreferencesCommand command)
+    [HttpPost("report")]
+    public async Task<IActionResult> ReportUser([FromForm] UserReportSubmitRequest request)
     {
-        var cmdWithUser = command with { UserId = GetUserId() };
-        await _mediator.Send(cmdWithUser);
-        return Ok(ApiResponse<string>.Succeeded(string.Empty, "Preferences updated"));
+        var command = new ReportUserCommand(
+            GetUserId(),
+            request.TargetUserId,
+            request.Reason,
+            request.Description,
+            request.EvidenceFiles
+        );
+
+        var reportId = await _mediator.Send(command);
+        return Ok(ApiResponse<Guid>.Succeeded(reportId, "Report submitted successfully"));
     }
 
     [Authorize]
-    [HttpPatch("me/location")]
-    public async Task<IActionResult> UpdateLocation([FromBody] Application.Users.Profile.UpdateLocationCommand command)
+    [HttpGet("reports")]
+    public async Task<IActionResult> GetMyReports()
     {
-        var cmdWithUser = command with { UserId = GetUserId() };
-        await _mediator.Send(cmdWithUser);
-        return Ok(ApiResponse<string>.Succeeded(string.Empty, "Location updated"));
+        var result = await _mediator.Send(new GetMyReportsQuery(GetUserId()));
+        return Ok(ApiResponse<List<UserReport>>.Succeeded(result));
     }
 
     [Authorize]
-    [HttpPatch("me/bio")]
-    public async Task<IActionResult> UpdateBio([FromBody] Application.Users.Profile.UpdateBioCommand command)
+    [HttpPost("verify")]
+    public async Task<IActionResult> SubmitVerification([FromForm] SubmitVerificationRequest request)
     {
-        var cmdWithUser = command with { UserId = GetUserId() };
-        await _mediator.Send(cmdWithUser);
-        return Ok(ApiResponse<string>.Succeeded(string.Empty, "Bio updated"));
+        var command = new SubmitVerificationCommand(
+            GetUserId(),
+            request.IdNumber,
+            request.FullName,
+            request.FrontImage,
+            request.BackImage,
+            request.SelfieImage
+        );
+
+        var result = await _mediator.Send(command);
+        return Ok(ApiResponse<Guid>.Succeeded(result, "Verification request submitted"));
     }
 
     [Authorize]
-    [HttpPatch("me/basic-info")]
-    public async Task<IActionResult> UpdateBasicInfo([FromBody] Application.Users.Profile.UpdateBasicInfoCommand command)
+    [HttpGet("verify/status")]
+    public async Task<IActionResult> GetMyVerificationStatus()
     {
-        var cmdWithUser = command with { UserId = GetUserId() };
-        await _mediator.Send(cmdWithUser);
-        return Ok(ApiResponse<string>.Succeeded(string.Empty, "Basic info updated"));
+        var result = await _mediator.Send(new GetMyVerificationQuery(GetUserId()));
+        return Ok(ApiResponse<UserVerification?>.Succeeded(result));
     }
 
     [Authorize]
-    [HttpPatch("me/background")]
-    public async Task<IActionResult> UpdateBackground([FromBody] Application.Users.Profile.UpdateBackgroundCommand command)
+    [HttpPost("review")]
+    public async Task<IActionResult> SubmitAppReview([FromBody] SubmitAppReviewRequest request)
     {
-        var cmdWithUser = command with { UserId = GetUserId() };
-        await _mediator.Send(cmdWithUser);
-        return Ok(ApiResponse<string>.Succeeded(string.Empty, "Background updated"));
+        var review = new AppReview(GetUserId(), request.Rating, request.Comment);
+        await _context.AppReviews.InsertOneAsync(review);
+        return Ok(ApiResponse<Guid>.Succeeded(review.Id, "Review submitted"));
     }
+}
 
-    [Authorize]
-    [HttpPatch("me/lifestyle")]
-    public async Task<IActionResult> UpdateLifestyle([FromBody] Application.Users.Profile.UpdateLifestyleCommand command)
-    {
-        var cmdWithUser = command with { UserId = GetUserId() };
-        await _mediator.Send(cmdWithUser);
-        return Ok(ApiResponse<string>.Succeeded(string.Empty, "Lifestyle updated"));
-    }
+public class SubmitAppReviewRequest
+{
+    public int Rating { get; set; }
+    public string Comment { get; set; } = null!;
+}
 
-    [Authorize]
-    [HttpPatch("me/dating-style")]
-    public async Task<IActionResult> UpdateDatingStyle([FromBody] Application.Users.Profile.UpdateDatingStyleCommand command)
-    {
-        var cmdWithUser = command with { UserId = GetUserId() };
-        await _mediator.Send(cmdWithUser);
-        return Ok(ApiResponse<string>.Succeeded(string.Empty, "Dating style updated"));
-    }
+public class UserReportSubmitRequest
+{
+    public Guid TargetUserId { get; set; }
+    public string Reason { get; set; } = null!;
+    public string Description { get; set; } = null!;
+    public List<IFormFile>? EvidenceFiles { get; set; }
+}
 
-    [Authorize]
-    [HttpPost("photos")]
-    public async Task<IActionResult> UploadPhoto(IFormFile file)
-    {
-        var result = await _mediator.Send(new UploadPhotoCommand(file));
-
-        return Ok(result);
-    }
-    
-    [Authorize]
-    [HttpDelete("photos/{photoId}")]
-    public async Task<IActionResult> DeletePhoto(Guid photoId)
-    {
-        await _mediator.Send(new DeletePhotoCommand(photoId));
-        return NoContent();
-    }
-    
-    [Authorize]
-    [HttpPatch("photos/reorder")]
-    public async Task<IActionResult> Reorder(ReoderPhotosCommand command)
-    {
-        await _mediator.Send(command);
-        return NoContent();
-    }
-
-    [Authorize]
-    [HttpPatch("photos/{photoId}/primary")]
-    public async Task<IActionResult> SetPrimary(Guid photoId)
-    {
-        await _mediator.Send(new SetPrimaryPhotoCommand(photoId));
-        return NoContent();
-    }
+public class SubmitVerificationRequest
+{
+    public string IdNumber { get; set; } = null!;
+    public string FullName { get; set; } = null!;
+    public IFormFile FrontImage { get; set; } = null!;
+    public IFormFile BackImage { get; set; } = null!;
+    public IFormFile SelfieImage { get; set; } = null!;
 }

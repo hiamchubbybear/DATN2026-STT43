@@ -20,25 +20,15 @@ public class FeedbackController : ControllerBase
         _mediator = mediator;
     }
 
-    [HttpPost("report")]
-    public async Task<IActionResult> ReportUser([FromBody] ReportUserRequest request)
-    {
-        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
-        var command = new ReportUserCommand(
-            userId,
-            request.TargetUserId,
-            request.Reason,
-            request.Description,
-            request.EvidencePhotos);
-
-        var result = await _mediator.Send(command);
-        return result ? Ok() : BadRequest();
-    }
-
+    // Moved to UserController for better organization
+    
     [HttpPost("review")]
     public async Task<IActionResult> SubmitReview([FromBody] SubmitReviewRequest request)
     {
-        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+        var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
+
+        var userId = Guid.Parse(userIdStr);
         var command = new SubmitAppReviewCommand(userId, request.Rating, request.Comment);
 
         var result = await _mediator.Send(command);
@@ -46,5 +36,5 @@ public class FeedbackController : ControllerBase
     }
 }
 
-public record ReportUserRequest(Guid TargetUserId, string Reason, string Description, List<string> EvidencePhotos);
+
 public record SubmitReviewRequest(int Rating, string Comment);

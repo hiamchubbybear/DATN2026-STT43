@@ -1,0 +1,112 @@
+services:
+  # ----------------------------------------------------------------            
+  # 1. Backend Service (ASP.NET Core 8.0)
+  # ----------------------------------------------------------------            
+  - type: web
+    name: datn-backend
+    runtime: docker
+    region: singapore
+    plan: starter # Render Free tier for Docker is limited, Starter is recommended for .NET
+    dockerContext: backend
+    dockerfilePath: backend/Dockerfile
+    healthCheckPath: /health/live
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ASPNETCORE_URLS
+        value: http://0.0.0.0:10000
+      # --- Database & Redis ---
+      - key: MongoDb__ConnectionString
+        sync: false # Set in Render Dashboard
+      - key: MongoDb__Database
+        value: DatingApp
+      - key: Redis__ConnectionString
+        fromService:
+          name: datn-redis
+          type: redis
+          property: connectionString
+      # --- Security & Auth ---
+      - key: Key__SecretKey
+        sync: false
+      - key: Oauth2__Google__ClientId
+        sync: false
+      - key: Oauth2__Google__ClientSecret
+        sync: false
+      # --- SMTP (Email) ---
+      - key: Smtp__Server
+        value: smtp.gmail.com
+      - key: Smtp__Port
+        value: "587"
+      - key: Smtp__Username
+        sync: false
+      - key: Smtp__Password
+        sync: false
+      - key: Smtp__SenderName
+        value: "Mixer App"
+      - key: Smtp__EnableSsl
+        value: "true"
+      # --- Cloudflare R2 (Storage) ---
+      - key: CloudflareR2__AccessKey
+        sync: false
+      - key: CloudflareR2__SecretKey
+        sync: false
+      - key: CloudflareR2__Endpoint
+        sync: false
+      - key: CloudflareR2__BucketName
+        sync: false
+      - key: CloudflareR2__PublicBaseUrl
+        sync: false
+      # --- External Services ---
+      - key: AiService__BaseUrl
+        fromService:
+          name: datn-ai-service
+          type: web
+          property: hostport
+      - key: Secret__GmailNotification
+        sync: false
+
+  # ----------------------------------------------------------------            
+  # 2. AI Anti-Spoofing Service (Python FastAPI)
+  # ----------------------------------------------------------------            
+  - type: web
+    name: datn-ai-service
+    runtime: docker
+    region: singapore
+    plan: starter
+    dockerContext: ai/face-antispoof-onnx
+    dockerfilePath: ai/face-antispoof-onnx/Dockerfile.api
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: LIVENESS_THRESHOLD
+        value: "0.5"
+      - key: FACE_MATCH_THRESHOLD
+        value: "0.75"
+      - key: PORT
+        value: "8000"
+
+  # ----------------------------------------------------------------            
+  # 3. Admin Portal (React + Vite)
+  # ----------------------------------------------------------------            
+  - type: web
+    name: datn-admin-portal
+    runtime: static
+    region: singapore
+    plan: free
+    rootDir: frontend/admin-react
+    buildCommand: npm install && npm run build
+    publishPath: dist
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          name: datn-backend
+          type: web
+          property: host
+
+  # ----------------------------------------------------------------            
+  # 4. Redis (Optional - Render Managed Redis)
+  # ----------------------------------------------------------------            
+  - type: redis
+    name: datn-redis
+    region: singapore
+    plan: free # Max 25MB, limited duration
+    ipAllowList: [] # Only allow internal access

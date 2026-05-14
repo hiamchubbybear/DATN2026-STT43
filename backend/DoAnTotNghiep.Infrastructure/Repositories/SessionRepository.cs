@@ -32,11 +32,11 @@ public class UserSessionRepository : ISessionRepository
         await _sessions.ReplaceOneAsync(x => x.Id == session.Id, session);
     }
 
-    public async Task<List<string>> GetPushTokensByUserId(Guid userId)
+    public async Task<List<string>> GetFcmTokensByUserId(Guid userId)
     {
         var sessions = await _sessions
-            .Find(x => x.UserId == userId && !x.IsRevoked && !string.IsNullOrEmpty(x.PushToken))
+            .Find(x => x.UserId == userId && !x.IsRevoked && !string.IsNullOrEmpty(x.FcmToken))
             .ToListAsync();
-        return sessions.Select(x => x.PushToken!).Distinct().ToList();
+        return sessions.Select(x => x.FcmToken!).Distinct().ToList();
     }
 }

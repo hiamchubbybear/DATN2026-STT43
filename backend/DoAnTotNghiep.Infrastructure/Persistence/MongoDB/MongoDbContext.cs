@@ -1,3 +1,4 @@
+using DoAnTotNghiep.Application.Common;
 using DoAnTotNghiep.Application.Users;
 using DoAnTotNghiep.Domain.Notifications;
 using DoAnTotNghiep.Domain.Token;
@@ -10,7 +11,7 @@ using MongoDB.Driver;
 
 namespace DoAnTotNghiep.Infrastructure.Persistence;
 
-public class MongoDbContext
+public class MongoDbContext : IMongoDbContext
 {
     static MongoDbContext()
     {
@@ -133,11 +134,13 @@ public class MongoDbContext
 public class MongoDbInitializer
 {
     private readonly IMongoDatabase _database;
+    private readonly IPasswordHasher _hasher;
 
-    public MongoDbInitializer(MongoSettings settings)
+    public MongoDbInitializer(MongoSettings settings, IPasswordHasher hasher)
     {
         var client = new MongoClient(settings.ConnectionString);
         _database = client.GetDatabase(settings.Database);
+        _hasher = hasher;
     }
 
     public async Task InitializeAsync()
@@ -203,17 +206,78 @@ public class MongoDbInitializer
 
         // 3. Seed Users
         var userCol = _database.GetCollection<UserAccount>("user_accounts");
-        if (await userCol.CountDocumentsAsync(_ => true) == 0)
-        {
-            var admin = new UserAccount("admin@mixer.com", "AQAAAAIAAYagAAAAEG...", AuthProvider.Local);
-            // Cần set role admin thủ công hoặc qua constructor nếu có
-            var user1 = new UserAccount("user1@gmail.com", null, AuthProvider.Local);
-            var user2 = new UserAccount("user2@gmail.com", null, AuthProvider.Local);
-            await userCol.InsertManyAsync(new[] { admin, user1, user2 });
+        var adminEmail = "admin@mixer.com";
+        var adminUser = await userCol.Find(u => u.Email == adminEmail).FirstOrDefaultAsync();
 
-            // 4. Seed Matches
-            var matchCol = _database.GetCollection<UserMatch>("user_matches");
-            await matchCol.InsertOneAsync(new UserMatch(user1.Id, user2.Id));
+        // BCrypt hash for 'Admin@123'
+        string adminPasswordHash = _hasher.Hash("Admin@123");
+
+        if (adminUser == null)
+        {
+            var admin = new UserAccount(adminEmail, adminPasswordHash, AuthProvider.Local);
+            admin.SetRole("Admin");
+            admin.MarkAsVerified();
+            await userCol.InsertOneAsync(admin);
+        }
+        else if (adminUser.Role != "Admin")
+        {
+            adminUser.SetRole("Admin");
+            adminUser.MarkAsVerified();
+            adminUser.UpdatePassword(adminPasswordHash); // Reset password to Admin@123 for existing invalid admin
+            await userCol.ReplaceOneAsync(u => u.Id == adminUser.Id, adminUser);
+        }
+
+        // 4. Seed Mock Data for Admin Testing
+        var profileCol = _database.GetCollection<UserProfile>("user_profiles");
+        var reportCol = _database.GetCollection<UserReport>("user_reports");
+
+        if (await profileCol.CountDocumentsAsync(_ => true) == 0)
+        {
+            var adminProfile = new UserProfile(adminUser?.Id ?? Guid.NewGuid());
+            adminProfile.UpdateBasicInfo("System Admin", new DateTime(1990, 1, 1), Gender.Other, ["English", "Vietnamese"]);
+            adminProfile.UpdateBio("Hệ thống Mixer Admin", Gender.Other, "Everyone");
+            await profileCol.InsertOneAsync(adminProfile);
+
+            // Create 50 fake users and reports for testing
+            var names = new[] { "Nguyễn Văn A", "Trần Thị B", "Lê Văn C", "Phạm Thị D", "Hoàng Văn E", "Vũ Thị F", "Đặng Văn G", "Bùi Thị H", "Lý Văn I", "Phan Thị J" };
+            var avatars = new[] { 
+                "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=200", 
+                "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200",
+                "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200",
+                "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=200",
+                "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200"
+            };
+
+            for (int i = 1; i <= 50; i++)
+            {
+                var uId = Guid.NewGuid();
+                var u = new UserAccount($"user{i}@example.com", adminPasswordHash, AuthProvider.Local);
+                if (i % 5 == 0) u.Ban("Spamming");
+                if (i % 3 == 0) u.MarkAsVerified();
+                await userCol.InsertOneAsync(u);
+
+                var p = new UserProfile(u.Id);
+                var gender = i % 2 == 0 ? Gender.Female : Gender.Male;
+                var displayName = $"{names[i % names.Length]} {i}";
+                p.UpdateBasicInfo(displayName, new DateTime(1995, (i % 12) + 1, (i % 28) + 1), gender, ["Vietnamese", "English"]);
+                p.UpdateLocation(10.762622 + (i * 0.001), 106.660172 + (i * 0.001), "Hồ Chí Minh, Việt Nam");
+                
+                // Add a photo
+                var photo = new Photo { 
+                    Url = avatars[i % avatars.Length], 
+                    IsPrimary = true,
+                    Order = 0
+                };
+                p.AddPhoto(photo);
+                
+                await profileCol.InsertOneAsync(p);
+
+                if (i % 10 == 0)
+                {
+                    var r = new UserReport(adminUser?.Id ?? Guid.NewGuid(), u.Id, "Harassment", $"Báo cáo vi phạm thứ {i}", []);
+                    await reportCol.InsertOneAsync(r);
+                }
+            }
         }
     }
 }

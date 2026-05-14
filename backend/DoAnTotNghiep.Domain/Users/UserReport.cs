@@ -5,14 +5,17 @@ namespace DoAnTotNghiep.Domain.Users;
 
 public class UserReport
 {
-    public Guid Id { get; private set; }
-    public Guid ReporterId { get; private set; }
-    public Guid TargetUserId { get; private set; }
-    public string Reason { get; private set; }
-    public string Description { get; private set; }
-    public List<string> EvidencePhotos { get; private set; }
-    public DateTime CreatedAt { get; private set; }
-    public ReportStatus Status { get; private set; }
+    public Guid Id { get; set; }
+    public Guid ReporterId { get; set; }
+    public Guid TargetUserId { get; set; }
+    public string Reason { get; set; }
+    public string Description { get; set; }
+    public List<string> EvidencePhotos { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public ReportStatus Status { get; set; }
+    public string? AdminFeedback { get; set; }
+    public string? ActionTaken { get; set; }
+    public DateTime? ResolvedAt { get; set; }
 
     public UserReport(Guid reporterId, Guid targetUserId, string reason, string description, List<string> evidencePhotos)
     {
@@ -26,8 +29,20 @@ public class UserReport
         Status = ReportStatus.Pending;
     }
 
-    public void Resolve() => Status = ReportStatus.Resolved;
-    public void Dismiss() => Status = ReportStatus.Dismissed;
+    public void Resolve(string? feedback = null, string? action = null)
+    {
+        Status = ReportStatus.Resolved;
+        AdminFeedback = feedback;
+        ActionTaken = action;
+        ResolvedAt = DateTime.UtcNow;
+    }
+
+    public void Dismiss(string? feedback = null)
+    {
+        Status = ReportStatus.Dismissed;
+        AdminFeedback = feedback;
+        ResolvedAt = DateTime.UtcNow;
+    }
 }
 
 public enum ReportStatus
