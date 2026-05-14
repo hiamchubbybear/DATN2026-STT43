@@ -14,7 +14,7 @@ import ConfigPage from './pages/system-config/ConfigPage';
 import AuditLogsPage from './pages/audit-logs/AuditLogsPage';
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('admin_token'));
 
   return (
     <BrowserRouter>

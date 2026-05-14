@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { adminApi } from '../../../shared/services/api';
 import logoImage from '../../../assets/logo.png';
 
 type LoginPageProps = {
@@ -10,10 +11,17 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    console.log('UI only login payload:', { email, password, rememberMe });
-    onLoginSuccess();
+    try {
+      const response = await adminApi.login(email, password);
+      const { accessToken } = response.data.data;
+      localStorage.setItem('admin_token', accessToken);
+      onLoginSuccess();
+    } catch (error) {
+      alert('Đăng nhập thất bại. Vui lòng kiểm tra lại tài khoản.');
+      console.error(error);
+    }
   };
 
   return (

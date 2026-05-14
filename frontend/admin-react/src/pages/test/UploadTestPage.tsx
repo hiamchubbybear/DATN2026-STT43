@@ -1,16 +1,10 @@
 import React, { useState, useRef } from 'react';
 import './UploadTestPage.css';
 
-interface Photo {
-  id: string;
-  url: string;
-  isPrimary: boolean;
-  order: number;
-}
+
 
 const UploadTestPage: React.FC = () => {
   const [token, setToken] = useState<string>('');
-  const [photos, setPhotos] = useState<Photo[]>([]);
   const [uploading, setUploading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);

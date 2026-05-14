@@ -5,14 +5,17 @@ export default function AuditLogsPage() {
   const [logs, setLogs] = useState<any[]>([]);
 
   useEffect(() => {
-    adminApi.getAuditLogs().then(res => setLogs(res.data));
+    adminApi.getAuditLogs().then(res => {
+      const sorted = res.data.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      setLogs(sorted);
+    });
   }, []);
 
   return (
     <div className="space-y-6">
       <header>
         <h2 className="text-2xl font-bold text-slate-800">Admin Audit Logs</h2>
-        <p className="text-slate-500">Nhật ký các hành động quản trị viên</p>
+        <p className="text-slate-500">Record of all administrative actions performed by staff</p>
       </header>
 
       <section className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">

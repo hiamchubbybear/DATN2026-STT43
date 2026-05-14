@@ -1,96 +1,13 @@
-import { useMemo, useState } from 'react';
-import avatarUser1 from '../../assets/avatar-user-1.svg';
-import avatarUser2 from '../../assets/avatar-user-2.svg';
-import avatarUser3 from '../../assets/avatar-user-3.svg';
-
-type ReviewStatus = 'Pending Reply' | 'Resolved';
-
-type ReviewItem = {
-  id: number;
-  userName: string;
-  memberSince: string;
-  date: string;
-  createdAt: string;
-  stars: number;
-  title: string;
-  content: string;
-  status: ReviewStatus;
-  avatar: string;
-  architectResponse?: string;
-};
-
-const reviewData: ReviewItem[] = [
-  {
-    id: 1,
-    userName: 'Luna Tran',
-    memberSince: 'Member since Jan 2024',
-    date: 'Apr 11, 2026',
-    createdAt: '2026-04-11',
-    stars: 5,
-    title: 'Great matching accuracy and smooth flow',
-    content: 'The app consistently suggests relevant profiles and the moderation response is quick and professional.',
-    status: 'Pending Reply',
-    avatar: avatarUser1,
-  },
-  {
-    id: 2,
-    userName: 'Ethan Hoang',
-    memberSince: 'Member since Oct 2023',
-    date: 'Apr 10, 2026',
-    createdAt: '2026-04-10',
-    stars: 4,
-    title: 'UI is clean but notifications can be improved',
-    content: 'Overall experience is positive. Scheduling and reminders are helpful, but timing could be more personalized.',
-    status: 'Resolved',
-    avatar: avatarUser2,
-    architectResponse: 'Thanks for the feedback. We have adjusted segmentation windows and are rolling out adaptive send-time optimization.',
-  },
-  {
-    id: 3,
-    userName: 'Mia Nguyen',
-    memberSince: 'Member since Mar 2025',
-    date: 'Apr 09, 2026',
-    createdAt: '2026-04-09',
-    stars: 5,
-    title: 'Excellent support and trust features',
-    content: 'Verification and report handling make the platform safer. The quality of interactions has improved a lot.',
-    status: 'Pending Reply',
-    avatar: avatarUser3,
-  },
-  {
-    id: 4,
-    userName: 'Gia Bao',
-    memberSince: 'Member since Dec 2024',
-    date: 'Apr 08, 2026',
-    createdAt: '2026-04-08',
-    stars: 3,
-    title: 'Need faster review responses',
-    content: 'Report handling is good overall, but in some urgent cases I expected a quicker callback from support.',
-    status: 'Resolved',
-    avatar: avatarUser1,
-    architectResponse: 'We have escalated urgent response flows and enabled priority queueing for critical cases.',
-  },
-  {
-    id: 5,
-    userName: 'Quynh Anh',
-    memberSince: 'Member since Jul 2022',
-    date: 'Apr 07, 2026',
-    createdAt: '2026-04-07',
-    stars: 4,
-    title: 'Good safety features and quality matching',
-    content: 'The verification badge and moderation transparency make me feel more confident using the platform daily.',
-    status: 'Pending Reply',
-    avatar: avatarUser2,
-  },
-];
-
-const pageSize = 2;
+import { useMemo, useState, useEffect } from 'react';
+import { adminApi } from '../../shared/services/api';
 
 type FilterState = {
   rating: 'all' | '5' | '4plus';
   sortDate: 'new' | 'old';
   status: 'all' | 'pending' | 'resolved';
 };
+
+const pageSize = 10;
 
 export default function ReviewsPage() {
   const [draftFilters, setDraftFilters] = useState<FilterState>({
@@ -103,192 +20,250 @@ export default function ReviewsPage() {
     sortDate: 'new',
     status: 'all',
   });
+  const [reviewData, setReviewData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
 
+  // Reply Modal State
+  const [showReplyModal, setShowReplyModal] = useState(false);
+  const [selectedReview, setSelectedReview] = useState<any>(null);
+  const [replyText, setReplyText] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    fetchReviews();
+  }, []);
+
+  const fetchReviews = async () => {
+    try {
+        setLoading(true);
+        const res = await adminApi.getAppReviews();
+        setReviewData(res.data);
+    } catch (e) {
+        console.error(e);
+    } finally {
+        setLoading(false);
+    }
+  };
+
+  const handleReplySubmit = async () => {
+    if (!selectedReview || !replyText.trim()) return;
+    setIsSubmitting(true);
+    try {
+        await adminApi.replyToReview(selectedReview.id, replyText);
+        alert("Reply sent successfully");
+        setShowReplyModal(false);
+        fetchReviews();
+    } catch (e) {
+        alert("Failed to send reply");
+    } finally {
+        setIsSubmitting(false);
+    }
+  };
+
   const filteredReviews = useMemo(() => {
-    const byRating = reviewData.filter((review) => {
-      if (appliedFilters.rating === 'all') return true;
-      if (appliedFilters.rating === '5') return review.stars === 5;
-      return review.stars >= 4;
+    let result = reviewData.filter((review) => {
+      // Rating filter
+      if (appliedFilters.rating === '5' && review.rating !== 5) return false;
+      if (appliedFilters.rating === '4plus' && review.rating < 4) return false;
+      
+      // Status filter
+      if (appliedFilters.status === 'pending' && review.adminReply) return false;
+      if (appliedFilters.status === 'resolved' && !review.adminReply) return false;
+      
+      return true;
     });
 
-    const byStatus = byRating.filter((review) => {
-      if (appliedFilters.status === 'all') return true;
-      if (appliedFilters.status === 'pending') return review.status === 'Pending Reply';
-      return review.status === 'Resolved';
-    });
-
-    const sorted = [...byStatus].sort((left, right) => {
+    // Sorting
+    result.sort((left, right) => {
       const leftTime = new Date(left.createdAt).getTime();
       const rightTime = new Date(right.createdAt).getTime();
       return appliedFilters.sortDate === 'new' ? rightTime - leftTime : leftTime - rightTime;
     });
 
-    return sorted;
-  }, [appliedFilters]);
+    return result;
+  }, [reviewData, appliedFilters]);
 
   const totalPages = Math.max(1, Math.ceil(filteredReviews.length / pageSize));
-  const pagedReviews = useMemo(() => {
-    const start = (page - 1) * pageSize;
-    return filteredReviews.slice(start, start + pageSize);
-  }, [filteredReviews, page]);
+  const pagedReviews = filteredReviews.slice((page - 1) * pageSize, page * pageSize);
 
   const from = filteredReviews.length === 0 ? 0 : (page - 1) * pageSize + 1;
   const to = Math.min(page * pageSize, filteredReviews.length);
 
   return (
-    <div className="space-y-6 bg-[#F3F3F3]">
-      <section className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+    <div className="space-y-6 bg-[#F3F3F3] min-h-screen p-6">
+      <header className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
         <div>
-          <h2 className="text-fluid-xl font-bold text-slate-800">Review Management</h2>
-          <p className="mt-1 text-fluid-sm text-[#ADAFBB]">Track user sentiment, reply faster, and improve service quality in real time.</p>
+          <h2 className="text-3xl font-bold text-slate-800 tracking-tight">App Reviews</h2>
+          <p className="mt-1 text-slate-500">Manage user feedback and improve the app experience</p>
         </div>
 
-        <article className="w-full max-w-xl rounded-2xl bg-white p-4 shadow-[0_16px_34px_-24px_rgba(0,0,0,0.16)]">
-          <div className="grid grid-cols-2 gap-3">
+        <div className="bg-white p-6 rounded-[24px] shadow-sm border border-slate-100 flex gap-8">
             <div>
-              <p className="text-fluid-xs font-semibold tracking-[0.14em] text-[#ADAFBB]">GLOBAL RATING</p>
-              <div className="mt-1 flex items-end gap-2">
-                <p className="text-fluid-xl font-bold text-slate-800">4.8</p>
-                <div className="mb-1 text-[#EE3F57]">★★★★★</div>
-              </div>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Avg. Rating</p>
+                <div className="flex items-center gap-2">
+                    <span className="text-2xl font-black text-slate-800">4.8</span>
+                    <span className="text-[#EE3F57] text-xl">★★★★★</span>
+                </div>
             </div>
-            <div className="text-right">
-              <p className="text-fluid-xs font-semibold tracking-[0.14em] text-[#ADAFBB]">TOTAL REVIEWS</p>
-              <p className="mt-1 text-fluid-xl font-bold text-slate-800">1,284</p>
+            <div className="w-px bg-slate-100" />
+            <div>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Feedback</p>
+                <p className="text-2xl font-black text-slate-800">{reviewData.length}</p>
             </div>
-          </div>
-        </article>
-      </section>
+        </div>
+      </header>
 
-      <section className="grid gap-3 md:grid-cols-4">
+      <section className="grid gap-3 md:grid-cols-4 bg-white p-4 rounded-[20px] shadow-sm border border-slate-100">
         <select
           value={draftFilters.rating}
-          onChange={(event) => setDraftFilters((prev) => ({ ...prev, rating: event.target.value as FilterState['rating'] }))}
-          className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-fluid-sm text-slate-600 outline-none focus:border-[#EE3F57]"
+          onChange={(e) => setDraftFilters({ ...draftFilters, rating: e.target.value as any })}
+          className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-[#EE3F57]/20 transition"
         >
-          <option value="all">Rating: All Stars</option>
-          <option value="5">Rating: 5 Stars</option>
-          <option value="4plus">Rating: 4+ Stars</option>
+          <option value="all">All Ratings</option>
+          <option value="5">5 Stars only</option>
+          <option value="4plus">4+ Stars</option>
         </select>
         <select
           value={draftFilters.sortDate}
-          onChange={(event) => setDraftFilters((prev) => ({ ...prev, sortDate: event.target.value as FilterState['sortDate'] }))}
-          className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-fluid-sm text-slate-600 outline-none focus:border-[#EE3F57]"
+          onChange={(e) => setDraftFilters({ ...draftFilters, sortDate: e.target.value as any })}
+          className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-[#EE3F57]/20 transition"
         >
-          <option value="new">Sort by Date: New</option>
-          <option value="old">Sort by Date: Old</option>
+          <option value="new">Newest First</option>
+          <option value="old">Oldest First</option>
         </select>
         <select
           value={draftFilters.status}
-          onChange={(event) => setDraftFilters((prev) => ({ ...prev, status: event.target.value as FilterState['status'] }))}
-          className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-fluid-sm text-slate-600 outline-none focus:border-[#EE3F57]"
+          onChange={(e) => setDraftFilters({ ...draftFilters, status: e.target.value as any })}
+          className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-[#EE3F57]/20 transition"
         >
-          <option value="all">Status: All</option>
-          <option value="pending">Status: Pending Reply</option>
-          <option value="resolved">Status: Resolved</option>
+          <option value="all">All Status</option>
+          <option value="pending">Pending Reply</option>
+          <option value="resolved">Replied</option>
         </select>
         <button
-          type="button"
-          onClick={() => {
-            setAppliedFilters(draftFilters);
-            setPage(1);
-          }}
-          className="rounded-xl bg-[linear-gradient(135deg,#F27121_10%,#E94057_60%,#8A2387_100%)] px-4 py-2.5 text-fluid-sm font-semibold text-white"
+          onClick={() => { setAppliedFilters(draftFilters); setPage(1); }}
+          className="rounded-xl bg-[#EE3F57] text-white font-bold py-2 hover:bg-[#EE3F57]/90 transition active:scale-95"
         >
-          Apply Filters
+          Filter
         </button>
       </section>
 
-      <section className="space-y-4">
-        {pagedReviews.length === 0 && (
-          <article className="rounded-2xl bg-white p-6 text-center text-sm text-slate-500 shadow-[0_16px_34px_-24px_rgba(0,0,0,0.16)]">
-            No reviews found for selected filters.
-          </article>
+      <main className="space-y-4">
+        {loading ? (
+            <div className="flex justify-center py-20"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#EE3F57]"></div></div>
+        ) : pagedReviews.length === 0 ? (
+            <div className="bg-white p-12 rounded-[24px] text-center text-slate-400 border border-slate-100">No reviews found.</div>
+        ) : (
+            pagedReviews.map((review) => (
+                <article key={review.id} className="bg-white rounded-[24px] p-6 shadow-sm border border-slate-100 hover:border-[#EE3F57]/30 transition-all group">
+                    <div className="flex justify-between items-start gap-6">
+                        <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-3">
+                                <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-500 uppercase">
+                                    {review.userName?.[0] || 'U'}
+                                </div>
+                                <div>
+                                    <h4 className="font-bold text-slate-800">{review.userName || "User"}</h4>
+                                    <div className="flex items-center gap-2">
+                                        <div className="text-amber-400 text-xs">{'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}</div>
+                                        <span className="text-[10px] text-slate-400">•</span>
+                                        <span className="text-[10px] text-slate-400 font-medium">{new Date(review.createdAt).toLocaleDateString()}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <p className="text-slate-600 leading-relaxed text-sm mb-4">{review.comment}</p>
+                            
+                            {review.adminReply && (
+                                <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 relative overflow-hidden">
+                                    <div className="absolute top-0 left-0 w-1 h-full bg-[#EE3F57]/50" />
+                                    <p className="text-[10px] font-bold text-[#EE3F57] uppercase tracking-widest mb-1">Official Response</p>
+                                    <p className="text-sm text-slate-700 italic">"{review.adminReply}"</p>
+                                    <p className="mt-2 text-[9px] text-slate-400 font-medium">{new Date(review.repliedAt).toLocaleString()}</p>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="shrink-0">
+                            {!review.adminReply && (
+                                <button 
+                                    onClick={() => { setSelectedReview(review); setReplyText(''); setShowReplyModal(true); }}
+                                    className="bg-slate-50 text-slate-600 px-4 py-2 rounded-xl text-xs font-bold hover:bg-[#EE3F57] hover:text-white transition-all active:scale-95 shadow-sm"
+                                >
+                                    Reply
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </article>
+            ))
         )}
-        {pagedReviews.map((review) => {
-          const isResolved = review.status === 'Resolved';
+      </main>
 
-          return (
-            <article key={review.id} className="rounded-2xl bg-white p-5 shadow-[0_16px_34px_-24px_rgba(0,0,0,0.16)]">
-              <div className="grid gap-4 xl:grid-cols-12">
-                <div className="xl:col-span-3">
-                  <div className="flex items-center gap-3">
-                    <img src={review.avatar} alt={review.userName} className="h-12 w-12 rounded-full object-cover" />
-                    <div>
-                      <p className="font-semibold text-slate-800">{review.userName}</p>
-                      <p className="text-xs text-[#ADAFBB]">{review.memberSince}</p>
-                    </div>
-                  </div>
-                  <p className="mt-3 text-sm text-[#EE3F57]">{'★'.repeat(review.stars)}{'☆'.repeat(5 - review.stars)}</p>
-                  <p className="text-xs text-[#ADAFBB]">{review.date}</p>
-                </div>
-
-                <div className="xl:col-span-6">
-                  <h3 className="font-semibold text-slate-800">{review.title}</h3>
-                  <p className="mt-1 text-sm leading-6 text-slate-600">{review.content}</p>
-
-                  <span
-                    className={`mt-3 inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ${
-                      isResolved ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-600'
-                    }`}
-                  >
-                    <span className={`h-2 w-2 rounded-full ${isResolved ? 'bg-emerald-500' : 'bg-[#EE3F57]'}`} />
-                    {review.status}
-                  </span>
-
-                  {review.architectResponse && (
-                    <div className="mt-3 rounded-xl bg-slate-100 p-3">
-                      <p className="text-xs font-semibold text-slate-500">Architect Response</p>
-                      <p className="mt-1 text-sm italic text-slate-600">{review.architectResponse}</p>
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex flex-col gap-2 xl:col-span-3 xl:items-end">
-                  <button
-                    type="button"
-                    className={`${isResolved ? 'bg-slate-100 text-slate-700' : 'bg-[#EE3F57] text-white'} rounded-xl px-4 py-2 text-sm font-semibold`}
-                  >
-                    {isResolved ? 'Edit Reply' : 'Reply'}
-                  </button>
-                  <button type="button" className="rounded-xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700">
-                    Delete
-                  </button>
-                </div>
-              </div>
-            </article>
-          );
-        })}
-      </section>
-
-      <button
-        type="button"
-        className="fixed bottom-6 right-6 z-20 inline-flex h-14 w-14 items-center justify-center rounded-full bg-[linear-gradient(135deg,#F27121_10%,#E94057_60%,#8A2387_100%)] text-white shadow-[0_18px_30px_-18px_rgba(0,0,0,0.5)]"
-        aria-label="Download reviews"
-      >
-        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-5 w-5">
-          <path d="M12 4v10m0 0 4-4m-4 4-4-4M5 19h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </button>
-
-      <footer className="flex flex-col gap-3 text-sm text-slate-500 md:flex-row md:items-center md:justify-between">
-        <p>Showing {from} - {to} of {filteredReviews.length} reviews</p>
-        <div className="flex items-center gap-2">
-          {Array.from({ length: totalPages }, (_, index) => index + 1).map((pageNumber) => (
-            <button
-              key={pageNumber}
-              type="button"
-              onClick={() => setPage(pageNumber)}
-              className={`h-8 w-8 rounded-lg text-xs font-semibold ${
-                pageNumber === page ? 'bg-[#EE3F57] text-white' : 'bg-white text-slate-500'
-              }`}
-            >
-              {pageNumber}
-            </button>
-          ))}
+      <footer className="flex justify-between items-center py-6">
+        <p className="text-sm text-slate-400 font-medium">Showing {from}-{to} of {filteredReviews.length} reviews</p>
+        <div className="flex gap-2">
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+                <button 
+                    key={p} 
+                    onClick={() => setPage(p)}
+                    className={`h-9 w-9 rounded-xl font-bold text-xs transition ${page === p ? 'bg-[#EE3F57] text-white shadow-lg shadow-rose-200' : 'bg-white text-slate-500 hover:bg-slate-50 border border-slate-100'}`}
+                >
+                    {p}
+                </button>
+            ))}
         </div>
       </footer>
+
+      {/* Reply Modal */}
+      {showReplyModal && selectedReview && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+            <div className="bg-white rounded-[32px] w-full max-w-lg shadow-2xl overflow-hidden transform transition-all scale-100">
+                <div className="p-8 border-b border-slate-100 flex justify-between items-center">
+                    <div>
+                        <h3 className="text-xl font-bold text-slate-800">Reply to Feedback</h3>
+                        <p className="text-xs text-slate-500 mt-1">Responding to {selectedReview.userName}</p>
+                    </div>
+                    <button onClick={() => setShowReplyModal(false)} className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-400">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                </div>
+
+                <div className="p-8 space-y-6">
+                    <div className="p-4 bg-slate-50 rounded-2xl text-sm text-slate-600 border border-slate-100">
+                        <p className="font-bold text-slate-400 uppercase text-[10px] mb-2 tracking-widest">Original Comment</p>
+                        "{selectedReview.comment}"
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Your Response</label>
+                        <textarea 
+                            value={replyText}
+                            onChange={(e) => setReplyText(e.target.value)}
+                            placeholder="Type your message here..."
+                            className="w-full h-32 p-4 rounded-2xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-[#EE3F57]/10 focus:border-[#EE3F57] transition resize-none text-sm"
+                        />
+                    </div>
+                </div>
+
+                <div className="p-8 bg-slate-50 flex gap-4">
+                    <button 
+                        onClick={() => setShowReplyModal(false)}
+                        className="flex-1 py-4 rounded-2xl font-bold text-slate-600 hover:bg-slate-200 transition"
+                    >
+                        Discard
+                    </button>
+                    <button 
+                        onClick={handleReplySubmit}
+                        disabled={isSubmitting || !replyText.trim()}
+                        className="flex-2 bg-[linear-gradient(135deg,#F27121_10%,#E94057_60%,#8A2387_100%)] text-white px-10 py-4 rounded-2xl font-bold hover:opacity-90 transition active:scale-95 disabled:opacity-50 shadow-lg shadow-rose-200"
+                    >
+                        {isSubmitting ? 'Sending...' : 'Send Response'}
+                    </button>
+                </div>
+            </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -16,7 +16,6 @@ export default function DashboardPage() {
     activeUsers: 0
   });
   const [advancedData, setAdvancedData] = useState<any>({ growth: [], categories: [] });
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     Promise.all([
@@ -25,7 +24,6 @@ export default function DashboardPage() {
     ]).then(([s, a]) => {
       setStats(s.data);
       setAdvancedData(a.data);
-      setLoading(false);
     });
   }, []);
 
@@ -41,8 +39,8 @@ export default function DashboardPage() {
     <div className="space-y-6 animate-in fade-in duration-500">
       <header className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800">Hệ thống Giám sát Mixer</h2>
-          <p className="text-slate-500 text-sm">Phân tích tăng trưởng và chỉ số an toàn thời gian thực</p>
+          <h2 className="text-2xl font-bold text-slate-800">Mixer Monitoring System</h2>
+          <p className="text-slate-500 text-sm">Real-time growth analysis and safety metrics</p>
         </div>
         <div className="flex gap-2">
             <div className="bg-emerald-500/10 text-emerald-600 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-2">
@@ -69,7 +67,7 @@ export default function DashboardPage() {
 
       <div className="grid gap-6 lg:grid-cols-5">
         <article className="rounded-2xl bg-white p-6 shadow-sm border border-slate-100 lg:col-span-3">
-          <h3 className="text-lg font-bold text-slate-800 mb-6">Biểu đồ Tăng trưởng</h3>
+          <h3 className="text-lg font-bold text-slate-800 mb-6">Growth Chart</h3>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={advancedData.growth}>
@@ -90,7 +88,7 @@ export default function DashboardPage() {
         </article>
 
         <article className="rounded-2xl bg-white p-6 shadow-sm border border-slate-100 lg:col-span-2">
-          <h3 className="text-lg font-bold text-slate-800 mb-6">Phân bổ Báo cáo</h3>
+          <h3 className="text-lg font-bold text-slate-800 mb-6">Report Distribution</h3>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -103,7 +101,7 @@ export default function DashboardPage() {
                   paddingAngle={5}
                   dataKey="value"
                 >
-                  {advancedData.categories.map((entry: any, index: number) => (
+                  {advancedData.categories.map((_entry: any, index: number) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
@@ -118,10 +116,10 @@ export default function DashboardPage() {
       <section className="grid gap-4 md:grid-cols-2">
          <article className="bg-[#8A2387] rounded-2xl p-6 text-white overflow-hidden relative">
             <div className="relative z-10">
-                <h3 className="text-lg font-bold mb-2">Thông báo toàn hệ thống</h3>
-                <p className="text-white/70 text-sm mb-4">Gửi tin nhắn broadcast đến tất cả người dùng ngay lập tức.</p>
+                <h3 className="text-lg font-bold mb-2">System Broadcast</h3>
+                <p className="text-white/70 text-sm mb-4">Send instant broadcast messages to all users immediately.</p>
                 <button className="bg-white text-[#8A2387] px-6 py-2 rounded-xl font-bold hover:bg-white/90 transition">
-                    Soạn thông báo
+                    Compose Message
                 </button>
             </div>
             <div className="absolute -right-10 -bottom-10 opacity-20 transform rotate-12">
@@ -131,7 +129,7 @@ export default function DashboardPage() {
          
          <article className="bg-slate-900 rounded-2xl p-6 text-white flex flex-col justify-between">
             <div>
-                <h3 className="text-lg font-bold mb-2">Tình trạng hệ thống</h3>
+                <h3 className="text-lg font-bold mb-2">System Health</h3>
                 <div className="space-y-3 mt-4">
                     <div className="flex justify-between items-center text-sm">
                         <span className="text-slate-400">Database (MongoDB)</span>

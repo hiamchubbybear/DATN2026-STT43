@@ -4,13 +4,13 @@ import {
   Database, 
   Server, 
   ShieldCheck, 
-  AlertCircle, 
   Clock, 
   Terminal,
   RefreshCw,
   Cpu,
   HardDrive
 } from 'lucide-react';
+import { adminApi } from '../../shared/services/api';
 import { 
   LineChart, 
   Line, 
@@ -47,18 +47,18 @@ const SystemMonitorPage: React.FC = () => {
     uptime: '...',
     version: '1.0.4-stable'
   });
-  const [sysInfo, setSysInfo] = useState<any>(null);
   const [logs, setLogs] = useState<any[]>([]);
 
   const fetchHealth = async () => {
     try {
-      const res = await fetch('/health/ready');
-      const json = await res.json();
+      const res = await adminApi.getHealth();
+      const json = res.data;
       setHealth(prev => ({
         ...prev,
-        status: json.status === 'Healthy' ? 'Healthy' : 'Degraded',
-        mongodb: json.checks.find((c: any) => c.name === 'mongodb')?.status || 'Offline',
-        redis: json.checks.find((c: any) => c.name === 'redis')?.status || 'Offline'
+        status: json.status,
+        mongodb: json.database,
+        uptime: 'Live', // Backend logic cho uptime có thể thêm sau
+        version: json.version
       }));
     } catch (e) {
       setHealth(prev => ({ ...prev, status: 'Error', mongodb: 'Offline', redis: 'Offline' }));
@@ -67,30 +67,22 @@ const SystemMonitorPage: React.FC = () => {
 
   const fetchSysInfo = async () => {
     try {
-      const res = await fetch('/api/admin/monitoring/system-info');
-      const json = await res.json();
-      setSysInfo(json);
+      const res = await adminApi.getSystemInfo();
+      const json = res.data;
       setHealth(prev => ({ ...prev, uptime: json.uptime }));
     } catch (e) {}
   };
 
   const fetchLogs = async () => {
     try {
-      const res = await fetch('/api/admin/monitoring/logs?count=50');
-      const rawLogs = await res.json();
-      // Simple parse of Serilog JSON or Template
+      const res = await adminApi.getLogs(50);
+      const rawLogs = res.data;
+      
       const parsedLogs = rawLogs.map((line: string, idx: number) => {
-        try {
-           // Try parsing as JSON if you used JSON format, otherwise use simple regex
-           if (line.startsWith('{')) {
-             const j = JSON.parse(line);
-             return { id: idx, time: j.Timestamp?.substring(11, 19), level: j.Level, message: j.RenderedMessage || j.Message, service: j.Properties?.SourceContext || 'System' };
-           }
-           // Simple fallback regex-ish
-           const parts = line.match(/\[(.*?) (.*?)\] (.*)/);
-           if (parts) return { id: idx, time: parts[1], level: parts[2], message: parts[3], service: 'App' };
-           return { id: idx, time: '', level: 'INFO', message: line, service: 'App' };
-        } catch { return { id: idx, time: '', level: 'INFO', message: line, service: 'App' }; }
+        // Simple fallback regex-ish
+        const parts = line.match(/\[(.*?) (.*?)\] (.*)/);
+        if (parts) return { id: idx, time: parts[1], level: parts[2], message: parts[3], service: 'App' };
+        return { id: idx, time: '', level: 'INFO', message: line, service: 'App' };
       });
       setLogs(parsedLogs.reverse());
     } catch (e) {}
@@ -103,6 +95,8 @@ const SystemMonitorPage: React.FC = () => {
     
     const interval = setInterval(() => {
       fetchHealth();
+      fetchLogs();
+      fetchSysInfo();
       fetchLogs();
       // ... existing data generator for charts
       setData(prev => {

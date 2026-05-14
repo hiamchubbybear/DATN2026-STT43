@@ -1,7 +1,32 @@
+import { useState } from 'react';
+import { adminApi } from '../../shared/services/api';
 import notificationIcon from '../../assets/notification.png';
 import monthlyActiveIcon from '../../assets/Monthly-Active.png';
 
 export default function NotificationsPage() {
+  const [title, setTitle] = useState('');
+  const [content, setContent] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleLaunch = async () => {
+    if (!title || !content) {
+      alert('Vui lòng nhập đầy đủ tiêu đề và nội dung');
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      await adminApi.broadcast(title, content);
+      alert('Đã gửi thông báo đến toàn bộ người dùng');
+      setTitle('');
+      setContent('');
+    } catch (e) {
+      alert('Gửi thông báo thất bại');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <section className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
@@ -19,12 +44,14 @@ export default function NotificationsPage() {
           <article className="rounded-2xl bg-white p-5 shadow-[0_16px_34px_-24px_rgba(0,0,0,0.16)]">
             <h3 className="text-fluid-base font-semibold text-slate-800">New Campaign</h3>
 
-            <form className="mt-4 space-y-4">
+            <form className="mt-4 space-y-4" onSubmit={(e) => { e.preventDefault(); handleLaunch(); }}>
               <div>
                 <label htmlFor="title" className="mb-1.5 block text-fluid-sm font-medium text-slate-600">Title</label>
                 <input
                   id="title"
                   type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
                   placeholder="Input Title"
                   className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-fluid-sm outline-none transition focus:border-[#EE3F57] focus:ring-4 focus:ring-[#EE3F57]/15"
                 />
@@ -35,6 +62,8 @@ export default function NotificationsPage() {
                 <textarea
                   id="message"
                   rows={5}
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
                   placeholder="Write your campaign message..."
                   className="w-full resize-none rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-fluid-sm outline-none transition focus:border-[#EE3F57] focus:ring-4 focus:ring-[#EE3F57]/15"
                 />
@@ -46,9 +75,9 @@ export default function NotificationsPage() {
                   <select
                     id="audience"
                     className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-fluid-sm text-slate-600 outline-none transition focus:border-[#EE3F57] focus:ring-4 focus:ring-[#EE3F57]/15"
-                    defaultValue=""
+                    defaultValue="all"
                   >
-                    <option value="" disabled>Select segment</option>
+                    <option value="all">All Users</option>
                     <option value="new">New Users</option>
                     <option value="active">Active Users</option>
                     <option value="inactive">Inactive Users</option>
@@ -60,9 +89,8 @@ export default function NotificationsPage() {
                   <select
                     id="scheduling"
                     className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-fluid-sm text-slate-600 outline-none transition focus:border-[#EE3F57] focus:ring-4 focus:ring-[#EE3F57]/15"
-                    defaultValue=""
+                    defaultValue="now"
                   >
-                    <option value="" disabled>Select schedule</option>
                     <option value="now">Send now</option>
                     <option value="later">Schedule later</option>
                   </select>
@@ -70,13 +98,18 @@ export default function NotificationsPage() {
               </div>
 
               <button
-                type="button"
-                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#EE3F57] px-4 py-3 text-fluid-sm font-semibold text-white transition hover:bg-[#d63249]"
+                type="submit"
+                disabled={loading}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#EE3F57] px-4 py-3 text-fluid-sm font-semibold text-white transition hover:bg-[#d63249] disabled:opacity-50"
               >
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-4 w-4">
-                  <path d="M3 12h14m0 0-4-4m4 4-4 4M19 5l2 2-2 2M19 15l2 2-2 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                Launch Notification
+                {loading ? 'Sending...' : (
+                    <>
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-4 w-4">
+                            <path d="M3 12h14m0 0-4-4m4 4-4 4M19 5l2 2-2 2M19 15l2 2-2 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                        Launch Notification
+                    </>
+                )}
               </button>
             </form>
           </article>

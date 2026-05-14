@@ -9,7 +9,6 @@ type Config = {
 
 export default function ConfigPage() {
   const [configs, setConfigs] = useState<Config[]>([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchConfigs();
@@ -21,18 +20,16 @@ export default function ConfigPage() {
       setConfigs(res.data);
     } catch (e) {
       console.error(e);
-    } finally {
-      setLoading(false);
     }
   };
 
   const handleUpdate = async (key: string, newValue: string) => {
     try {
       await adminApi.updateConfig(key, newValue);
-      alert('Cập nhật thành công');
+      alert('Update successful');
       fetchConfigs();
     } catch (e) {
-      alert('Cập nhật thất bại');
+      alert('Update failed');
     }
   };
 
@@ -40,7 +37,7 @@ export default function ConfigPage() {
     <div className="space-y-6">
       <header>
         <h2 className="text-2xl font-bold text-slate-800">System Configuration</h2>
-        <p className="text-slate-500">Quản lý các tham số vận hành hệ thống</p>
+        <p className="text-slate-500">Manage global operational parameters and business rules</p>
       </header>
 
       <section className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
