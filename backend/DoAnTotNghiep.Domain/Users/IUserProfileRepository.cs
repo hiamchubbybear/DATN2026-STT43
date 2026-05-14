@@ -21,4 +21,5 @@ public interface IUserProfileRepository
         int? maxAge = null,
         int? maxDistanceKm = null);
     Task<List<UserProfile>> GetByUserIdsAsync(List<Guid> userIds);
+    Task<List<UserProfile>> SearchAsync(UserSearchFilter filter);
 }

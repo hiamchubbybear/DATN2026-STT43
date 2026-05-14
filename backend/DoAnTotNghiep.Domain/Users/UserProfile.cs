@@ -14,6 +14,9 @@ public class UserProfile(Guid userId) : BaseEntity
     private UserProfile() : this(Guid.Empty) { }
 
     public Guid UserId { get; private set; } = userId;
+    public string Email { get; set; } = string.Empty;
+    public UserStatus Status { get; private set; } = UserStatus.Active;
+    public DateTime? SuspendedUntil { get; private set; }
 
     public BasicInfo BasicInfo { get; private set; } = new();
     public Background Background { get; private set; } = new();
@@ -35,6 +38,32 @@ public class UserProfile(Guid userId) : BaseEntity
     public int MinAgePreference { get; private set; } = 18;
     public int MaxAgePreference { get; private set; } = 100;
     public int MaxDistanceKm { get; private set; } = 50;
+
+    public void Ban()
+    {
+        Status = UserStatus.Banned;
+        SetUpdated();
+    }
+
+    public void Restore()
+    {
+        Status = UserStatus.Active;
+        SuspendedUntil = null;
+        SetUpdated();
+    }
+
+    public void Suspend(int days)
+    {
+        Status = UserStatus.Suspended;
+        SuspendedUntil = DateTime.UtcNow.AddDays(days);
+        SetUpdated();
+    }
+
+    public void ShadowBan()
+    {
+        Status = UserStatus.ShadowBanned;
+        SetUpdated();
+    }
 
 
     public void UpdateBasicInfo(string displayName, DateTime dob, Gender gender, List<string> languages)

@@ -99,4 +99,37 @@ public class UserProfileRepository : IUserProfileRepository
             .Limit(take)
             .ToListAsync();
     }
+
+    public async Task<List<UserProfile>> SearchAsync(UserSearchFilter filter)
+    {
+        var builder = Builders<UserProfile>.Filter;
+        var filters = new List<FilterDefinition<UserProfile>>();
+
+        if (!string.IsNullOrWhiteSpace(filter.Search))
+        {
+            var search = filter.Search.Trim();
+            filters.Add(builder.Or(
+                builder.Regex(x => x.BasicInfo.DisplayName, new MongoDB.Bson.BsonRegularExpression(search, "i")),
+                builder.Regex(x => x.Email, new MongoDB.Bson.BsonRegularExpression(search, "i"))
+            ));
+        }
+
+        if (filter.Status.HasValue)
+        {
+            filters.Add(builder.Eq(x => x.Status, filter.Status.Value));
+        }
+
+        var finalFilter = filters.Any() ? builder.And(filters) : builder.Empty;
+
+        var query = _profiles.Find(finalFilter);
+
+        var skip = (filter.Page - 1) * filter.PageSize;
+        if (skip < 0) skip = 0;
+
+        return await query
+            .SortByDescending(x => x.CreatedAt)
+            .Skip(skip)
+            .Limit(filter.PageSize)
+            .ToListAsync();
+    }
 }

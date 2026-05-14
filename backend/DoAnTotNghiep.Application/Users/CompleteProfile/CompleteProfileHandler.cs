@@ -20,6 +20,7 @@ public class CompleteProfileHandler(
         if (existingProfile == null)
         {
             var profile = new UserProfile(request.UserId);
+            profile.Email = user.Email;
             profile.UpdateBasicInfo(request.DisplayName, request.Dob, request.Gender, request.Languages);
             
             if (!string.IsNullOrEmpty(request.Education) || !string.IsNullOrEmpty(request.Occupation))
@@ -51,6 +52,7 @@ public class CompleteProfileHandler(
         }
         else
         {
+            existingProfile.Email = user.Email;
             existingProfile.UpdateBasicInfo(request.DisplayName, request.Dob, request.Gender, request.Languages);
             
             if (!string.IsNullOrEmpty(request.Education) || !string.IsNullOrEmpty(request.Occupation))
