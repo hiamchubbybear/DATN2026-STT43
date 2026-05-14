@@ -2,6 +2,7 @@ import React from 'react';
 import { Text, TextInput, TouchableOpacity, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { EditProfileSection } from '../EditProfileSection';
+import { useTranslation } from 'react-i18next';
 
 interface BasicInfoSectionProps {
   displayName: string;
@@ -26,18 +27,19 @@ export const BasicInfoSection = ({
   onSave,
   isSaving
 }: BasicInfoSectionProps) => {
+  const { t } = useTranslation();
   return (
-    <EditProfileSection title="Basic Info" onSave={onSave} isSaving={isSaving}>
-      <Text style={styles.label}>Display name</Text>
+    <EditProfileSection title={t('profile_edit.basic_info')} onSave={onSave} isSaving={isSaving}>
+      <Text style={styles.label}>{t('profile_edit.display_name')}</Text>
       <TextInput 
         style={styles.input} 
         value={displayName} 
         onChangeText={setDisplayName} 
-        placeholder="Your name" 
+        placeholder={t('setup.step1_placeholder')} 
         placeholderTextColor="#A1A1AA" 
       />
 
-      <Text style={styles.label}>Birthday (YYYY-MM-DD)</Text>
+      <Text style={styles.label}>{t('profile_edit.birthday')} (YYYY-MM-DD)</Text>
       <TextInput 
         style={styles.input} 
         value={dob?.split('T')[0]} 
@@ -46,22 +48,22 @@ export const BasicInfoSection = ({
         placeholderTextColor="#A1A1AA" 
       />
 
-      <Text style={styles.label}>Gender</Text>
+      <Text style={styles.label}>{t('profile_edit.gender')}</Text>
       <TouchableOpacity 
         style={styles.selector} 
-        onPress={() => onOpenModal('gender', 'Select Gender', ['Male', 'Female', 'Other'])}
+        onPress={() => onOpenModal('gender', t('profile_edit.select_gender'), [t('discover.men'), t('discover.women'), t('common.other')])}
       >
-        <Text style={gender ? styles.selectorText : styles.placeholderText}>{gender || 'Select Gender'}</Text>
+        <Text style={gender ? styles.selectorText : styles.placeholderText}>{gender || t('profile_edit.select_gender')}</Text>
         <Ionicons name="chevron-down" size={20} color="#9CA3AF" />
       </TouchableOpacity>
 
-      <Text style={styles.label}>Languages</Text>
+      <Text style={styles.label}>{t('profile_edit.languages')}</Text>
       <TouchableOpacity 
         style={styles.selector} 
-        onPress={() => onOpenModal('languages', 'Select Languages', ['Vietnamese', 'English', 'Korean', 'Japanese', 'Chinese', 'French'])}
+        onPress={() => onOpenModal('languages', t('profile_edit.select_languages'), ['Vietnamese', 'English', 'Korean', 'Japanese', 'Chinese', 'French'])}
       >
         <Text style={languages.length > 0 ? styles.selectorText : styles.placeholderText}>
-          {languages.length > 0 ? languages.join(', ') : 'Select Languages'}
+          {languages.length > 0 ? languages.join(', ') : t('profile_edit.select_languages')}
         </Text>
         <Ionicons name="chevron-down" size={20} color="#9CA3AF" />
       </TouchableOpacity>

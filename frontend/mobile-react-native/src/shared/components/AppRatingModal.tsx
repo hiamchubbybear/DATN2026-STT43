@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useToast } from '../components/ToastProvider';
+import { useTranslation } from 'react-i18next';
 
 interface AppRatingModalProps {
   visible: boolean;
@@ -20,13 +21,14 @@ interface AppRatingModalProps {
 
 export const AppRatingModal = ({ visible, onClose }: AppRatingModalProps) => {
   const { showToast } = useToast();
+  const { t } = useTranslation();
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async () => {
     if (rating === 0) {
-      showToast({ type: 'error', title: 'Error', message: 'Please select a rating' });
+      showToast({ type: 'error', title: t('common.error'), message: t('rating.error_select') });
       return;
     }
 
@@ -38,12 +40,12 @@ export const AppRatingModal = ({ visible, onClose }: AppRatingModalProps) => {
       
       showToast({ 
         type: 'success', 
-        title: 'Thank You!', 
-        message: 'Your feedback helps us improve the app.' 
+        title: t('rating.thank_you'), 
+        message: t('rating.success_msg') 
       });
       onClose();
     } catch (error) {
-      showToast({ type: 'error', title: 'Error', message: 'Failed to submit review' });
+      showToast({ type: 'error', title: t('common.error'), message: t('rating.error_failed') });
     } finally {
       setLoading(false);
     }
@@ -65,8 +67,8 @@ export const AppRatingModal = ({ visible, onClose }: AppRatingModalProps) => {
               <Ionicons name="heart" size={40} color="#EE3F57" />
             </View>
 
-            <Text style={styles.title}>Enjoying Mixer?</Text>
-            <Text style={styles.subtitle}>Your feedback means a lot to us! How would you rate your experience?</Text>
+            <Text style={styles.title}>{t('rating.title')}</Text>
+            <Text style={styles.subtitle}>{t('rating.subtitle')}</Text>
 
             <View style={styles.starsRow}>
               {[1, 2, 3, 4, 5].map(star => (
@@ -86,7 +88,7 @@ export const AppRatingModal = ({ visible, onClose }: AppRatingModalProps) => {
 
             <TextInput
               style={styles.input}
-              placeholder="Tell us what you think (optional)..."
+              placeholder={t('rating.placeholder')}
               multiline
               numberOfLines={3}
               value={comment}
@@ -102,12 +104,12 @@ export const AppRatingModal = ({ visible, onClose }: AppRatingModalProps) => {
               {loading ? (
                 <ActivityIndicator color="#FFFFFF" />
               ) : (
-                <Text style={styles.submitBtnText}>Submit Review</Text>
+                <Text style={styles.submitBtnText}>{t('rating.submit')}</Text>
               )}
             </TouchableOpacity>
 
             <TouchableOpacity onPress={onClose} style={styles.maybeLater}>
-              <Text style={styles.maybeLaterText}>Maybe later</Text>
+              <Text style={styles.maybeLaterText}>{t('rating.maybe_later')}</Text>
             </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>

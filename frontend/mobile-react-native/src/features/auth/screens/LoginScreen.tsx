@@ -20,6 +20,8 @@ import { RootStackParamList } from "../../../app/navigation/RootNavigator";
 import { useAuthStore } from "../../../store/authStore";
 import { AuthBackButton } from "../../../shared/components/AuthBackButton";
 import { useToast } from "../../../shared/components/ToastProvider";
+import { useTranslation } from 'react-i18next';
+import { getFcmToken } from "../../../shared/utils/notificationHelper";
 
 const GOOGLE_WEB_CLIENT_ID =
   process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ||
@@ -57,6 +59,8 @@ export const LoginScreen = () => {
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [loading, setLoading] = React.useState(false);
   const { showToast } = useToast();
+  const { t } = useTranslation();
+  const setAuth = useAuthStore(state => state.setAuth);
   const isExpoGo = Constants.executionEnvironment === "storeClient";
 
   const redirectUriOptions = React.useMemo(
@@ -105,17 +109,18 @@ export const LoginScreen = () => {
       setLoading(false);
       console.error("❌ [Google] Lỗi mở Google Auth:", error);
       showToast({
-        title: "Lỗi Đăng Nhập",
-        message: error.message || "Không thể đăng nhập bằng Google",
+        title: t('auth.login_failed'),
+        message: error.message || t('auth.google_failed', 'Could not sign in with Google'),
         type: "error"
       });
     }
   };
 
-  const setAuth = useAuthStore(state => state.setAuth);
-
   const handleBackendLogin = React.useCallback(async (idToken?: string, accessToken?: string) => {
     try {
+      setLoading(true);
+      const fcmToken = await getFcmToken();
+      
       const API_URL = `${
         process.env.EXPO_PUBLIC_API_BASE_URL || "http://localhost:5017"
       }/api/auth/google-login`;
@@ -124,48 +129,34 @@ export const LoginScreen = () => {
       const res = await fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idToken, accessToken }),
+        body: JSON.stringify({ idToken, accessToken, fcmToken }),
       });
 
       const data = await res.json();
       console.log("📡 [API] Response:", JSON.stringify(data, null, 2));
 
-      // Check for data.data because I updated the backend to wrap it in ApiResponse
       const authData = data.data || (data.accessToken ? data : null);
-      console.log("🔍 [Google] Parsed authData:", JSON.stringify(authData, null, 2));
-
       if (res.ok && authData && authData.accessToken) {
-        showToast({
-          title: 'Thành công',
-          message: 'Đăng nhập bằng Google thành công!',
-          type: 'success'
-        });
         setAuth(
           authData.user || { id: authData.userId || '', email: '' },
           authData.accessToken, 
           authData.refreshToken,
           authData.isProfileCompleted
         );
-        console.log("✅ [API] Đăng nhập thành công! RootNavigator sẽ tự chuyển màn hình.");
       } else {
-        const errorMsg = data?.message || data?.Message || data?.detail || data?.Detail || "Đăng nhập thất bại (Invalid structure)";
-        showToast({
-          title: "Lỗi",
-          message: errorMsg,
-          type: "error"
-        });
+        throw new Error(data?.message || t('auth.login_failed'));
       }
-    } catch (error) {
-      console.error("❌ [API] Network error:", error);
+    } catch (error: any) {
+      console.error("❌ [API] Error:", error);
       showToast({
-        title: "Lỗi Kết Nối",
-        message: "Không thể kết nối đến Server. Kiểm tra IP và cổng Backend.",
+        title: t('auth.login_failed'),
+        message: error.message,
         type: "error"
       });
     } finally {
       setLoading(false);
     }
-  }, [navigation, setAuth, showToast]);
+  }, [setAuth, showToast, t]);
 
   React.useEffect(() => {
     if (!response) {
@@ -224,8 +215,8 @@ export const LoginScreen = () => {
 
         {/* Welcome Text */}
         <View style={styles.welcomeContainer}>
-          <Text style={styles.title}>Sign in to continue</Text>
-          <Text style={styles.subtitle}>Welcome back! Please enter your details to continue your journey.</Text>
+          <Text style={styles.title}>{t('auth.sign_in_continue')}</Text>
+          <Text style={styles.subtitle}>{t('auth.sign_in_desc')}</Text>
         </View>
 
         {/* Action Buttons */}
@@ -235,22 +226,14 @@ export const LoginScreen = () => {
             onPress={() => navigation.navigate("EmailLogin")}
             activeOpacity={0.8}
           >
-            <Text style={styles.primaryBtnText}>Continue with email</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.secondaryBtn}
-            onPress={() => navigation.navigate("EmailLogin")} // Assuming we want login by default
-            activeOpacity={0.8}
-          >
-            <Text style={styles.secondaryBtnText}>Already have an account? Log In</Text>
+            <Text style={styles.primaryBtnText}>{t('auth.continueWithEmail')}</Text>
           </TouchableOpacity>
         </View>
 
         {/* Divider */}
         <View style={styles.dividerContainer}>
           <View style={styles.line} />
-          <Text style={styles.orText}>or sign in with</Text>
+          <Text style={styles.orText}>{t('auth.orSignInWith')}</Text>
           <View style={styles.line} />
         </View>
 
@@ -278,15 +261,15 @@ export const LoginScreen = () => {
       <View style={styles.footer}>
         <View style={styles.footerRow}>
           <TouchableOpacity onPress={() => navigation.navigate("SignUp")}>
-            <Text style={styles.footerLink}>Create Account</Text>
+            <Text style={styles.footerLink}>{t('auth.create_account')}</Text>
           </TouchableOpacity>
           <View style={styles.footerDivider} />
           <TouchableOpacity onPress={() => navigation.navigate("ForgotPasswordEmail")}>
-            <Text style={styles.footerLink}>Forgot Password?</Text>
+            <Text style={styles.footerLink}>{t('auth.forgotPassword')}</Text>
           </TouchableOpacity>
         </View>
         <TouchableOpacity style={styles.privacyLink}>
-          <Text style={styles.privacyText}>By continuing, you agree to our Privacy Policy</Text>
+          <Text style={styles.privacyText}>{t('auth.privacy_policy')}</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

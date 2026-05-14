@@ -1,54 +1,62 @@
 import React, { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  Modal, 
-  TouchableOpacity, 
-  TextInput, 
-  ScrollView, 
-  KeyboardAvoidingView, 
-  Platform,
-  ActivityIndicator,
-  Image
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { View, Text, Modal, TouchableOpacity, TextInput, ScrollView, StyleSheet, Platform, ActivityIndicator } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { useToast } from '../components/ToastProvider';
+import { Image } from 'expo-image';
+import Svg, { Path } from 'react-native-svg';
+import { reportService } from '../../services/api/reportService';
+import { useTranslation } from 'react-i18next';
+import { Alert } from 'react-native';
 
-interface UserReportModalProps {
+type Props = {
   visible: boolean;
-  onClose: () => void;
   targetUserId: string;
   targetUserName: string;
-}
+  onClose: () => void;
+  onSuccess?: () => void;
+};
 
-const REPORT_REASONS = [
-  'Inappropriate content',
-  'Harassment or bullying',
-  'Fake profile / Spam',
-  'Underage user',
-  'Stolen photos',
-  'Other'
-];
+const CloseIcon = () => (
+  <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+    <Path d="M18 6L6 18M6 6L18 12" stroke="#111111" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </Svg>
+);
 
-export const UserReportModal = ({ visible, onClose, targetUserId, targetUserName }: UserReportModalProps) => {
-  const { showToast } = useToast();
-  const [selectedReason, setSelectedReason] = useState('');
+const CameraIcon = () => (
+  <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+    <Path d="M23 19C23 19.5523 22.5523 20 22 20H2C1.44772 20 1 19.5523 1 19V7C1 6.44772 1.44772 6 2 6H7L9 3H15L17 6H22C22.5523 6 23 6.44772 23 7V19Z" stroke="#EE3F57" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <Path d="M12 17C14.2091 17 16 15.2091 16 13C16 10.7909 14.2091 9 12 9C9.79086 9 8 10.7909 8 13C8 15.2091 9.79086 17 12 17Z" stroke="#EE3F57" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </Svg>
+);
+
+export const UserReportModal: React.FC<Props> = ({ visible, targetUserId, targetUserName, onClose, onSuccess }) => {
+  const { t } = useTranslation();
+  const reasons = [
+    t('report.reasons.harassment'),
+    t('report.reasons.fake_profile'),
+    t('report.reasons.scam'),
+    t('report.reasons.inappropriate_content'),
+    t('report.reasons.other')
+  ];
+
+  const [reason, setReason] = useState(reasons[0]);
   const [description, setDescription] = useState('');
-  const [images, setImages] = useState<string[]>([]);
+  const [images, setImages] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsMultipleSelection: true,
-      quality: 0.7,
+      quality: 0.8,
     });
 
     if (!result.canceled) {
-      const newImages = result.assets.map(asset => asset.uri);
-      setImages([...images, ...newImages].slice(0, 3)); // Max 3 images
+      const selectedImages = result.assets.map(asset => ({
+        uri: asset.uri,
+        name: asset.fileName || asset.uri.split('/').pop(),
+        type: asset.mimeType || 'image/jpeg'
+      }));
+      setImages([...images, ...selectedImages]);
     }
   };
 
@@ -57,261 +65,120 @@ export const UserReportModal = ({ visible, onClose, targetUserId, targetUserName
   };
 
   const handleSubmit = async () => {
-    if (!selectedReason) {
-      showToast({ type: 'error', title: 'Error', message: 'Please select a reason' });
+    if (!description.trim()) {
+      Alert.alert(t('common.error'), t('report.description_required'));
       return;
     }
 
     setLoading(true);
     try {
-      // Simulate API call
-      console.log('Reporting user:', { targetUserId, selectedReason, description, images });
-      await new Task(resolve => setTimeout(resolve, 1500)); 
-      
-      showToast({ 
-        type: 'success', 
-        title: 'Report Submitted', 
-        message: 'Thank you for helping us keep the community safe.' 
-      });
+      await reportService.submitReport(targetUserId, reason, description, images);
+
+      if (onSuccess) onSuccess();
+      Alert.alert(t('common.success'), t('report.success'));
       onClose();
     } catch (error) {
-      showToast({ type: 'error', title: 'Error', message: 'Failed to submit report' });
+      console.error('Report failed:', error);
+      Alert.alert(t('common.error'), t('report.failed'));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Modal visible={visible} animationType="slide" transparent>
+    <Modal visible={visible} animationType="slide" transparent={true}>
       <View style={styles.overlay}>
-        <KeyboardAvoidingView 
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.container}
-        >
-          <View style={styles.content}>
-            <View style={styles.header}>
-              <Text style={styles.headerTitle}>Report {targetUserName}</Text>
-              <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-                <Ionicons name="close" size={24} color="#111827" />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
-              <Text style={styles.label}>Why are you reporting this user?</Text>
-              <View style={styles.reasonsGrid}>
-                {REPORT_REASONS.map(reason => (
-                  <TouchableOpacity 
-                    key={reason}
-                    style={[
-                      styles.reasonChip,
-                      selectedReason === reason && styles.selectedChip
-                    ]}
-                    onPress={() => setSelectedReason(reason)}
-                  >
-                    <Text style={[
-                      styles.reasonText,
-                      selectedReason === reason && styles.selectedChipText
-                    ]}>{reason}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              <Text style={styles.label}>Additional Details (Optional)</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Tell us more about the issue..."
-                multiline
-                numberOfLines={4}
-                value={description}
-                onChangeText={setDescription}
-                placeholderTextColor="#9CA3AF"
-              />
-
-              <Text style={styles.label}>Evidence (Photos)</Text>
-              <View style={styles.imageRow}>
-                {images.map((uri, index) => (
-                  <View key={index} style={styles.imageWrap}>
-                    <Image source={{ uri }} style={styles.evidenceImg} />
-                    <TouchableOpacity 
-                      style={styles.removeImgBtn}
-                      onPress={() => removeImage(index)}
-                    >
-                      <Ionicons name="close-circle" size={20} color="#EF4444" />
-                    </TouchableOpacity>
-                  </View>
-                ))}
-                {images.length < 3 && (
-                  <TouchableOpacity style={styles.addImgBtn} onPress={pickImage}>
-                    <Ionicons name="camera-outline" size={24} color="#6B7280" />
-                    <Text style={styles.addImgText}>Add Photo</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-            </ScrollView>
-
-            <View style={styles.footer}>
-              <TouchableOpacity 
-                style={[styles.submitBtn, !selectedReason && styles.disabledBtn]} 
-                onPress={handleSubmit}
-                disabled={loading || !selectedReason}
-              >
-                {loading ? (
-                  <ActivityIndicator color="#FFFFFF" />
-                ) : (
-                  <Text style={styles.submitBtnText}>Submit Report</Text>
-                )}
-              </TouchableOpacity>
-            </View>
+        <View style={styles.container}>
+          <View style={styles.header}>
+            <Text style={styles.headerTitle}>{t('report.title', { name: targetUserName })}</Text>
+            <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
+              <Text style={{ fontSize: 24, color: '#111' }}>×</Text>
+            </TouchableOpacity>
           </View>
-        </KeyboardAvoidingView>
+
+          <ScrollView style={styles.content}>
+            <Text style={styles.label}>{t('report.reason_label')}</Text>
+            <View style={styles.reasonsContainer}>
+              {reasons.map((r) => (
+                <TouchableOpacity 
+                  key={r} 
+                  style={[styles.reasonItem, reason === r && styles.reasonSelected]}
+                  onPress={() => setReason(r)}
+                >
+                  <Text style={[styles.reasonText, reason === r && styles.reasonTextSelected]}>{r}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <Text style={styles.label}>{t('report.description_label')}</Text>
+            <TextInput
+              style={styles.input}
+              placeholder={t('report.description_placeholder')}
+              multiline
+              numberOfLines={4}
+              value={description}
+              onChangeText={setDescription}
+            />
+
+            <Text style={styles.label}>{t('report.evidence_label')}</Text>
+            <View style={styles.imagesContainer}>
+              {images.map((uri, index) => (
+                <View key={index} style={styles.imageWrapper}>
+                  <Image source={{ uri }} style={styles.evidenceImage} />
+                  <TouchableOpacity style={styles.removeBtn} onPress={() => removeImage(index)}>
+                    <Text style={styles.removeText}>×</Text>
+                  </TouchableOpacity>
+                </View>
+              ))}
+              <TouchableOpacity style={styles.addBtn} onPress={pickImage}>
+                <CameraIcon />
+                <Text style={styles.addText}>{t('report.add_photo')}</Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+
+          <View style={styles.footer}>
+            <TouchableOpacity style={styles.cancelBtn} onPress={onClose}>
+              <Text style={styles.cancelText}>{t('common.cancel')}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={[styles.submitBtn, loading && { opacity: 0.7 }]} 
+              onPress={handleSubmit}
+              disabled={loading}
+            >
+              {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitText}>{t('report.submit')}</Text>}
+            </TouchableOpacity>
+          </View>
+        </View>
       </View>
     </Modal>
   );
 };
 
 const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
-  },
-  container: {
-    maxHeight: '90%',
-  },
-  content: {
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-    paddingBottom: Platform.OS === 'ios' ? 34 : 20,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 24,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#111827',
-  },
-  closeBtn: {
-    padding: 4,
-  },
-  scroll: {
-    padding: 24,
-  },
-  label: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#374151',
-    marginBottom: 12,
-    marginTop: 8,
-  },
-  reasonsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 16,
-  },
-  reasonChip: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 999,
-    backgroundColor: '#F3F4F6',
-    borderWidth: 1,
-    borderColor: 'transparent',
-  },
-  selectedChip: {
-    backgroundColor: '#FFF1F2',
-    borderColor: '#EE3F57',
-  },
-  reasonText: {
-    fontSize: 14,
-    color: '#4B5563',
-    fontWeight: '500',
-  },
-  selectedChipText: {
-    color: '#EE3F57',
-    fontWeight: '700',
-  },
-  input: {
-    backgroundColor: '#F9FAFB',
-    borderRadius: 16,
-    padding: 16,
-    fontSize: 15,
-    color: '#111827',
-    textAlignVertical: 'top',
-    height: 100,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#F3F4F6',
-  },
-  imageRow: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 8,
-  },
-  imageWrap: {
-    width: 80,
-    height: 80,
-    borderRadius: 12,
-    overflow: 'hidden',
-    position: 'relative',
-  },
-  evidenceImg: {
-    width: '100%',
-    height: '100%',
-  },
-  removeImgBtn: {
-    position: 'absolute',
-    top: 2,
-    right: 2,
-    backgroundColor: 'white',
-    borderRadius: 10,
-  },
-  addImgBtn: {
-    width: 80,
-    height: 80,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    borderColor: '#D1D5DB',
-    backgroundColor: '#F9FAFB',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  addImgText: {
-    fontSize: 10,
-    color: '#6B7280',
-    marginTop: 4,
-    fontWeight: '600',
-  },
-  footer: {
-    padding: 24,
-    paddingTop: 0,
-  },
-  submitBtn: {
-    backgroundColor: '#EE3F57',
-    height: 56,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#EE3F57',
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 4,
-  },
-  disabledBtn: {
-    backgroundColor: '#D1D5DB',
-    shadowOpacity: 0,
-  },
-  submitBtnText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '700',
-  },
+  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
+  container: { backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: '90%' },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, borderBottomWidth: 1, borderBottomColor: '#F3F4F6' },
+  headerTitle: { fontSize: 18, fontWeight: '700', color: '#111' },
+  closeBtn: { padding: 4 },
+  content: { padding: 20 },
+  label: { fontSize: 14, fontWeight: '600', color: '#666', marginBottom: 12, marginTop: 8 },
+  reasonsContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 20 },
+  reasonItem: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: '#F3F4F6', borderWidth: 1, borderColor: '#F3F4F6' },
+  reasonSelected: { backgroundColor: '#FFF0F2', borderColor: '#EE3F57' },
+  reasonText: { fontSize: 14, color: '#666' },
+  reasonTextSelected: { color: '#EE3F57', fontWeight: '600' },
+  input: { backgroundColor: '#F9FAFB', borderRadius: 12, padding: 16, textAlignVertical: 'top', minHeight: 100, borderWeight: 1, borderColor: '#E5E7EB' },
+  imagesContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 4, marginBottom: 40 },
+  imageWrapper: { width: 80, height: 80, position: 'relative' },
+  evidenceImage: { width: 80, height: 80, borderRadius: 8 },
+  removeBtn: { position: 'absolute', top: -5, right: -5, backgroundColor: '#000', width: 20, height: 20, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  removeText: { color: '#fff', fontSize: 14, fontWeight: 'bold' },
+  addBtn: { width: 80, height: 80, borderRadius: 8, borderStyle: 'dashed', borderWidth: 1, borderColor: '#D1D5DB', alignItems: 'center', justifyContent: 'center', backgroundColor: '#F9FAFB' },
+  addText: { fontSize: 11, color: '#EE3F57', marginTop: 4 },
+  footer: { flexDirection: 'row', padding: 20, borderTopWidth: 1, borderTopColor: '#F3F4F6', gap: 12, paddingBottom: Platform.OS === 'ios' ? 40 : 20 },
+  cancelBtn: { flex: 1, height: 50, borderRadius: 12, backgroundColor: '#F3F4F6', alignItems: 'center', justifyContent: 'center' },
+  cancelText: { fontWeight: '600', color: '#666' },
+  submitBtn: { flex: 2, height: 50, borderRadius: 12, backgroundColor: '#EE3F57', alignItems: 'center', justifyContent: 'center' },
+  submitText: { fontWeight: '600', color: '#fff' },
 });

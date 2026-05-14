@@ -2,8 +2,8 @@ import { apiClient } from './apiClient';
 import { getDeviceInfo } from '../../shared/utils/deviceUtils';
 
 export const authService = {
-  login: async (email: string, password: string) => {
-    const deviceInfo = getDeviceInfo();
+  login: async (email: string, password: string, fcmToken?: string | null) => {
+    const deviceInfo = getDeviceInfo(fcmToken);
     const response = await apiClient.post('/api/auth/login', { 
       email, 
       password,
@@ -17,8 +17,8 @@ export const authService = {
     return response.data;
   },
 
-  verifyEmail: async (email: string, token: string) => {
-    const response = await apiClient.post('/api/auth/verify-email', { email, token });
+  verifyEmail: async (email: string, token: string, fcmToken?: string | null) => {
+    const response = await apiClient.post('/api/auth/verify-email', { email, token, fcmToken });
     return response.data;
   },
 
@@ -46,8 +46,8 @@ export const authService = {
     return response.data;
   },
 
-  googleLogin: async (idToken: string) => {
-    const deviceInfo = getDeviceInfo();
+  googleLogin: async (idToken: string, fcmToken?: string | null) => {
+    const deviceInfo = getDeviceInfo(fcmToken);
     const response = await apiClient.post('/api/auth/google-login', { 
       idToken,
       ...deviceInfo

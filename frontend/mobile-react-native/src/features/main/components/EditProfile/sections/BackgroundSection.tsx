@@ -3,6 +3,8 @@ import { Text, TextInput, TouchableOpacity, StyleSheet, View } from 'react-nativ
 import { Ionicons } from '@expo/vector-icons';
 import { EditProfileSection } from '../EditProfileSection';
 
+import { useTranslation } from 'react-i18next';
+
 interface BackgroundSectionProps {
   occupation: string;
   setOccupation: (val: string) => void;
@@ -20,23 +22,24 @@ export const BackgroundSection = ({
   onSave,
   isSaving
 }: BackgroundSectionProps) => {
+  const { t } = useTranslation();
   return (
-    <EditProfileSection title="Background" onSave={onSave} isSaving={isSaving}>
-      <Text style={styles.label}>Occupation</Text>
+    <EditProfileSection title={t('profile_edit.background')} onSave={onSave} isSaving={isSaving}>
+      <Text style={styles.label}>{t('profile_edit.occupation_label')}</Text>
       <TextInput 
         style={styles.input} 
         value={occupation} 
         onChangeText={setOccupation} 
-        placeholder="What do you do?" 
+        placeholder={t('profile_edit.occupation_placeholder')} 
         placeholderTextColor="#A1A1AA" 
       />
 
-      <Text style={styles.label}>Education</Text>
+      <Text style={styles.label}>{t('profile_edit.education_label')}</Text>
       <TouchableOpacity 
         style={styles.selector} 
-        onPress={() => onOpenModal('education', 'Select Education', ['High School', 'Bachelor', 'Master', 'PhD'])}
+        onPress={() => onOpenModal('education', t('profile_edit.select_education'), [t('setup.edu_high'), t('setup.edu_bachelor'), t('setup.edu_master'), t('setup.edu_phd')])}
       >
-        <Text style={education ? styles.selectorText : styles.placeholderText}>{education || 'Select Education'}</Text>
+        <Text style={education ? styles.selectorText : styles.placeholderText}>{education || t('profile_edit.select_education')}</Text>
         <Ionicons name="chevron-down" size={20} color="#9CA3AF" />
       </TouchableOpacity>
     </EditProfileSection>

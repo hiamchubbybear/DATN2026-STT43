@@ -8,6 +8,7 @@ import Svg, { Path } from 'react-native-svg';
 import { authService } from '../../../services/api/authService';
 import { useAuthStore } from '../../../store/authStore';
 import { useToast } from '../../../shared/components/ToastProvider';
+import { useTranslation } from 'react-i18next';
 import { normalizeFont, radius, scale, spacing, verticalScale } from '../../../shared/utils/responsive';
 
 const { width } = Dimensions.get('window');
@@ -18,6 +19,7 @@ export default function VerifyScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const setAuth = useAuthStore(state => state.setAuth);
   const { showToast } = useToast();
+  const { t } = useTranslation();
   
   const [code, setCode] = useState<string>('');
   const [timer, setTimer] = useState(42);
@@ -46,7 +48,8 @@ export default function VerifyScreen() {
     if (newCode.length === 6) {
       try {
         setLoading(true);
-        const result = await authService.verifyEmail(email, newCode);
+        const fcmToken = await getFcmToken();
+        const result = await authService.verifyEmail(email, newCode, fcmToken);
         console.log("🔍 [Verify] Raw response:", JSON.stringify(result, null, 2));
         
         // Handle both wrapped (result.data) and direct (result) responses
@@ -55,8 +58,8 @@ export default function VerifyScreen() {
 
         if (authData && authData.accessToken) {
           showToast({
-            title: 'Thành công',
-            message: 'Xác thực email thành công!',
+            title: t('common.success'),
+            message: t('auth.verify_success'),
             type: 'success'
           });
           setAuth(
@@ -71,8 +74,8 @@ export default function VerifyScreen() {
         }
       } catch (error: any) {
         showToast({
-          title: 'Xác thực thất bại',
-          message: error.message || 'Mã xác thực không chính xác',
+          title: t('auth.verify_failed'),
+          message: error.message || t('auth.invalid_code'),
           type: 'error'
         });
         setCode(''); // Clear code on failure
@@ -88,14 +91,14 @@ export default function VerifyScreen() {
       await authService.resendVerification(email);
       setTimer(42);
       showToast({
-        title: 'Thành công',
-        message: 'Mã xác thực đã được gửi lại',
+        title: t('common.success'),
+        message: t('auth.code_resent'),
         type: 'success'
       });
     } catch (error: any) {
       showToast({
-        title: 'Lỗi',
-        message: error.message || 'Không thể gửi lại mã',
+        title: t('common.error'),
+        message: error.message || t('auth.resend_error'),
         type: 'error'
       });
     } finally {
@@ -151,7 +154,7 @@ export default function VerifyScreen() {
         <View style={styles.content}>
           <Text style={styles.timerTitle}>{formatTime(timer)}</Text>
           <Text style={styles.description}>
-            Type the verification code we've sent you
+            {t('auth.verify_desc')}
           </Text>
 
           <View style={styles.codeContainer}>
@@ -176,7 +179,7 @@ export default function VerifyScreen() {
           onPress={handleResend}
           disabled={loading || timer > 0}
         >
-          {loading ? <ActivityIndicator color="#F43F5E" /> : <Text style={[styles.resendText, timer > 0 && styles.resendDisabled]}>Send again</Text>}
+          {loading ? <ActivityIndicator color="#F43F5E" /> : <Text style={[styles.resendText, timer > 0 && styles.resendDisabled]}>{t('auth.send_again')}</Text>}
         </TouchableOpacity>
       </View>
     </SafeAreaView>

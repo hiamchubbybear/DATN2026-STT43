@@ -2,6 +2,7 @@ import React from 'react';
 import { Text, TouchableOpacity, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { EditProfileSection } from '../EditProfileSection';
+import { useTranslation } from 'react-i18next';
 
 interface DatingStyleSectionProps {
   freeTimePrefer: string[];
@@ -18,26 +19,27 @@ export const DatingStyleSection = ({
   onSave,
   isSaving
 }: DatingStyleSectionProps) => {
+  const { t } = useTranslation();
   return (
-    <EditProfileSection title="Dating Style" onSave={onSave} isSaving={isSaving}>
-      <Text style={styles.label}>Free Time Preference</Text>
+    <EditProfileSection title={t('profile_edit.dating_style')} onSave={onSave} isSaving={isSaving}>
+      <Text style={styles.label}>{t('profile_edit.free_time_label')}</Text>
       <TouchableOpacity 
         style={styles.selector} 
-        onPress={() => onOpenModal('freeTimePrefer', 'Free Time Preference', ['Staying In', 'Going Out', 'Chilling', 'Productive', 'Adventurous'])}
+        onPress={() => onOpenModal('freeTimePrefer', t('profile_edit.select_preference'), [t('setup.ft_stay'), t('setup.ft_out'), t('setup.ft_chill'), t('setup.ft_prod'), t('setup.ft_adv')])}
       >
         <Text style={freeTimePrefer.length > 0 ? styles.selectorText : styles.placeholderText}>
-          {freeTimePrefer.length > 0 ? freeTimePrefer.join(', ') : 'Select Preference'}
+          {freeTimePrefer.length > 0 ? freeTimePrefer.join(', ') : t('profile_edit.select_preference')}
         </Text>
         <Ionicons name="chevron-down" size={20} color="#9CA3AF" />
       </TouchableOpacity>
 
-      <Text style={styles.label}>Preferred Date Style</Text>
+      <Text style={styles.label}>{t('profile_edit.date_style_label')}</Text>
       <TouchableOpacity 
         style={styles.selector} 
-        onPress={() => onOpenModal('dateStyle', 'Preferred Date Style', ['Coffee', 'Dinner', 'Movie', 'Walk', 'Activity', 'Bar'])}
+        onPress={() => onOpenModal('dateStyle', t('profile_edit.select_style'), [t('setup.ds_coffee'), t('setup.ds_dinner'), t('setup.ds_movie'), t('setup.ds_walk'), t('setup.ds_act'), t('setup.ds_bar')])}
       >
         <Text style={dateStyle.length > 0 ? styles.selectorText : styles.placeholderText}>
-          {dateStyle.length > 0 ? dateStyle.join(', ') : 'Select Style'}
+          {dateStyle.length > 0 ? dateStyle.join(', ') : t('profile_edit.select_style')}
         </Text>
         <Ionicons name="chevron-down" size={20} color="#9CA3AF" />
       </TouchableOpacity>

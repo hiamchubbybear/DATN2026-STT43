@@ -13,11 +13,13 @@ import { Modal } from 'react-native';
 import { ProfileDetail } from '../components/ProfileDetail';
 import { FilterModal } from '../components/FilterModal';
 import { Image } from 'expo-image';
+import { useTranslation } from 'react-i18next';
 
 const { width } = Dimensions.get('window');
 
 export const HomeScreen = () => {
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
   const [filters, setFilters] = useState({
     gender: 'Everyone',
     minAge: 18,
@@ -118,8 +120,8 @@ export const HomeScreen = () => {
       <View style={[styles.header, { paddingTop: insets.top + spacing(10) }]}>
         <View style={styles.placeholder} />
         <View style={styles.titleContainer}>
-          <Text style={styles.headerTitle}>Discover</Text>
-          <Text style={styles.headerSubtitle}>Find your match</Text>
+          <Text style={styles.headerTitle}>{t('discover.title')}</Text>
+          <Text style={styles.headerSubtitle}>{t('discover.subtitle')}</Text>
         </View>
         <TouchableOpacity 
           style={styles.iconButton}
@@ -133,7 +135,7 @@ export const HomeScreen = () => {
       <View style={styles.stackContainer}>
         {hasNoProfiles ? (
           <View style={styles.noProfiles}>
-            <Text style={styles.noProfilesText}>No more profiles found</Text>
+            <Text style={styles.noProfilesText}>{t('discover.no_profiles')}</Text>
             <TouchableOpacity 
               style={styles.retryButton} 
               onPress={() => {
@@ -142,7 +144,7 @@ export const HomeScreen = () => {
                 refetch();
               }}
             >
-              <Text style={styles.retryButtonText}>Refresh Feed</Text>
+              <Text style={styles.retryButtonText}>{t('discover.refresh')}</Text>
             </TouchableOpacity>
           </View>
         ) : (

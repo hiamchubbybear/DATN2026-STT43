@@ -4,4 +4,8 @@ export { SettingsScreen } from './SettingsScreen';
 export { MainScreen } from './MainScreen';
 export { MatchesScreen } from './MatchesScreen';
 export { MessagesScreen } from './MessagesScreen';
+export { DiscoverySettingsScreen } from './DiscoverySettingsScreen';
 export { NotificationsMainScreen } from './NotificationsMainScreen';
+export { EditGalleryScreen } from './EditGalleryScreen';
+export * from './UserProfileScreen';
+export * from './ReportHistoryScreen';

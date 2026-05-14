@@ -2,6 +2,7 @@ import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RootNavigator } from './src/app/navigation/RootNavigator';
 import { ToastProvider } from './src/shared/components/ToastProvider';
+import './src/shared/i18n';
 
 import { LogBox } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';

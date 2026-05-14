@@ -11,6 +11,7 @@ import Slider from '@react-native-community/slider';
 import Svg, { Path } from 'react-native-svg';
 import MultiSlider from '@ptomasroos/react-native-multi-slider';
 import { spacing, radius, normalizeFont, scale } from '../../../shared/utils/responsive';
+import { useTranslation } from 'react-i18next';
 
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -52,6 +53,8 @@ interface FilterModalProps {
 }
 
 export const FilterModal = ({ visible, onClose, onApply, initialFilters }: FilterModalProps) => {
+  const { t } = useTranslation();
+  // Convert initial gender to numeric if it's a string
   // Convert initial gender to numeric if it's a string
   const initialGenderValue = typeof initialFilters.gender === 'string' 
     ? GENDER_MAP[initialFilters.gender] || 3 
@@ -93,14 +96,14 @@ export const FilterModal = ({ visible, onClose, onApply, initialFilters }: Filte
             <TouchableOpacity onPress={onClose}>
               <IconClose />
             </TouchableOpacity>
-            <Text style={styles.headerTitle}>Filters</Text>
+            <Text style={styles.headerTitle}>{t('discover.filter')}</Text>
             <TouchableOpacity onPress={handleReset}>
-              <Text style={styles.resetText}>Reset</Text>
+              <Text style={styles.resetText}>{t('discover.reset')}</Text>
             </TouchableOpacity>
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Show Me</Text>
+            <Text style={styles.sectionTitle}>{t('discover.show_me')}</Text>
             <View style={styles.optionsContainer}>
               {[1, 2, 3].map((val) => (
                 <TouchableOpacity
@@ -109,7 +112,7 @@ export const FilterModal = ({ visible, onClose, onApply, initialFilters }: Filte
                   onPress={() => setGender(val)}
                 >
                   <Text style={[styles.optionText, gender === val && styles.optionTextActive]}>
-                    {val === 3 ? 'Everyone' : val === 1 ? 'Men' : 'Women'}
+                    {val === 3 ? t('discover.everyone') : val === 1 ? t('discover.men') : t('discover.women')}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -118,7 +121,7 @@ export const FilterModal = ({ visible, onClose, onApply, initialFilters }: Filte
 
           <View style={styles.section}>
             <View style={styles.row}>
-              <Text style={styles.sectionTitle}>Maximum Distance</Text>
+              <Text style={styles.sectionTitle}>{t('discover.distance_max')}</Text>
               <Text style={styles.valueText}>{distance} km</Text>
             </View>
             <Slider
@@ -136,7 +139,7 @@ export const FilterModal = ({ visible, onClose, onApply, initialFilters }: Filte
 
           <View style={styles.section}>
             <View style={styles.row}>
-              <Text style={styles.sectionTitle}>Age Range</Text>
+              <Text style={styles.sectionTitle}>{t('discover.age_range')}</Text>
               <Text style={styles.valueText}>{ageRange[0]} - {ageRange[1]}</Text>
             </View>
             <View style={styles.sliderContainer}>
@@ -159,7 +162,7 @@ export const FilterModal = ({ visible, onClose, onApply, initialFilters }: Filte
 
           <View style={styles.footer}>
             <TouchableOpacity style={styles.applyButton} onPress={handleApply}>
-              <Text style={styles.applyButtonText}>Apply Filters</Text>
+              <Text style={styles.applyButtonText}>{t('discover.apply')}</Text>
             </TouchableOpacity>
           </View>
         </View>

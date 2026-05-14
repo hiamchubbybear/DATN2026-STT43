@@ -5,13 +5,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { normalizeFont, radius, scale, spacing, verticalScale } from '../../../shared/utils/responsive';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { notificationService, type NotificationDto } from '../../../services/api/notificationService';
+import { useTranslation } from 'react-i18next';
 
-function formatTime(iso: string) {
+function formatTime(iso: string, t: any) {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '';
   const diffMs = Date.now() - d.getTime();
   const mins = Math.floor(diffMs / 60000);
-  if (mins < 1) return 'Just now';
+  if (mins < 1) return t('notifications.just_now');
   if (mins < 60) return `${mins}m`;
   const hrs = Math.floor(mins / 60);
   if (hrs < 24) return `${hrs}h`;
@@ -36,6 +37,7 @@ function toneForType(type?: string) {
 
 export const NotificationsMainScreen = () => {
   const qc = useQueryClient();
+  const { t } = useTranslation();
   const { data, isLoading, isRefetching, refetch } = useQuery({
     queryKey: ['notifications'],
     queryFn: notificationService.list,
@@ -65,14 +67,14 @@ export const NotificationsMainScreen = () => {
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => refetch()} />}
       >
-        <Text style={styles.title}>Notifications</Text>
+        <Text style={styles.title}>{t('notifications.title')}</Text>
 
-        <Text style={styles.sectionTitle}>Alerts & Activity</Text>
+        <Text style={styles.sectionTitle}>{t('notifications.section_title')}</Text>
         <View style={styles.list}>
           {!isLoading && (!data || data.length === 0) ? (
             <View style={styles.emptyWrap}>
               <Ionicons name="notifications-off-outline" size={normalizeFont(22)} color="#9CA3AF" />
-              <Text style={styles.emptyText}>No notifications yet</Text>
+              <Text style={styles.emptyText}>{t('notifications.empty')}</Text>
             </View>
           ) : null}
 
@@ -84,9 +86,9 @@ export const NotificationsMainScreen = () => {
               style={styles.listRow}
               activeOpacity={0.85}
               onLongPress={() =>
-                Alert.alert('Xóa thông báo', 'Bạn muốn xóa thông báo này?', [
-                  { text: 'Hủy', style: 'cancel' },
-                  { text: 'Xóa', style: 'destructive', onPress: () => del.mutate(item.id) },
+                Alert.alert(t('notifications.delete_title'), t('notifications.delete_confirm'), [
+                  { text: t('common.cancel'), style: 'cancel' },
+                  { text: t('common.delete', 'Delete'), style: 'destructive', onPress: () => del.mutate(item.id) },
                 ])
               }
             >
@@ -107,12 +109,12 @@ export const NotificationsMainScreen = () => {
               </View>
 
               <View style={styles.listMeta}>
-                <Text style={styles.timeText}>{formatTime(item.createdAt)}</Text>
+                <Text style={styles.timeText}>{formatTime(item.createdAt, t)}</Text>
                 <TouchableOpacity
                   onPress={() =>
-                    Alert.alert('Xóa thông báo', 'Bạn muốn xóa thông báo này?', [
-                      { text: 'Hủy', style: 'cancel' },
-                      { text: 'Xóa', style: 'destructive', onPress: () => del.mutate(item.id) },
+                    Alert.alert(t('notifications.delete_title'), t('notifications.delete_confirm'), [
+                      { text: t('common.cancel'), style: 'cancel' },
+                      { text: t('common.delete', 'Delete'), style: 'destructive', onPress: () => del.mutate(item.id) },
                     ])
                   }
                   hitSlop={10}

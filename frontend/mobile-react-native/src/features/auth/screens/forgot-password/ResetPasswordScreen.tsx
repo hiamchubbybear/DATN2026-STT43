@@ -8,6 +8,7 @@ import Svg, { Path } from 'react-native-svg';
 import { authService } from '../../../../services/api/authService';
 import { useToast } from '../../../../shared/components/ToastProvider';
 import { normalizeFont, radius, scale, spacing, verticalScale } from '../../../../shared/utils/responsive';
+import { useTranslation } from 'react-i18next';
 
 export default function ResetPasswordScreen() {
   const [password, setPassword] = useState('');
@@ -17,12 +18,13 @@ export default function ResetPasswordScreen() {
   const { email, token } = route.params;
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { showToast } = useToast();
+  const { t } = useTranslation();
 
   const handleReset = async () => {
     if (password !== confirmPassword) {
       showToast({
-        title: 'Lỗi',
-        message: 'Mật khẩu không khớp',
+        title: t('common.error'),
+        message: t('auth.password_mismatch_desc'),
         type: 'error'
       });
       return;
@@ -32,15 +34,15 @@ export default function ResetPasswordScreen() {
       setLoading(true);
       await authService.resetPassword(email, token, password);
       showToast({
-        title: 'Thành công',
-        message: 'Mật khẩu của bạn đã được đặt lại thành công.',
+        title: t('common.success'),
+        message: t('auth.reset_success'),
         type: 'success'
       });
       navigation.navigate('Login');
     } catch (error: any) {
       showToast({
-        title: 'Lỗi',
-        message: error.message || 'Không thể đặt lại mật khẩu',
+        title: t('common.error'),
+        message: error.message || t('profile_edit.error_update'),
         type: 'error'
       });
     } finally {
@@ -64,9 +66,9 @@ export default function ResetPasswordScreen() {
           </View>
           
           <View style={styles.content}>
-            <Text style={styles.title}>New password</Text>
+            <Text style={styles.title}>{t('auth.new_password')}</Text>
             <Text style={styles.description}>
-              Enter your new password below. It must be at least 8 characters.
+              {t('auth.new_password_desc')}
             </Text>
 
             <View style={[styles.inputContainer, styles.passwordContainer]}>
@@ -76,7 +78,7 @@ export default function ResetPasswordScreen() {
               </Svg>
               <TextInput
                 style={styles.input}
-                placeholder="New Password"
+                placeholder={t('auth.new_password')}
                 placeholderTextColor="#9CA3AF"
                 value={password}
                 onChangeText={setPassword}
@@ -93,7 +95,7 @@ export default function ResetPasswordScreen() {
               </Svg>
               <TextInput
                 style={styles.input}
-                placeholder="Confirm New Password"
+                placeholder={t('auth.confirmPassword')}
                 placeholderTextColor="#9CA3AF"
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
@@ -109,7 +111,7 @@ export default function ResetPasswordScreen() {
             onPress={handleReset}
             disabled={!password || !confirmPassword || loading}
           >
-            {loading ? <ActivityIndicator color="#FFF" /> : <Text style={styles.buttonText}>Reset Password</Text>}
+            {loading ? <ActivityIndicator color="#FFF" /> : <Text style={styles.buttonText}>{t('auth.reset_password_btn')}</Text>}
           </TouchableOpacity>
         </KeyboardAvoidingView>
       </TouchableWithoutFeedback>

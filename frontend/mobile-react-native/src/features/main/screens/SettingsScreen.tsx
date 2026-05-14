@@ -26,25 +26,38 @@ const SettingsItem = ({ icon, label, color = '#111827', onPress, showArrow = tru
 
 import { AppRatingModal } from '../../../shared/components/AppRatingModal';
 
+import { useTranslation } from 'react-i18next';
+
 export const SettingsScreen = () => {
   const { logout } = useAuthStore();
   const navigation = useNavigation();
+  const { t, i18n } = useTranslation();
   const [ratingVisible, setRatingVisible] = React.useState(false);
 
   const handleLogout = () => {
-    Alert.alert('Đăng xuất', 'Bạn có chắc chắn muốn đăng xuất khỏi ứng dụng?', [
-      { text: 'Hủy', style: 'cancel' },
-      { text: 'Đăng xuất', style: 'destructive', onPress: () => logout() },
+    Alert.alert(t('settings.logout'), t('settings.logout_confirm', 'Are you sure you want to logout?'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('settings.logout'), style: 'destructive', onPress: () => logout() },
     ]);
+  };
+
+  const toggleLanguage = async () => {
+    try {
+      const currentLang = i18n.language || 'vi';
+      const newLang = currentLang.startsWith('vi') ? 'en' : 'vi';
+      await i18n.changeLanguage(newLang);
+    } catch (error) {
+      console.error('Failed to change language:', error);
+    }
   };
 
   const handleDeleteAccount = () => {
     Alert.alert(
-      'Xóa tài khoản', 
-      'Hành động này không thể hoàn tác. Tất cả dữ liệu của bạn sẽ bị xóa vĩnh viễn.', 
+      t('settings.deleteAccount'), 
+      t('settings.delete_account_confirm'), 
       [
-        { text: 'Hủy', style: 'cancel' },
-        { text: 'Xóa vĩnh vễn', style: 'destructive', onPress: () => console.log('Delete account requested') },
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('settings.deleteAccount'), style: 'destructive', onPress: () => console.log('Delete account requested') },
       ]
     );
   };
@@ -55,52 +68,51 @@ export const SettingsScreen = () => {
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Ionicons name="chevron-back" size={24} color="#111827" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Cài đặt</Text>
+        <Text style={styles.headerTitle}>{t('settings.title')}</Text>
         <View style={{ width: 40 }} />
       </View>
-
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.container}>
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Tài khoản</Text>
-          <SettingsItem icon="person-outline" label="Thông tin cá nhân" color="#6366F1" onPress={() => navigation.navigate('EditProfile' as any)} />
-          <SettingsItem icon="options-outline" label="Tiêu chuẩn tìm kiếm" color="#F43F5E" onPress={() => navigation.navigate('DiscoverySettings' as any)} />
-          <SettingsItem icon="lock-closed-outline" label="Đổi mật khẩu" color="#8B5CF6" />
-          <SettingsItem icon="notifications-outline" label="Thông báo" color="#F59E0B" />
+          <Text style={styles.sectionTitle}>{t('settings.account')}</Text>
+          <SettingsItem icon="person-outline" label={t('settings.personalInfo')} color="#6366F1" onPress={() => navigation.navigate('EditProfile' as any)} />
+          <SettingsItem icon="options-outline" label={t('settings.discoverySettings')} color="#F43F5E" onPress={() => navigation.navigate('DiscoverySettings' as any)} />
+          <SettingsItem icon="language-outline" label={`${t('settings.language')} (${i18n.language.toUpperCase()})`} color="#10B981" onPress={toggleLanguage} />
+          <SettingsItem icon="lock-closed-outline" label={t('settings.changePassword')} color="#8B5CF6" />
+          <SettingsItem icon="notifications-outline" label={t('settings.notifications')} color="#F59E0B" />
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Quyền riêng tư & Bảo mật</Text>
-          <SettingsItem icon="shield-checkmark-outline" label="Quyền riêng tư" color="#10B981" />
-          <SettingsItem icon="eye-off-outline" label="Chế độ ẩn danh" color="#6B7280" />
+          <Text style={styles.sectionTitle}>{t('settings.privacy')}</Text>
+          <SettingsItem icon="shield-checkmark-outline" label={t('settings.privacy')} color="#10B981" />
+          <SettingsItem icon="eye-off-outline" label={t('settings.incognito_mode')} color="#6B7280" />
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Hỗ trợ</Text>
-          <SettingsItem icon="help-circle-outline" label="Trợ giúp & Hỗ trợ" color="#3B82F6" />
-          <SettingsItem icon="bug-outline" label="Báo cáo sự cố" color="#F43F5E" onPress={() => console.log('Report problem')} />
-          <SettingsItem icon="star-outline" label="Đánh giá ứng dụng" color="#F59E0B" onPress={() => setRatingVisible(true)} />
-          <SettingsItem icon="information-circle-outline" label="Về chúng tôi" color="#6B7280" />
+          <Text style={styles.sectionTitle}>{t('settings.support')}</Text>
+          <SettingsItem icon="help-circle-outline" label={t('settings.help_support')} color="#3B82F6" />
+          <SettingsItem icon="bug-outline" label={t('settings.report_problem')} color="#F43F5E" onPress={() => console.log('Report problem')} />
+          <SettingsItem icon="document-text-outline" label={t('settings.report_history')} color="#F59E0B" onPress={() => navigation.navigate('ReportHistory' as any)} />
+          <SettingsItem icon="star-outline" label={t('settings.rate_app')} color="#F59E0B" onPress={() => setRatingVisible(true)} />
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Hành động</Text>
           <SettingsItem 
             icon="log-out-outline" 
-            label="Đăng xuất" 
+            label={t('settings.logout')} 
             color="#EF4444" 
             onPress={handleLogout} 
             showArrow={false} 
           />
           <SettingsItem 
             icon="trash-outline" 
-            label="Xóa tài khoản" 
+            label={t('settings.deleteAccount')} 
             color="#EF4444" 
             onPress={handleDeleteAccount} 
             showArrow={false} 
           />
         </View>
 
-        <Text style={styles.versionText}>Phiên bản 1.0.0 (BETA)</Text>
+        <Text style={styles.versionText}>{t('settings.version')} 1.0.0 (BETA)</Text>
       </ScrollView>
 
       <AppRatingModal 

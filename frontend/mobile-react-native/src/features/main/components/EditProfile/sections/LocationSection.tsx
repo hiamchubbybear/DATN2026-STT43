@@ -1,6 +1,7 @@
 import React from 'react';
 import { Text, TextInput, StyleSheet, View } from 'react-native';
 import { EditProfileSection } from '../EditProfileSection';
+import { useTranslation } from 'react-i18next';
 
 interface LocationSectionProps {
   locationName: string;
@@ -15,14 +16,15 @@ export const LocationSection = ({
   onSave,
   isSaving
 }: LocationSectionProps) => {
+  const { t } = useTranslation();
   return (
-    <EditProfileSection title="Discovery Location" onSave={onSave} isSaving={isSaving}>
-      <Text style={styles.label}>Location Name</Text>
+    <EditProfileSection title={t('profile_edit.location')} onSave={onSave} isSaving={isSaving}>
+      <Text style={styles.label}>{t('profile_edit.location_label')}</Text>
       <TextInput 
         style={styles.input} 
         value={locationName} 
         onChangeText={setLocationName} 
-        placeholder="Enter your city/region" 
+        placeholder={t('profile_edit.location_placeholder')} 
         placeholderTextColor="#A1A1AA" 
       />
     </EditProfileSection>

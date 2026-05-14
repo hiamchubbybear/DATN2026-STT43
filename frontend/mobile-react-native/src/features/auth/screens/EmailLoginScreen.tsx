@@ -21,6 +21,8 @@ import { authService } from '../../../services/api/authService';
 import { useAuthStore } from '../../../store/authStore';
 import { normalizeFont, radius, scale, spacing, verticalScale } from '../../../shared/utils/responsive';
 import { useToast } from '../../../shared/components/ToastProvider';
+import { useTranslation } from 'react-i18next';
+import { getFcmToken } from '../../../shared/utils/notificationHelper';
 
 export default function EmailLoginScreen() {
   const [email, setEmail] = useState('');
@@ -31,6 +33,7 @@ export default function EmailLoginScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const setAuth = useAuthStore(state => state.setAuth);
   const { showToast } = useToast();
+  const { t } = useTranslation();
 
   const handleLogin = async () => {
     if (!email || !password || loading) {
@@ -39,7 +42,8 @@ export default function EmailLoginScreen() {
 
     try {
       setLoading(true);
-      const data = await authService.login(email, password);
+      const fcmToken = await getFcmToken();
+      const data = await authService.login(email, password, fcmToken);
       const authData = data.data || (data.accessToken ? data : null);
 
       if (authData && authData.accessToken) {
@@ -55,8 +59,8 @@ export default function EmailLoginScreen() {
       }
     } catch (error: any) {
       showToast({
-        title: 'Đăng nhập thất bại',
-        message: error.message || 'Email hoặc mật khẩu không chính xác',
+        title: t('auth.login_failed'),
+        message: error.message || t('auth.invalid_credentials'),
         type: 'error'
       });
     } finally {
@@ -80,9 +84,9 @@ export default function EmailLoginScreen() {
           </View>
 
           <View style={styles.content}>
-            <Text style={styles.title}>Welcome Back</Text>
+            <Text style={styles.title}>{t('auth.welcome_back')}</Text>
             <Text style={styles.description}>
-              Please enter your email address and password to log in.
+              {t('auth.email_login_desc')}
             </Text>
 
             <View style={[
@@ -118,7 +122,7 @@ export default function EmailLoginScreen() {
               </Svg>
               <TextInput
                 style={styles.input}
-                placeholder="Password"
+                placeholder={t('auth.password_placeholder')}
                 placeholderTextColor="#9CA3AF"
                 value={password}
                 onChangeText={setPassword}
@@ -137,7 +141,7 @@ export default function EmailLoginScreen() {
               style={styles.forgotPassword}
               onPress={() => navigation.navigate('ForgotPasswordEmail')}
             >
-              <Text style={styles.forgotPasswordText}>Forgot password?</Text>
+              <Text style={styles.forgotPasswordText}>{t('auth.forgot_password_link')}</Text>
             </TouchableOpacity>
           </View>
 
@@ -147,7 +151,7 @@ export default function EmailLoginScreen() {
             activeOpacity={0.8}
             disabled={!email || !password || loading}
           >
-            {loading ? <ActivityIndicator color="#FFF" /> : <Text style={styles.buttonText}>Log In</Text>}
+            {loading ? <ActivityIndicator color="#FFF" /> : <Text style={styles.buttonText}>{t('auth.login_btn')}</Text>}
           </TouchableOpacity>
         </KeyboardAvoidingView>
       </TouchableWithoutFeedback>

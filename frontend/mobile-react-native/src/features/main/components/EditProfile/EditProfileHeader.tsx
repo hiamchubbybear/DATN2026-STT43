@@ -2,16 +2,18 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 
 export const EditProfileHeader = () => {
   const navigation = useNavigation();
+  const { t } = useTranslation();
 
   return (
     <View style={styles.header}>
       <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()} activeOpacity={0.8}>
         <Ionicons name="chevron-back" size={24} color="#111827" />
       </TouchableOpacity>
-      <Text style={styles.headerTitle}>Edit Profile</Text>
+      <Text style={styles.headerTitle}>{t('profile_edit.title')}</Text>
       <View style={styles.headerSpacer} />
     </View>
   );

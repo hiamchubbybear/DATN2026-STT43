@@ -86,7 +86,10 @@ export const SwipeableCard = React.memo(forwardRef<SwipeableCardRef, SwipeableCa
 
     const tapGesture = Gesture.Tap()
       .onEnd(() => {
-        if (onPress) runOnJS(onPress)();
+        // Block tap if card is moving (swiping)
+        if (Math.abs(translateY.value) < 10 && Math.abs(translateX.value) < 10) {
+          if (onPress) runOnJS(onPress)();
+        }
       });
 
     const longPressGesture = Gesture.LongPress()

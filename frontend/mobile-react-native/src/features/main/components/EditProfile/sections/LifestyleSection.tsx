@@ -2,6 +2,7 @@ import React from 'react';
 import { Text, TouchableOpacity, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { EditProfileSection } from '../EditProfileSection';
+import { useTranslation } from 'react-i18next';
 
 interface LifestyleSectionProps {
   drinking: string;
@@ -26,62 +27,63 @@ export const LifestyleSection = ({
   onSave,
   isSaving
 }: LifestyleSectionProps) => {
+  const { t } = useTranslation();
   return (
-    <EditProfileSection title="Lifestyle & Interests" onSave={onSave} isSaving={isSaving}>
-      <Text style={styles.label}>Drinking</Text>
+    <EditProfileSection title={t('profile_edit.lifestyle_interests')} onSave={onSave} isSaving={isSaving}>
+      <Text style={styles.label}>{t('profile_edit.drinking_label')}</Text>
       <TouchableOpacity 
         style={styles.selector} 
-        onPress={() => onOpenModal('drinking', 'Drinking Habit', ['Often', 'Sometimes', 'No'])}
+        onPress={() => onOpenModal('drinking', t('profile_edit.select_habit'), [t('setup.freq_often'), t('setup.freq_sometimes'), t('setup.freq_no')])}
       >
-        <Text style={drinking ? styles.selectorText : styles.placeholderText}>{drinking || 'Select Habit'}</Text>
+        <Text style={drinking ? styles.selectorText : styles.placeholderText}>{drinking || t('profile_edit.select_habit')}</Text>
         <Ionicons name="chevron-down" size={20} color="#9CA3AF" />
       </TouchableOpacity>
 
-      <Text style={styles.label}>Smoking</Text>
+      <Text style={styles.label}>{t('profile_edit.smoking_label')}</Text>
       <TouchableOpacity 
         style={styles.selector} 
-        onPress={() => onOpenModal('smoking', 'Smoking Habit', ['Often', 'Sometimes', 'No'])}
+        onPress={() => onOpenModal('smoking', t('profile_edit.select_habit'), [t('setup.freq_often'), t('setup.freq_sometimes'), t('setup.freq_no')])}
       >
-        <Text style={smoking ? styles.selectorText : styles.placeholderText}>{smoking || 'Select Habit'}</Text>
+        <Text style={smoking ? styles.selectorText : styles.placeholderText}>{smoking || t('profile_edit.select_habit')}</Text>
         <Ionicons name="chevron-down" size={20} color="#9CA3AF" />
       </TouchableOpacity>
 
-      <Text style={styles.label}>Social Level</Text>
+      <Text style={styles.label}>{t('profile_edit.social_label')}</Text>
       <TouchableOpacity 
         style={styles.selector} 
-        onPress={() => onOpenModal('socialLevel', 'Social Level', ['Introvert', 'Extrovert', 'Ambivert'])}
+        onPress={() => onOpenModal('socialLevel', t('profile_edit.select_level'), [t('setup.soc_introvert'), t('setup.soc_extrovert'), t('setup.soc_ambivert')])}
       >
-        <Text style={socialLevel ? styles.selectorText : styles.placeholderText}>{socialLevel || 'Select Level'}</Text>
+        <Text style={socialLevel ? styles.selectorText : styles.placeholderText}>{socialLevel || t('profile_edit.select_level')}</Text>
         <Ionicons name="chevron-down" size={20} color="#9CA3AF" />
       </TouchableOpacity>
 
-      <Text style={styles.label}>Personality Type</Text>
+      <Text style={styles.label}>{t('profile_edit.personality_label')}</Text>
       <TouchableOpacity 
         style={styles.selector} 
-        onPress={() => onOpenModal('personalityType', 'Personality Type', ['INTJ', 'INTP', 'ENTJ', 'ENTP', 'INFJ', 'INFP', 'ENFJ', 'ENFP', 'ISTJ', 'ISFJ', 'ESTJ', 'ESFJ', 'ISTP', 'ISFP', 'ESTP', 'ESFP'])}
+        onPress={() => onOpenModal('personalityType', t('profile_edit.select_type'), ['INTJ', 'INTP', 'ENTJ', 'ENTP', 'INFJ', 'INFP', 'ENFJ', 'ENFP', 'ISTJ', 'ISFJ', 'ESTJ', 'ESFJ', 'ISTP', 'ISFP', 'ESTP', 'ESFP'])}
       >
-        <Text style={personalityType ? styles.selectorText : styles.placeholderText}>{personalityType || 'Select Type'}</Text>
+        <Text style={personalityType ? styles.selectorText : styles.placeholderText}>{personalityType || t('profile_edit.select_type')}</Text>
         <Ionicons name="chevron-down" size={20} color="#9CA3AF" />
       </TouchableOpacity>
 
-      <Text style={styles.label}>Hobbies</Text>
+      <Text style={styles.label}>{t('profile_edit.hobbies_label')}</Text>
       <TouchableOpacity 
         style={styles.selector} 
-        onPress={() => onOpenModal('hobbies', 'Hobbies', ['Reading', 'Gaming', 'Cooking', 'Hiking', 'Photography', 'Music', 'Traveling', 'Sports'])}
+        onPress={() => onOpenModal('hobbies', t('profile_edit.select_hobbies'), [t('setup.hobby_reading'), t('setup.hobby_gaming'), t('setup.hobby_cooking'), t('setup.hobby_hiking'), t('setup.hobby_photo'), t('setup.hobby_music'), t('setup.hobby_travel'), t('setup.hobby_sports')])}
       >
         <Text style={hobbies.length > 0 ? styles.selectorText : styles.placeholderText}>
-          {hobbies.length > 0 ? hobbies.join(', ') : 'Select Hobbies'}
+          {hobbies.length > 0 ? hobbies.join(', ') : t('profile_edit.select_hobbies')}
         </Text>
         <Ionicons name="chevron-down" size={20} color="#9CA3AF" />
       </TouchableOpacity>
 
-      <Text style={styles.label}>Interests</Text>
+      <Text style={styles.label}>{t('profile_edit.interests_label')}</Text>
       <TouchableOpacity 
         style={styles.selector} 
-        onPress={() => onOpenModal('interests', 'Interests', ['Technology', 'Art', 'Science', 'Fashion', 'Movies', 'Anime', 'Politics', 'Business'])}
+        onPress={() => onOpenModal('interests', t('profile_edit.select_interests'), [t('setup.int_tech'), t('setup.int_art'), t('setup.int_science'), t('setup.int_fashion'), t('setup.int_movies'), t('setup.int_anime'), t('setup.int_politics'), t('setup.int_business')])}
       >
         <Text style={interests.length > 0 ? styles.selectorText : styles.placeholderText}>
-          {interests.length > 0 ? interests.join(', ') : 'Select Interests'}
+          {interests.length > 0 ? interests.join(', ') : t('profile_edit.select_interests')}
         </Text>
         <Ionicons name="chevron-down" size={20} color="#9CA3AF" />
       </TouchableOpacity>

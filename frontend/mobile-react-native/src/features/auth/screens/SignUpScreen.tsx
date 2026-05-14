@@ -7,9 +7,11 @@ import { RootStackParamList } from '../../../app/navigation/RootNavigator';
 import { AuthBackButton } from '../../../shared/components/AuthBackButton';
 import { IconFacebook, IconGoogle, IconApple } from '../../../shared/components/AuthIcons';
 import { normalizeFont, radius, scale, spacing } from '../../../shared/utils/responsive';
+import { useTranslation } from 'react-i18next';
 
 export const SignUpScreen = () => {
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+    const { t } = useTranslation();
 
     return (
         <SafeAreaView style={styles.safeArea}>
@@ -23,7 +25,7 @@ export const SignUpScreen = () => {
                         resizeMode="contain"
                     />
 
-                    <Text style={styles.title}>Sign up to continue</Text>
+                    <Text style={styles.title}>{t('auth.signUp_title')}</Text>
 
                     <View style={styles.buttonsStack}>
                         <TouchableOpacity 
@@ -31,13 +33,13 @@ export const SignUpScreen = () => {
                             onPress={() => navigation.navigate('EmailSignUp')}
                             activeOpacity={0.8}
                         >
-                            <Text style={styles.primaryButtonText}>Continue with email</Text>
+                            <Text style={styles.primaryButtonText}>{t('auth.continueWithEmail')}</Text>
                         </TouchableOpacity>
                     </View>
 
                     <View style={styles.dividerRow}>
                         <View style={styles.dividerLine} />
-                        <Text style={styles.dividerText}>or sign up with</Text>
+                        <Text style={styles.dividerText}>{t('auth.orSignInWith')}</Text>
                         <View style={styles.dividerLine} />
                     </View>
 
@@ -50,10 +52,10 @@ export const SignUpScreen = () => {
 
                 <View style={styles.bottomLinks}>
                     <TouchableOpacity>
-                        <Text style={styles.linkText}>Terms of use</Text>
+                        <Text style={styles.linkText}>{t('auth.terms_of_use')}</Text>
                     </TouchableOpacity>
                     <TouchableOpacity>
-                        <Text style={styles.linkText}>Privacy Policy</Text>
+                        <Text style={styles.linkText}>{t('auth.privacy_policy')}</Text>
                     </TouchableOpacity>
                 </View>
             </View>

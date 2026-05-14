@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 interface EditProfileSectionProps {
   title: string;
@@ -9,6 +10,7 @@ interface EditProfileSectionProps {
 }
 
 export const EditProfileSection = ({ title, onSave, isSaving, children }: EditProfileSectionProps) => {
+  const { t } = useTranslation();
   return (
     <View style={styles.card}>
       <View style={styles.sectionHeader}>
@@ -21,7 +23,7 @@ export const EditProfileSection = ({ title, onSave, isSaving, children }: EditPr
           {isSaving ? (
             <ActivityIndicator size="small" color="#EE3F57" />
           ) : (
-            <Text style={styles.inlineSaveText}>Save</Text>
+            <Text style={styles.inlineSaveText}>{t('common.save')}</Text>
           )}
         </TouchableOpacity>
       </View>

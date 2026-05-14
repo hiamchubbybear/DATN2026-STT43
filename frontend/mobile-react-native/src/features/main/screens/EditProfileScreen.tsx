@@ -9,6 +9,7 @@ import { RootStackParamList } from '../../../app/navigation/RootNavigator';
 import { profileService } from '../../../services/api/profileService';
 import { useToast } from '../../../shared/components/ToastProvider';
 import { Logger } from '../../../shared/utils/logger';
+import { useTranslation } from 'react-i18next';
 
 // Components
 import { EditProfileHeader } from '../components/EditProfile/EditProfileHeader';
@@ -26,6 +27,7 @@ export const EditProfileScreen = () => {
   const navigation = useNavigation<ProfileNavigation>();
   const { showToast } = useToast();
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
   
   const [loading, setLoading] = React.useState(true);
   const [savingSection, setSavingSection] = React.useState<string | null>(null);
@@ -78,7 +80,7 @@ export const EditProfileScreen = () => {
       else setGender('');
 
       setDob(profile?.basicInfo?.dob || '');
-      setLanguages(profile?.basicInfo?.languages || []);
+      setLanguages((profile?.basicInfo?.languages || []).map((l: string) => l.trim()));
       setDrinking(profile?.lifestyle?.drinking || '');
       setSmoking(profile?.lifestyle?.smoking || '');
       setSocialLevel(profile?.lifestyle?.socialLevel || '');
@@ -89,7 +91,7 @@ export const EditProfileScreen = () => {
       setDateStyle(profile?.datingStyle?.dateStyle || []);
     } catch (error) {
       Logger.error('Failed to fetch profile', error);
-      showToast({ type: 'error', text1: 'Error', text2: 'Failed to load profile data' });
+      showToast({ type: 'error', text1: t('common.error'), text2: t('profile_edit.error_load') });
     } finally {
       setLoading(false);
     }
@@ -130,10 +132,10 @@ export const EditProfileScreen = () => {
           await profileService.updateLocation({ locationName, latitude: 0, longitude: 0 });
           break;
       }
-      showToast({ type: 'success', text1: 'Success', text2: `${section} updated successfully` });
+      showToast({ type: 'success', text1: t('common.success'), text2: `${t(`profile_edit.${section}`)} ${t('profile_edit.success_update')}` });
     } catch (error) {
       Logger.error(`Failed to update ${section}`, error);
-      showToast({ type: 'error', text1: 'Error', text2: `Failed to update ${section}` });
+      showToast({ type: 'error', text1: t('common.error'), text2: `${t('profile_edit.error_update')} ${t(`profile_edit.${section}`)}` });
     } finally {
       setSavingSection(null);
     }
@@ -193,27 +195,27 @@ export const EditProfileScreen = () => {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.menuContainer}>
           <MenuButton 
-            icon="person-outline" title="Basic Information" 
+            icon="person-outline" title={t('profile_edit.basic_info')} 
             onPress={() => setActiveModal('basicInfo')} 
           />
           <MenuButton 
-            icon="document-text-outline" title="About Me & Bio" 
+            icon="document-text-outline" title={t('profile_edit.bio')} 
             onPress={() => setActiveModal('bio')} 
           />
           <MenuButton 
-            icon="school-outline" title="Background & Education" 
+            icon="school-outline" title={t('profile_edit.background')} 
             onPress={() => setActiveModal('background')} 
           />
           <MenuButton 
-            icon="heart-outline" title="Lifestyle & Interests" 
+            icon="heart-outline" title={t('profile_edit.lifestyle')} 
             onPress={() => setActiveModal('lifestyle')} 
           />
           <MenuButton 
-            icon="calendar-outline" title="Dating Style" 
+            icon="calendar-outline" title={t('profile_edit.dating_style')} 
             onPress={() => setActiveModal('datingStyle')} 
           />
           <MenuButton 
-            icon="location-outline" title="Discovery Location" 
+            icon="location-outline" title={t('profile_edit.location')} 
             onPress={() => setActiveModal('location')} 
           />
         </View>
@@ -226,7 +228,7 @@ export const EditProfileScreen = () => {
             <TouchableOpacity onPress={() => setActiveModal(null)} style={styles.closeButton}>
               <Ionicons name="close" size={24} color="#111827" />
             </TouchableOpacity>
-            <Text style={styles.modalHeaderTitle}>Edit {activeModal}</Text>
+            <Text style={styles.modalHeaderTitle}>{t('profile_edit.edit_section')} {t(`profile_edit.${activeModal}`)}</Text>
             <View style={{ width: 44 }} />
           </View>
           

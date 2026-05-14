@@ -10,12 +10,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Slider from '@react-native-community/slider';
 import { spacing, radius, normalizeFont, scale } from '../../../shared/utils/responsive';
 import { useAuthStore } from '../../../store/authStore';
+import { useTranslation } from 'react-i18next';
 
 export const DiscoverySettingScreen = ({ navigation }: any) => {
   const { setProfileStatus } = useAuthStore();
+  const { t } = useTranslation();
   const [distance, setDistance] = useState(50);
   const [ageRange, setAgeRange] = useState([18, 35]);
-  const [showMe, setShowMe] = useState('Everyone');
+  const [showMe, setShowMe] = useState(t('discover.everyone'));
 
   const handleFinish = () => {
     // In a real app, we'd save these to the backend/store
@@ -27,16 +29,16 @@ export const DiscoverySettingScreen = ({ navigation }: any) => {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          <Text style={styles.title}>Discovery Settings</Text>
+          <Text style={styles.title}>{t('setup.discovery_title')}</Text>
           <Text style={styles.subtitle}>
-            Personalize who you want to see. You can change these later in settings.
+            {t('setup.discovery_subtitle')}
           </Text>
 
           {/* Show Me Section */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Show Me</Text>
+            <Text style={styles.sectionTitle}>{t('discover.show_me')}</Text>
             <View style={styles.optionsContainer}>
-              {['Men', 'Women', 'Everyone'].map((option) => (
+              {[t('discover.men'), t('discover.women'), t('discover.everyone')].map((option) => (
                 <TouchableOpacity
                   key={option}
                   style={[styles.optionButton, showMe === option && styles.optionActive]}
@@ -53,7 +55,7 @@ export const DiscoverySettingScreen = ({ navigation }: any) => {
           {/* Distance Section */}
           <View style={styles.section}>
             <View style={styles.row}>
-              <Text style={styles.sectionTitle}>Maximum Distance</Text>
+              <Text style={styles.sectionTitle}>{t('discover.distance_max')}</Text>
               <Text style={styles.valueText}>{distance} km</Text>
             </View>
             <Slider
@@ -72,7 +74,7 @@ export const DiscoverySettingScreen = ({ navigation }: any) => {
           {/* Age Section */}
           <View style={styles.section}>
             <View style={styles.row}>
-              <Text style={styles.sectionTitle}>Age Range</Text>
+              <Text style={styles.sectionTitle}>{t('discover.age_range')}</Text>
               <Text style={styles.valueText}>{ageRange[0]} - {ageRange[1]}</Text>
             </View>
             <View style={styles.ageSliderPlaceholder}>
@@ -88,14 +90,14 @@ export const DiscoverySettingScreen = ({ navigation }: any) => {
                 maximumTrackTintColor="#E5E7EB"
                 thumbTintColor="#F43F5E"
               />
-              <Text style={styles.helperText}>Adjusting upper age limit</Text>
+              <Text style={styles.helperText}>{t('setup.adjust_age')}</Text>
             </View>
           </View>
         </ScrollView>
 
         <View style={styles.footer}>
           <TouchableOpacity style={styles.button} onPress={handleFinish}>
-            <Text style={styles.buttonText}>Enter App</Text>
+            <Text style={styles.buttonText}>{t('setup.enter_app')}</Text>
           </TouchableOpacity>
         </View>
       </View>

@@ -6,8 +6,8 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../../app/navigation/RootNavigator';
 import { profileService } from '../../../services/api/profileService';
-import { Logger } from '../../../shared/utils/logger';
 import { calculateCompletion } from '../../../shared/utils/profileUtils';
+import { useTranslation } from 'react-i18next';
 
 type ProfileNavigation = NativeStackNavigationProp<RootStackParamList>;
 
@@ -33,6 +33,7 @@ function calculateAge(dob?: string) {
 export const ProfileMainScreen = () => {
   const navigation = useNavigation<ProfileNavigation>();
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
   const [profile, setProfile] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -71,10 +72,10 @@ export const ProfileMainScreen = () => {
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         <View style={styles.centered}>
           <Ionicons name="cloud-offline-outline" size={56} color="#D1D5DB" />
-          <Text style={styles.errorTitle}>Profile unavailable</Text>
+          <Text style={styles.errorTitle}>{t('profile.unavailable')}</Text>
           <Text style={styles.errorMessage}>{error || 'No profile data found.'}</Text>
           <TouchableOpacity style={styles.retryButton} onPress={loadProfile} activeOpacity={0.85}>
-            <Text style={styles.retryText}>Try again</Text>
+            <Text style={styles.retryText}>{t('profile.try_again')}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -83,16 +84,16 @@ export const ProfileMainScreen = () => {
 
   const displayName = profile?.basicInfo?.displayName || 'Your profile';
   const age = calculateAge(profile?.basicInfo?.dob);
-  const occupation = profile?.background?.occupation || 'No occupation set';
-  const location = profile?.locationName || 'No location set';
-  const bio = profile?.bio || 'Add a short bio to help people get to know you.';
+  const occupation = profile?.background?.occupation || t('common.no_occupation_set', 'No occupation set');
+  const location = profile?.locationName || t('common.no_location_set', 'No location set');
+  const bio = profile?.bio || t('profile.no_bio');
   const photos = profile?.photos || [];
 
   const getGenderDisplay = (val: any) => {
-    if (val === 1) return 'Male';
-    if (val === 2) return 'Female';
-    if (val === 3) return 'Other';
-    return val || 'Not set';
+    if (val === 1) return t('discover.men');
+    if (val === 2) return t('discover.women');
+    if (val === 3) return t('common.other', 'Other');
+    return val || t('common.not_set', 'Not set');
   };
 
   return (
@@ -123,12 +124,49 @@ export const ProfileMainScreen = () => {
 
         <View style={styles.completionContainer}>
           <View style={styles.completionHeader}>
+            <Text style={styles.completionTitle}>{t('profile.completion')}</Text>
             <Text style={styles.completionValue}>{calculateCompletion(profile)}%</Text>
           </View>
           <View style={styles.progressBarBg}>
             <View style={[styles.progressBarFill, { width: `${calculateCompletion(profile)}%` }]} />
           </View>
         </View>
+
+        <TouchableOpacity 
+          style={styles.verificationCard} 
+          onPress={() => navigation.navigate('IdentityVerification' as any)}
+          activeOpacity={0.85}
+        >
+          <View style={styles.verificationIconBg}>
+            <Ionicons 
+              name={profile.isVerified ? "checkmark-circle" : "shield-checkmark-outline"} 
+              size={24} 
+              color={profile.isVerified ? "#10B981" : "#6B7280"} 
+            />
+          </View>
+          <View style={{ flex: 1, marginLeft: 12 }}>
+            <Text style={styles.verificationTitle}>{t('verification.title')}</Text>
+            <Text style={[styles.verificationStatus, profile.isVerified && { color: '#10B981' }]}>
+              {profile.isVerified ? t('verification.status.approved') : t('verification.status.pending')}
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color="#D1D5DB" />
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={styles.verificationCard} 
+          onPress={() => navigation.navigate('AppFeedback')}
+          activeOpacity={0.85}
+        >
+          <View style={[styles.verificationIconBg, { backgroundColor: '#F0F9FF' }]}>
+            <Ionicons name="star-outline" size={24} color="#0EA5E9" />
+          </View>
+          <View style={{ flex: 1, marginLeft: 12 }}>
+            <Text style={styles.verificationTitle}>{t('profile.rate_app', 'Rate the App')}</Text>
+            <Text style={styles.verificationStatus}>{t('profile.share_feedback', 'Help us improve your experience')}</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color="#D1D5DB" />
+        </TouchableOpacity>
 
         <View style={styles.card}>
           <View style={styles.nameRow}>
@@ -137,7 +175,7 @@ export const ProfileMainScreen = () => {
               <Text style={styles.subText}>{occupation}</Text>
             </View>
             <TouchableOpacity style={styles.editChip} onPress={() => navigation.navigate('EditProfile')} activeOpacity={0.85}>
-              <Text style={styles.editChipText}>Edit</Text>
+              <Text style={styles.editChipText}>{t('profile.edit')}</Text>
               <Ionicons name="chevron-forward" size={14} color="#EE3F57" />
             </TouchableOpacity>
           </View>
@@ -148,15 +186,15 @@ export const ProfileMainScreen = () => {
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>About</Text>
+            <Text style={styles.sectionTitle}>{t('common.about')}</Text>
             <Text style={styles.bodyText}>{bio}</Text>
           </View>
 
           <View style={styles.section}>
             <View style={styles.sectionHeaderRow}>
-              <Text style={styles.sectionTitle}>Personal Info</Text>
+              <Text style={styles.sectionTitle}>{t('profile.personal_info')}</Text>
               <TouchableOpacity onPress={() => navigation.navigate('EditProfile')} activeOpacity={0.85}>
-                <Text style={styles.linkText}>Edit</Text>
+                <Text style={styles.linkText}>{t('profile.edit')}</Text>
               </TouchableOpacity>
             </View>
             <View style={styles.infoGrid}>
@@ -177,7 +215,7 @@ export const ProfileMainScreen = () => {
               {profile.interestedIn && (
                 <View style={styles.infoItem}>
                   <Ionicons name="heart-outline" size={16} color="#6B7280" />
-                  <Text style={styles.infoText}>Interested in: {profile.interestedIn}</Text>
+                  <Text style={styles.infoText}>{t('profile.interested_in')}: {profile.interestedIn}</Text>
                 </View>
               )}
             </View>
@@ -185,9 +223,9 @@ export const ProfileMainScreen = () => {
 
           <View style={styles.section}>
             <View style={styles.sectionHeaderRow}>
-              <Text style={styles.sectionTitle}>Lifestyle</Text>
+              <Text style={styles.sectionTitle}>{t('profile.lifestyle')}</Text>
               <TouchableOpacity onPress={() => navigation.navigate('EditProfile')} activeOpacity={0.85}>
-                <Text style={styles.linkText}>Edit</Text>
+                <Text style={styles.linkText}>{t('profile.edit')}</Text>
               </TouchableOpacity>
             </View>
             <View style={styles.tagContainer}>
@@ -221,9 +259,9 @@ export const ProfileMainScreen = () => {
           {(profile.lifestyle?.hobbies?.length > 0 || profile.lifestyle?.interests?.length > 0) && (
             <View style={styles.section}>
               <View style={styles.sectionHeaderRow}>
-                <Text style={styles.sectionTitle}>Interests & Hobbies</Text>
+                <Text style={styles.sectionTitle}>{t('profile.interests_hobbies')}</Text>
                 <TouchableOpacity onPress={() => navigation.navigate('EditProfile')} activeOpacity={0.85}>
-                  <Text style={styles.linkText}>Edit</Text>
+                  <Text style={styles.linkText}>{t('profile.edit')}</Text>
                 </TouchableOpacity>
               </View>
               <View style={styles.tagContainer}>
@@ -244,9 +282,9 @@ export const ProfileMainScreen = () => {
           {(profile.datingStyle?.freeTimePrefer?.length > 0 || profile.datingStyle?.dateStyle?.length > 0) && (
             <View style={styles.section}>
               <View style={styles.sectionHeaderRow}>
-                <Text style={styles.sectionTitle}>Dating Style</Text>
+                <Text style={styles.sectionTitle}>{t('profile.dating_style')}</Text>
                 <TouchableOpacity onPress={() => navigation.navigate('EditProfile')} activeOpacity={0.85}>
-                  <Text style={styles.linkText}>Edit</Text>
+                  <Text style={styles.linkText}>{t('profile.edit')}</Text>
                 </TouchableOpacity>
               </View>
               <View style={styles.tagContainer}>
@@ -266,9 +304,9 @@ export const ProfileMainScreen = () => {
 
           <View style={styles.section}>
             <View style={styles.sectionHeaderRow}>
-              <Text style={styles.sectionTitle}>Gallery</Text>
+              <Text style={styles.sectionTitle}>{t('common.gallery')}</Text>
               <TouchableOpacity onPress={() => navigation.navigate('EditGallery')} activeOpacity={0.85}>
-                <Text style={styles.linkText}>Edit gallery</Text>
+                <Text style={styles.linkText}>{t('profile.edit_gallery')}</Text>
               </TouchableOpacity>
             </View>
 
@@ -295,14 +333,14 @@ export const ProfileMainScreen = () => {
                   })}
                   {showAllPhotos && photos.length > 3 && (
                     <TouchableOpacity style={styles.collapseButton} onPress={() => setShowAllPhotos(false)}>
-                      <Text style={styles.collapseText}>Show less</Text>
+                      <Text style={styles.collapseText}>{t('profile.show_less')}</Text>
                     </TouchableOpacity>
                   )}
                 </>
               ) : (
                 <View style={styles.emptyGallery}>
                   <Ionicons name="images-outline" size={20} color="#D1D5DB" />
-                  <Text style={styles.emptyGalleryText}>No photos yet</Text>
+                  <Text style={styles.emptyGalleryText}>{t('profile.no_photos')}</Text>
                 </View>
               )}
             </View>
@@ -524,6 +562,38 @@ const styles = StyleSheet.create({
     height: '100%',
     backgroundColor: '#EE3F57',
     borderRadius: 4,
+  },
+  verificationCard: {
+    marginTop: 12,
+    marginHorizontal: 12,
+    backgroundColor: '#FFFFFF',
+    padding: 16,
+    borderRadius: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 1,
+  },
+  verificationIconBg: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: '#F9FAFB',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  verificationTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  verificationStatus: {
+    fontSize: 13,
+    color: '#6B7280',
+    marginTop: 2,
   },
   emptyGallery: {
     width: '100%',

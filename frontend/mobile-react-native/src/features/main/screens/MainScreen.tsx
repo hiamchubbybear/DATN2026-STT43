@@ -3,6 +3,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { StyleSheet, Text, View, TouchableOpacity, Dimensions, Image } from 'react-native';
 import Svg, { Path, Circle, Defs, LinearGradient, Stop, Rect } from 'react-native-svg';
 import { normalizeFont, radius, scale, spacing, verticalScale } from '../../../shared/utils/responsive';
+import { useTranslation } from 'react-i18next';
 
 const { width } = Dimensions.get('window');
 
@@ -80,6 +81,7 @@ const SvgGradientOverlay = () => (
 
 export const MainScreen = () => {
   const [showOnboarding, setShowOnboarding] = useState(true);
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
 
   if (showOnboarding) {
@@ -87,7 +89,7 @@ export const MainScreen = () => {
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.header}>
           <View style={styles.placeholder} />
-          <Text style={styles.headerTitle}>Discover</Text>
+          <Text style={styles.headerTitle}>{t('onboarding.title')}</Text>
           <TouchableOpacity style={styles.iconButton}>
             <SvgFilter />
           </TouchableOpacity>
@@ -95,13 +97,13 @@ export const MainScreen = () => {
 
         <View style={styles.content}>
           <Text style={styles.introText}>
-            Get ready to find your perfect match with these simple gestures.
+            {t('onboarding.intro')}
           </Text>
 
           <View style={styles.gestureSection}>
             <SvgDoubleUp />
-            <Text style={styles.swipeUpTitle}>Swipe Up to Reject</Text>
-            <Text style={styles.noteText}>NOTE: AFTER REJECTING, YOU CANNOT UNDO THIS ACTION.</Text>
+            <Text style={styles.swipeUpTitle}>{t('onboarding.swipe_up_title')}</Text>
+            <Text style={styles.noteText}>{t('onboarding.swipe_up_note')}</Text>
           </View>
 
           <View style={styles.blobContainer}>
@@ -110,8 +112,8 @@ export const MainScreen = () => {
           </View>
 
           <View style={styles.gestureSection}>
-            <Text style={styles.swipeDownTitle}>Swipe Down to Match</Text>
-            <Text style={styles.noteText}>INSTANT CONNECTION BEGINS HERE.</Text>
+            <Text style={styles.swipeDownTitle}>{t('onboarding.swipe_down_title')}</Text>
+            <Text style={styles.noteText}>{t('onboarding.swipe_down_note')}</Text>
             <View style={styles.heartContainer}>
               <SvgHeart />
               <View style={styles.chevronDownWrap}>
@@ -123,9 +125,9 @@ export const MainScreen = () => {
 
         <View style={styles.footer}>
           <TouchableOpacity style={styles.primaryButton} onPress={() => setShowOnboarding(false)}>
-            <Text style={styles.primaryButtonText}>Got it! Start Swiping</Text>
+            <Text style={styles.primaryButtonText}>{t('onboarding.got_it')}</Text>
           </TouchableOpacity>
-          <Text style={styles.stepText}>STEP 1 OF 1 • COMPLETE</Text>
+          <Text style={styles.stepText}>{t('onboarding.step_complete')}</Text>
         </View>
       </SafeAreaView>
     );
@@ -137,8 +139,8 @@ export const MainScreen = () => {
       <View style={styles.header}>
         <View style={styles.placeholder} />
         <View style={styles.titleWrap}>
-          <Text style={styles.headerTitle}>Discover</Text>
-          <Text style={styles.headerSubtitle}>Chicago, Il</Text>
+          <Text style={styles.headerTitle}>{t('discover.title')}</Text>
+          <Text style={styles.headerSubtitle}>{t('common.unknown_location', 'Unknown Location')}</Text>
         </View>
         <TouchableOpacity style={styles.iconButton}>
           <SvgFilter />

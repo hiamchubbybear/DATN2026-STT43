@@ -21,6 +21,8 @@ import { EditProfileScreen } from '../../features/main/screens/EditProfileScreen
 import { EditGalleryScreen } from '../../features/main/screens/EditGalleryScreen';
 import { UserProfileScreen } from '../../features/main/screens/UserProfileScreen';
 import { ChatRoomScreen } from '../../features/chat/screens/ChatRoomScreen';
+import { IdentityVerificationScreen } from '../../features/main/screens/IdentityVerificationScreen';
+import { AppFeedbackScreen } from '../../features/main/screens/AppFeedbackScreen';
 
 export type RootStackParamList = {
   Onboarding: undefined;
@@ -41,10 +43,15 @@ export type RootStackParamList = {
   EditProfile: undefined;
   EditGallery: undefined;
   UserProfile: { userId: string };
+  ReportHistory: undefined;
+  IdentityVerification: undefined;
+  AppFeedback: undefined;
   ChatRoom: { conversationId: string; receiverId: string; receiverName: string; receiverAvatar?: string };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
+
+import { ReportHistoryScreen } from '../../features/main/screens/ReportHistoryScreen';
 
 export const RootNavigator = () => {
   const { isAuthenticated, isProfileCompleted } = useAuthStore();
@@ -75,6 +82,8 @@ export const RootNavigator = () => {
             <Stack.Screen name="ProfileSetup" component={ProfileSetupScreen} />
             <Stack.Screen name="Permission" component={PermissionScreen} />
             <Stack.Screen name="DiscoverySetting" component={DiscoverySettingScreen} />
+            <Stack.Screen name="IdentityVerification" component={IdentityVerificationScreen} />
+            <Stack.Screen name="AppFeedback" component={AppFeedbackScreen} />
           </>
         ) : (
           // App Stack
@@ -103,6 +112,14 @@ export const RootNavigator = () => {
             <Stack.Screen 
               name="UserProfile" 
               component={UserProfileScreen} 
+            />
+            <Stack.Screen 
+              name="ReportHistory" 
+              component={ReportHistoryScreen} 
+            />
+            <Stack.Screen 
+              name="IdentityVerification" 
+              component={IdentityVerificationScreen} 
             />
           </>
         )}

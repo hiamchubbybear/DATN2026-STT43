@@ -9,6 +9,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { authService } from '../../../services/api/authService';
 import { normalizeFont, radius, scale, spacing, verticalScale } from '../../../shared/utils/responsive';
 import { useToast } from '../../../shared/components/ToastProvider';
+import { useTranslation } from 'react-i18next';
 
 export default function EmailSignUpDetailsScreen() {
   const [email, setEmail] = useState('');
@@ -20,12 +21,13 @@ export default function EmailSignUpDetailsScreen() {
   
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { showToast } = useToast();
+  const { t } = useTranslation();
 
   const handleSignUp = async () => {
     if (!email || !password || !confirmPassword) {
       showToast({
-        title: 'Thiếu thông tin',
-        message: 'Vui lòng điền đầy đủ các trường',
+        title: t('auth.missing_fields'),
+        message: t('auth.missing_fields_desc'),
         type: 'error'
       });
       return;
@@ -33,19 +35,19 @@ export default function EmailSignUpDetailsScreen() {
 
     if (password !== confirmPassword) {
       showToast({
-        title: 'Lỗi xác nhận',
-        message: 'Mật khẩu xác nhận không trùng khớp',
+        title: t('auth.password_mismatch'),
+        message: t('auth.password_mismatch_desc'),
         type: 'error'
       });
       return;
     }
 
-    // Password validation: at least 8 chars, at least one letter and one number
-    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
+    // Password validation: at least 8 chars, at least one uppercase letter and one number
+    const passwordRegex = /^(?=.*[A-Z])(?=.*\d).{8,}$/;
     if (!passwordRegex.test(password)) {
       showToast({
-        title: 'Mật khẩu yếu',
-        message: 'Mật khẩu phải có ít nhất 8 ký tự, bao gồm cả chữ cái và chữ số.',
+        title: t('auth.weak_password'),
+        message: t('auth.weak_password_desc'),
         type: 'error'
       });
       return;
@@ -58,8 +60,8 @@ export default function EmailSignUpDetailsScreen() {
       navigation.navigate('EmailSignUpVerify', { email });
     } catch (error: any) {
       showToast({
-        title: 'Đăng ký thất bại',
-        message: error.message || 'Đã có lỗi xảy ra',
+        title: t('common.error'),
+        message: error.message || t('auth.signUp_failed', 'Registration failed'),
         type: 'error'
       });
     } finally {
@@ -83,9 +85,9 @@ export default function EmailSignUpDetailsScreen() {
           </View>
           
           <View style={styles.content}>
-            <Text style={styles.title}>Create Account</Text>
+            <Text style={styles.title}>{t('auth.signUp_title')}</Text>
             <Text style={styles.description}>
-              Join our community today. Enter your details to get started.
+              {t('auth.signUp_details_desc')}
             </Text>
 
             <View style={styles.inputContainer}>
@@ -95,7 +97,7 @@ export default function EmailSignUpDetailsScreen() {
               </Svg>
               <TextInput
                 style={styles.input}
-                placeholder="Email address"
+                placeholder={t('auth.email')}
                 placeholderTextColor="#9CA3AF"
                 value={email}
                 onChangeText={setEmail}
@@ -111,7 +113,7 @@ export default function EmailSignUpDetailsScreen() {
               </Svg>
               <TextInput
                 style={styles.input}
-                placeholder="Password"
+                placeholder={t('auth.password')}
                 placeholderTextColor="#9CA3AF"
                 value={password}
                 onChangeText={setPassword}
@@ -130,7 +132,7 @@ export default function EmailSignUpDetailsScreen() {
               </Svg>
               <TextInput
                 style={styles.input}
-                placeholder="Confirm Password"
+                placeholder={t('auth.confirmPassword')}
                 placeholderTextColor="#9CA3AF"
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
@@ -149,7 +151,7 @@ export default function EmailSignUpDetailsScreen() {
             activeOpacity={0.8}
             disabled={!email || !password || !confirmPassword || loading}
           >
-            {loading ? <ActivityIndicator color="#FFF" /> : <Text style={styles.buttonText}>Sign Up</Text>}
+            {loading ? <ActivityIndicator color="#FFF" /> : <Text style={styles.buttonText}>{t('auth.signUp_btn')}</Text>}
           </TouchableOpacity>
         </KeyboardAvoidingView>
       </TouchableWithoutFeedback>

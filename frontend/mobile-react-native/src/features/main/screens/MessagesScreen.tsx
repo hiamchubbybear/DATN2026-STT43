@@ -8,11 +8,13 @@ import { RootStackParamList } from '../../../app/navigation/RootNavigator';
 import { apiClient } from '../../../services/api/apiClient';
 import { Logger } from '../../../shared/utils/logger';
 import { normalizeFont, radius, scale, spacing, verticalScale } from '../../../shared/utils/responsive';
+import { useTranslation } from 'react-i18next';
 
 const defaultAvatar = require('../../../../assets/images/anh1.jpg');
 
 export const MessagesScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { t } = useTranslation();
   const [conversations, setConversations] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -60,14 +62,14 @@ export const MessagesScreen = () => {
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.title}>Messages</Text>
+        <Text style={styles.title}>{t('chat.title')}</Text>
 
         <View style={styles.searchWrap}>
           <Ionicons name="search-outline" size={normalizeFont(16)} color="#A1A1AA" />
-          <Text style={styles.searchText}>Search</Text>
+          <Text style={styles.searchText}>{t('chat.search')}</Text>
         </View>
 
-        <Text style={[styles.sectionTitle, styles.messagesTitle]}>Recent Chats</Text>
+        <Text style={[styles.sectionTitle, styles.messagesTitle]}>{t('chat.recent_chats')}</Text>
 
         {conversations.length > 0 ? (
           conversations.map((conv) => (
@@ -87,7 +89,7 @@ export const MessagesScreen = () => {
               />
               <View style={styles.messageMeta}>
                 <Text style={styles.name}>{conv.otherParticipantName}</Text>
-                <Text style={styles.preview} numberOfLines={1}>{conv.lastMessage || 'No messages yet'}</Text>
+                <Text style={styles.preview} numberOfLines={1}>{conv.lastMessage || t('chat.no_messages')}</Text>
               </View>
               <View style={styles.trailing}>
                 <Text style={styles.time}>
@@ -98,9 +100,9 @@ export const MessagesScreen = () => {
           ))
         ) : (
           <View style={styles.emptyState}>
-            <Text style={styles.emptyText}>Click a person above to start testing chat!</Text>
+            <Text style={styles.emptyText}>{t('chat.empty_state')}</Text>
             <Text style={[styles.emptyText, { marginTop: spacing(8), fontSize: normalizeFont(12) }]}>
-              Pull down to refresh and find new users
+              {t('chat.pull_to_refresh')}
             </Text>
           </View>
         )}

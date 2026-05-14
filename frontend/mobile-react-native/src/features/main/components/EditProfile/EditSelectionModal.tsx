@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 
 interface EditSelectionModalProps {
   visible: boolean;
@@ -21,6 +22,7 @@ export const EditSelectionModal = ({
   onSelect, 
   onClose 
 }: EditSelectionModalProps) => {
+  const { t } = useTranslation();
   
   const isSelected = (option: string) => {
     if (Array.isArray(selectedValues)) {
@@ -63,7 +65,7 @@ export const EditSelectionModal = ({
 
         {isMultiSelect && (
           <TouchableOpacity style={styles.modalDoneButton} onPress={onClose}>
-            <Text style={styles.modalDoneText}>Done</Text>
+            <Text style={styles.modalDoneText}>{t('common.done')}</Text>
           </TouchableOpacity>
         )}
       </View>

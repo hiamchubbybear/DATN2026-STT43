@@ -7,6 +7,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../../app/navigation/RootNavigator';
 import { apiClient } from '../../../services/api/apiClient';
 import { normalizeFont, radius, scale, spacing, verticalScale } from '../../../shared/utils/responsive';
+import { useTranslation } from 'react-i18next';
 
 import { swipeService } from '../../../services/api/swipeService';
 import { Logger } from '../../../shared/utils/logger';
@@ -15,6 +16,7 @@ const defaultAvatar = require('../../../../assets/images/anh2.jpg');
 
 export const MatchesScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { t } = useTranslation();
   const [matches, setMatches] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [refreshing, setRefreshing] = React.useState(false);
@@ -48,9 +50,9 @@ export const MatchesScreen = () => {
     yesterday.setDate(yesterday.getDate() - 1);
 
     const groups: { [key: string]: any[] } = {
-      'Today': [],
-      'Yesterday': [],
-      'Earlier': []
+      [t('common.today')]: [],
+      [t('common.yesterday')]: [],
+      [t('common.earlier')]: []
     };
 
     matches.forEach(m => {
@@ -58,11 +60,11 @@ export const MatchesScreen = () => {
       matchDate.setHours(0, 0, 0, 0);
 
       if (matchDate.getTime() === today.getTime()) {
-        groups['Today'].push(m);
+        groups[t('common.today')].push(m);
       } else if (matchDate.getTime() === yesterday.getTime()) {
-        groups['Yesterday'].push(m);
+        groups[t('common.yesterday')].push(m);
       } else {
-        groups['Earlier'].push(m);
+        groups[t('common.earlier')].push(m);
       }
     });
 
@@ -156,8 +158,8 @@ export const MatchesScreen = () => {
         ListHeaderComponent={
           <View style={styles.headerRow}>
             <View>
-              <Text style={styles.title}>Matches</Text>
-              <Text style={styles.subtitle}>This is a list of people who have liked you and your matches.</Text>
+              <Text style={styles.title}>{t('matches.title')}</Text>
+              <Text style={styles.subtitle}>{t('matches.subtitle')}</Text>
             </View>
             <TouchableOpacity style={styles.filterBtn} activeOpacity={0.85}>
               <Ionicons name="options-outline" size={normalizeFont(18)} color="#EE3F57" />

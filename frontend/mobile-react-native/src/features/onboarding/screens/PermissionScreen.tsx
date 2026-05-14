@@ -15,6 +15,7 @@ import * as Location from 'expo-location';
 import Svg, { Path, Circle } from 'react-native-svg';
 import { spacing, radius, normalizeFont, scale } from '../../../shared/utils/responsive';
 import { useAuthStore } from '../../../store/authStore';
+import { useTranslation } from 'react-i18next';
 
 const IconLocation = () => (
   <View style={[styles.iconContainer, { backgroundColor: '#DBEAFE' }]}>
@@ -35,6 +36,7 @@ const IconBell = () => (
 );
 
 export const PermissionScreen = ({ navigation }: any) => {
+  const { t } = useTranslation();
   const [locationStatus, setLocationStatus] = useState<string>('undetermined');
   const [notificationStatus, setNotificationStatus] = useState<string>('undetermined');
   const [loading, setLoading] = useState(false);
@@ -82,18 +84,18 @@ export const PermissionScreen = ({ navigation }: any) => {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          <Text style={styles.title}>Enable Permissions</Text>
+          <Text style={styles.title}>{t('setup.permission_title')}</Text>
           <Text style={styles.subtitle}>
-            To give you the best experience, we need access to a few things.
+            {t('setup.permission_subtitle')}
           </Text>
 
           {/* Location Permission */}
           <View style={styles.permissionItem}>
             <IconLocation />
             <View style={styles.permissionTextContainer}>
-              <Text style={styles.permissionTitle}>Location Services</Text>
+              <Text style={styles.permissionTitle}>{t('setup.location_title')}</Text>
               <Text style={styles.permissionDescription}>
-                Used to find matches near you and show your distance.
+                {t('setup.location_desc')}
               </Text>
             </View>
             <TouchableOpacity 
@@ -101,7 +103,7 @@ export const PermissionScreen = ({ navigation }: any) => {
               onPress={requestLocation}
             >
               <Text style={[styles.statusText, locationStatus === 'granted' && styles.statusTextGranted]}>
-                {locationStatus === 'granted' ? 'Enabled' : 'Enable'}
+                {locationStatus === 'granted' ? t('setup.enabled') : t('setup.enable')}
               </Text>
             </TouchableOpacity>
           </View>
@@ -110,9 +112,9 @@ export const PermissionScreen = ({ navigation }: any) => {
           <View style={styles.permissionItem}>
             <IconBell />
             <View style={styles.permissionTextContainer}>
-              <Text style={styles.permissionTitle}>Notifications</Text>
+              <Text style={styles.permissionTitle}>{t('setup.notif_title')}</Text>
               <Text style={styles.permissionDescription}>
-                Get notified when you have a new match or message.
+                {t('setup.notif_desc')}
               </Text>
             </View>
             <TouchableOpacity 
@@ -120,7 +122,7 @@ export const PermissionScreen = ({ navigation }: any) => {
               onPress={requestNotifications}
             >
               <Text style={[styles.statusText, notificationStatus === 'granted' && styles.statusTextGranted]}>
-                {notificationStatus === 'granted' ? 'Enabled' : 'Enable'}
+                {notificationStatus === 'granted' ? t('setup.enabled') : t('setup.enable')}
               </Text>
             </TouchableOpacity>
           </View>
@@ -131,10 +133,10 @@ export const PermissionScreen = ({ navigation }: any) => {
             style={[styles.button, !isAllGranted && styles.buttonDisabled]} 
             onPress={handleContinue}
           >
-            <Text style={styles.buttonText}>Continue</Text>
+            <Text style={styles.buttonText}>{t('common.continue')}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.maybeLater} onPress={handleContinue}>
-            <Text style={styles.maybeLaterText}>Maybe Later</Text>
+            <Text style={styles.maybeLaterText}>{t('setup.maybe_later')}</Text>
           </TouchableOpacity>
         </View>
       </View>

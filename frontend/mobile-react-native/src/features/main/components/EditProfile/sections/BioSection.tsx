@@ -2,6 +2,8 @@ import React from 'react';
 import { Text, TextInput, StyleSheet, View } from 'react-native';
 import { EditProfileSection } from '../EditProfileSection';
 
+import { useTranslation } from 'react-i18next';
+
 interface BioSectionProps {
   bio: string;
   setBio: (val: string) => void;
@@ -10,14 +12,15 @@ interface BioSectionProps {
 }
 
 export const BioSection = ({ bio, setBio, onSave, isSaving }: BioSectionProps) => {
+  const { t } = useTranslation();
   return (
-    <EditProfileSection title="About Me" onSave={onSave} isSaving={isSaving}>
-      <Text style={styles.label}>Bio</Text>
+    <EditProfileSection title={t('profile_edit.about_me')} onSave={onSave} isSaving={isSaving}>
+      <Text style={styles.label}>{t('profile_edit.bio_label')}</Text>
       <TextInput 
         style={[styles.input, styles.textArea]} 
         value={bio} 
         onChangeText={setBio} 
-        placeholder="Tell us about yourself..." 
+        placeholder={t('profile_edit.bio_placeholder')} 
         placeholderTextColor="#A1A1AA"
         multiline
         numberOfLines={4}

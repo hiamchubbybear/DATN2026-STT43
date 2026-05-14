@@ -9,6 +9,7 @@ import { apiClient } from '../../../services/api/apiClient';
 import { chatService } from '../../../services/api/chatService';
 import { useAuthStore } from '../../../store/authStore';
 import { useToast } from '../../../shared/components/ToastProvider';
+import { UserReportModal } from '../../../shared/components/UserReportModal';
 import Svg, { Path, Circle, Rect } from 'react-native-svg';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ChatRoom'>;
@@ -74,6 +75,7 @@ export const ChatRoomScreen: React.FC<Props> = ({ route, navigation }) => {
   
   const [inputText, setInputText] = useState('');
   const [isMenuVisible, setIsMenuVisible] = useState(false);
+  const [isReportModalVisible, setIsReportModalVisible] = useState(false);
   const flatListRef = useRef<FlatList>(null);
 
   useEffect(() => {
@@ -98,7 +100,8 @@ export const ChatRoomScreen: React.FC<Props> = ({ route, navigation }) => {
           timestamp: msg.createdAt || msg.timestamp || new Date().toISOString(),
           isDelivered: true,
         }));
-        useChatStore.getState().setMessages(conversationId, mappedMessages);
+        // API returns newest first, we want oldest first in store
+        useChatStore.getState().setMessages(conversationId, mappedMessages.reverse());
       }
     } catch (error) {
       console.error('Failed to fetch chat history:', error);
@@ -170,11 +173,7 @@ export const ChatRoomScreen: React.FC<Props> = ({ route, navigation }) => {
 
   const handleReport = () => {
     setIsMenuVisible(false);
-    Alert.alert(
-      'Báo cáo người dùng',
-      'Cảm ơn bạn đã báo cáo. Chúng tôi sẽ xem xét nội dung này sớm nhất có thể.',
-      [{ text: 'OK' }]
-    );
+    setIsReportModalVisible(true);
   };
 
   const handleViewProfile = () => {
@@ -184,16 +183,18 @@ export const ChatRoomScreen: React.FC<Props> = ({ route, navigation }) => {
 
   const renderMessage = ({ item, index }: { item: any, index: number }) => {
     const isMe = item.senderId === user?.id || item.senderId === 'me';
+    const displayMessages = [...messages].reverse();
     
-    // Check if we need to show the date separator (if first message or different day from previous)
+    // With inverted, displayMessages is [newest, ..., oldest]
+    // showDateSeparator if it's the last item or different day from the next (older) one
     let showDateSeparator = false;
-    if (index === 0) {
+    if (index === displayMessages.length - 1) {
       showDateSeparator = true;
     } else {
-      const prevMsg = messages[index - 1];
-      const prevDate = new Date(prevMsg.timestamp).toDateString();
+      const nextMsg = displayMessages[index + 1];
+      const nextDate = new Date(nextMsg.timestamp).toDateString();
       const currDate = new Date(item.timestamp).toDateString();
-      if (prevDate !== currDate) showDateSeparator = true;
+      if (nextDate !== currDate) showDateSeparator = true;
     }
 
     return (
@@ -201,7 +202,9 @@ export const ChatRoomScreen: React.FC<Props> = ({ route, navigation }) => {
         {showDateSeparator && (
           <View style={styles.dateSeparator}>
             <View style={styles.dateLine} />
-            <Text style={styles.dateText}>Today</Text>
+            <Text style={styles.dateText}>
+                {new Date(item.timestamp).toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'short' })}
+            </Text>
             <View style={styles.dateLine} />
           </View>
         )}
@@ -295,12 +298,11 @@ export const ChatRoomScreen: React.FC<Props> = ({ route, navigation }) => {
       >
         <FlatList
           ref={flatListRef}
-          data={messages}
+          data={[...messages].reverse()}
+          inverted={true}
           keyExtractor={(item) => item.id}
           renderItem={renderMessage}
           contentContainerStyle={styles.messageList}
-          onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-          onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })}
           showsVerticalScrollIndicator={false}
         />
 
@@ -327,6 +329,20 @@ export const ChatRoomScreen: React.FC<Props> = ({ route, navigation }) => {
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
+
+      <UserReportModal 
+        visible={isReportModalVisible}
+        targetUserId={receiverId}
+        targetUserName={receiverName}
+        onClose={() => setIsReportModalVisible(false)}
+        onSuccess={() => {
+          showToast({
+            title: 'Đã gửi báo cáo',
+            message: 'Cảm ơn bạn đã giúp cộng đồng an toàn hơn.',
+            type: 'success'
+          });
+        }}
+      />
     </SafeAreaView>
   );
 };

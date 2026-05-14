@@ -8,6 +8,7 @@ import Svg, { Path } from 'react-native-svg';
 import { authService } from '../../../../services/api/authService';
 import { useToast } from '../../../../shared/components/ToastProvider';
 import { ActivityIndicator } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { normalizeFont, radius, scale, spacing, verticalScale } from '../../../../shared/utils/responsive';
 
 const { width } = Dimensions.get('window');
@@ -17,6 +18,7 @@ export default function ForgotPasswordVerifyScreen() {
   const { email } = route.params;
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { showToast } = useToast();
+  const { t } = useTranslation();
   
   const [code, setCode] = useState<string>('');
   const [timer, setTimer] = useState(42);
@@ -40,8 +42,8 @@ export default function ForgotPasswordVerifyScreen() {
         navigation.navigate('ResetPassword', { email, token: newCode });
       } catch (error: any) {
         showToast({
-          title: 'Xác thực thất bại',
-          message: error.message || 'Mã xác thực không hợp lệ hoặc đã hết hạn',
+          title: t('auth.verify_failed'),
+          message: error.message || t('auth.invalid_code'),
           type: 'error'
         });
         setCode(''); // Clear code on failure
@@ -99,7 +101,7 @@ export default function ForgotPasswordVerifyScreen() {
         <View style={styles.content}>
           <Text style={styles.timerTitle}>{formatTime(timer)}</Text>
           <Text style={styles.description}>
-            Enter the 6-character code sent to your email to reset password
+            {t('auth.verify_reset_desc')}
           </Text>
 
           <View style={styles.codeContainer}>
@@ -122,7 +124,7 @@ export default function ForgotPasswordVerifyScreen() {
           onPress={() => setTimer(42)}
           disabled={loading || timer > 0}
         >
-          {loading ? <ActivityIndicator color="#EF4444" /> : <Text style={[styles.resendText, timer > 0 && styles.resendDisabled]}>Send again</Text>}
+          {loading ? <ActivityIndicator color="#EF4444" /> : <Text style={[styles.resendText, timer > 0 && styles.resendDisabled]}>{t('auth.send_again')}</Text>}
         </TouchableOpacity>
       </View>
     </SafeAreaView>

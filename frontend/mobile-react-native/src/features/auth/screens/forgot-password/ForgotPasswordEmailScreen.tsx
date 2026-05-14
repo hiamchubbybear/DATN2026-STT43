@@ -9,12 +9,14 @@ import { authService } from '../../../../services/api/authService';
 import { useToast } from '../../../../shared/components/ToastProvider';
 import { ActivityIndicator } from 'react-native';
 import { normalizeFont, radius, scale, spacing, verticalScale } from '../../../../shared/utils/responsive';
+import { useTranslation } from 'react-i18next';
 
 export default function ForgotPasswordEmailScreen() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { showToast } = useToast();
+  const { t } = useTranslation();
 
   const handleContinue = async () => {
     if (!email) return;
@@ -24,8 +26,8 @@ export default function ForgotPasswordEmailScreen() {
       navigation.navigate('ForgotPasswordVerify', { email });
     } catch (error: any) {
       showToast({
-        title: 'Lỗi',
-        message: error.message || 'Không thể gửi mã khôi phục',
+        title: t('common.error'),
+        message: error.message || t('auth.send_code_failed'),
         type: 'error'
       });
     } finally {
@@ -49,9 +51,9 @@ export default function ForgotPasswordEmailScreen() {
           </View>
           
           <View style={styles.content}>
-            <Text style={styles.title}>Forgot password?</Text>
+            <Text style={styles.title}>{t('auth.forgotPassword')}</Text>
             <Text style={styles.description}>
-              Enter your email address and we'll send you a 4-digit token to reset your password.
+              {t('auth.forgot_password_desc')}
             </Text>
 
             <View style={styles.inputContainer}>
@@ -77,7 +79,7 @@ export default function ForgotPasswordEmailScreen() {
             onPress={handleContinue}
             disabled={!email || loading}
           >
-            {loading ? <ActivityIndicator color="#FFF" /> : <Text style={styles.buttonText}>Continue</Text>}
+            {loading ? <ActivityIndicator color="#FFF" /> : <Text style={styles.buttonText}>{t('common.continue')}</Text>}
           </TouchableOpacity>
         </KeyboardAvoidingView>
       </TouchableWithoutFeedback>

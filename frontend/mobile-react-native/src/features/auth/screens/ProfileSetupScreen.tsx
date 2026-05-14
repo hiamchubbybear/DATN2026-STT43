@@ -21,6 +21,7 @@ import { useAuthStore } from '../../../store/authStore';
 import { profileService } from '../../../services/api/profileService';
 import { normalizeFont, radius, scale, spacing, verticalScale } from '../../../shared/utils/responsive';
 import { useToast } from '../../../shared/components/ToastProvider';
+import { useTranslation } from 'react-i18next';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const PHOTO_WIDTH = (SCREEN_WIDTH - 64 - 24) / 3; // 3 columns, 32px padding each side, 12px gap between
@@ -49,6 +50,7 @@ export default function ProfileSetupScreen() {
   const navigation = useNavigation<any>();
   const { setProfileStatus, logout } = useAuthStore();
   const { showToast } = useToast();
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1);
   const totalSteps = 10;
@@ -71,24 +73,28 @@ export default function ProfileSetupScreen() {
   const handleNext = async () => {
     if (step === 1 && !displayName.trim()) {
       showToast({
-        title: 'Thông tin bắt buộc',
-        message: 'Vui lòng nhập tên của bạn.',
+        title: t('missing_fields', 'Required Information'),
+        message: t('setup.step1_placeholder'),
         type: 'error'
       });
       return;
     }
-    if (step === 2 && !/^\d{4}-\d{2}-\d{2}$/.test(dob)) {
-      showToast({
-        title: 'Định dạng sai',
-        message: 'Vui lòng nhập ngày sinh theo định dạng YYYY-MM-DD.',
-        type: 'error'
-      });
-      return;
+    if (step === 2) {
+      const dobDate = new Date(dob);
+      const today = new Date();
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(dob) || isNaN(dobDate.getTime()) || dobDate > today) {
+        showToast({
+          title: 'Invalid Date',
+          message: 'Invalid date of birth',
+          type: 'error'
+        });
+        return;
+      }
     }
     if (step === 10 && photos.length === 0) {
       showToast({
-        title: 'Thiếu ảnh',
-        message: 'Vui lòng thêm ít nhất một ảnh đại diện.',
+        title: t('common.error'),
+        message: t('setup.step10_subtitle'),
         type: 'error'
       });
       return;
@@ -195,8 +201,8 @@ export default function ProfileSetupScreen() {
       }
 
       showToast({
-        title: 'Thành công',
-        message: 'Hồ sơ của bạn đã được hoàn tất!',
+        title: 'Success',
+        message: 'Your profile has been completed!',
         type: 'success'
       });
       navigation.replace('Permission');
@@ -216,11 +222,11 @@ export default function ProfileSetupScreen() {
       case 1:
         return (
           <>
-            <Text style={styles.title}>What's your first name?</Text>
-            <Text style={styles.subtitle}>This is how it will appear on your profile. You cannot change it later.</Text>
+            <Text style={styles.title}>{t('setup.step1_title')}</Text>
+            <Text style={styles.subtitle}>{t('setup.step1_subtitle')}</Text>
             <TextInput
               style={styles.inputLarge}
-              placeholder="First Name"
+              placeholder={t('setup.step1_placeholder')}
               value={displayName}
               onChangeText={setDisplayName}
               placeholderTextColor="#9CA3AF"
@@ -231,8 +237,8 @@ export default function ProfileSetupScreen() {
       case 2:
         return (
           <>
-            <Text style={styles.title}>My birthday is</Text>
-            <Text style={styles.subtitle}>Your age will be public.</Text>
+            <Text style={styles.title}>{t('setup.step2_title')}</Text>
+            <Text style={styles.subtitle}>{t('setup.step2_subtitle')}</Text>
             <TextInput
               style={styles.inputLarge}
               placeholder="YYYY-MM-DD"
@@ -257,8 +263,8 @@ export default function ProfileSetupScreen() {
       case 3:
         return (
           <>
-            <Text style={styles.title}>I am a</Text>
-            <Text style={styles.subtitle}>We use this to offer you better matches.</Text>
+            <Text style={styles.title}>{t('setup.step3_title')}</Text>
+            <Text style={styles.subtitle}>{t('setup.step3_subtitle')}</Text>
             <View style={styles.optionsContainer}>
               {['Male', 'Female', 'Other'].map((g) => (
                 <TouchableOpacity
@@ -267,7 +273,7 @@ export default function ProfileSetupScreen() {
                   onPress={() => setGender(g)}
                 >
                   <Text style={[styles.optionText, gender === g && styles.optionTextActive]}>
-                    {g === 'Male' ? 'Man' : g === 'Female' ? 'Woman' : 'Other'}
+                    {g === 'Male' ? t('discover.men') : g === 'Female' ? t('discover.women') : t('common.other')}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -277,8 +283,8 @@ export default function ProfileSetupScreen() {
       case 4:
         return (
           <>
-            <Text style={styles.title}>I am interested in</Text>
-            <Text style={styles.subtitle}>Who do you want to see on Discovery?</Text>
+            <Text style={styles.title}>{t('setup.step4_title')}</Text>
+            <Text style={styles.subtitle}>{t('setup.step4_subtitle')}</Text>
             <View style={styles.optionsContainer}>
               {['Male', 'Female', 'Everyone'].map((g) => (
                 <TouchableOpacity
@@ -287,7 +293,7 @@ export default function ProfileSetupScreen() {
                   onPress={() => setInterestedIn(g)}
                 >
                   <Text style={[styles.optionText, interestedIn === g && styles.optionTextActive]}>
-                    {g === 'Male' ? 'Men' : g === 'Female' ? 'Women' : 'Everyone'}
+                    {g === 'Male' ? t('discover.men') : g === 'Female' ? t('discover.women') : t('common.everyone', 'Everyone')}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -297,10 +303,10 @@ export default function ProfileSetupScreen() {
       case 5:
         return (
           <>
-            <Text style={styles.title}>Background</Text>
-            <Text style={styles.subtitle}>Share what you do and where you studied. (Optional)</Text>
+            <Text style={styles.title}>{t('setup.step5_title')}</Text>
+            <Text style={styles.subtitle}>{t('setup.step5_subtitle')}</Text>
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Occupation / Job Title</Text>
+              <Text style={styles.label}>{t('setup.step5_occupation')}</Text>
               <TextInput
                 style={styles.inputLarge}
                 placeholder="e.g. Software Engineer"
@@ -310,7 +316,7 @@ export default function ProfileSetupScreen() {
               />
             </View>
             <View style={[styles.inputGroup, { marginTop: 24 }]}>
-              <Text style={styles.label}>School / University</Text>
+              <Text style={styles.label}>{t('setup.step5_school')}</Text>
               <TextInput
                 style={styles.inputLarge}
                 placeholder="e.g. Harvard University"
@@ -324,8 +330,8 @@ export default function ProfileSetupScreen() {
       case 6:
         return (
           <>
-            <Text style={styles.title}>Write a Bio</Text>
-            <Text style={styles.subtitle}>A little bit about you. Make it fun! (Optional)</Text>
+            <Text style={styles.title}>{t('setup.step6_title')}</Text>
+            <Text style={styles.subtitle}>{t('setup.step6_subtitle')}</Text>
             <TextInput
               style={[styles.inputLarge, styles.textArea]}
               placeholder="I love going on spontaneous road trips..."
@@ -340,10 +346,10 @@ export default function ProfileSetupScreen() {
       case 7:
         return (
           <>
-            <Text style={styles.title}>Lifestyle</Text>
-            <Text style={styles.subtitle}>Help others get to know your lifestyle better. (Optional)</Text>
+            <Text style={styles.title}>{t('setup.step7_title')}</Text>
+            <Text style={styles.subtitle}>{t('setup.step7_subtitle')}</Text>
             
-            <Text style={styles.sectionLabel}>Do you drink?</Text>
+            <Text style={styles.sectionLabel}>{t('setup.step7_drinking')}</Text>
             <View style={styles.chipsContainer}>
               {['Not for me', 'Socially', 'Frequently', 'Sober'].map((item) => (
                 <TouchableOpacity
@@ -356,7 +362,7 @@ export default function ProfileSetupScreen() {
               ))}
             </View>
 
-            <Text style={[styles.sectionLabel, { marginTop: 20 }]}>Do you smoke?</Text>
+            <Text style={[styles.sectionLabel, { marginTop: 20 }]}>{t('setup.step7_smoking')}</Text>
             <View style={styles.chipsContainer}>
               {['Non-smoker', 'Socially', 'Frequently', 'Trying to quit'].map((item) => (
                 <TouchableOpacity
@@ -369,7 +375,7 @@ export default function ProfileSetupScreen() {
               ))}
             </View>
 
-            <Text style={[styles.sectionLabel, { marginTop: 20 }]}>Social level</Text>
+            <Text style={[styles.sectionLabel, { marginTop: 20 }]}>{t('setup.step7_social')}</Text>
             <View style={styles.chipsContainer}>
               {['Homebody', 'Socially active', 'Party animal'].map((item) => (
                 <TouchableOpacity
@@ -391,8 +397,8 @@ export default function ProfileSetupScreen() {
         ];
         return (
           <>
-            <Text style={styles.title}>Hobbies & Interests</Text>
-            <Text style={styles.subtitle}>What do you like to do in your free time? (Optional)</Text>
+            <Text style={styles.title}>{t('setup.step8_title')}</Text>
+            <Text style={styles.subtitle}>{t('setup.step8_subtitle')}</Text>
             <View style={styles.chipsContainer}>
               {hobbyList.map((h) => {
                 const isActive = hobbies.includes(h);
@@ -416,8 +422,8 @@ export default function ProfileSetupScreen() {
         ];
         return (
           <>
-            <Text style={styles.title}>Languages I know</Text>
-            <Text style={styles.subtitle}>Select the languages you can speak.</Text>
+            <Text style={styles.title}>{t('setup.step9_title')}</Text>
+            <Text style={styles.subtitle}>{t('setup.step9_subtitle')}</Text>
             <View style={styles.chipsContainer}>
               {langList.map((lang) => {
                 const isActive = languages.includes(lang);
@@ -438,8 +444,8 @@ export default function ProfileSetupScreen() {
         const slots = [0, 1, 2, 3, 4, 5];
         return (
           <>
-            <Text style={styles.title}>Add Recent Photos</Text>
-            <Text style={styles.subtitle}>Add at least 1 photo to continue. First photo is your main one.</Text>
+            <Text style={styles.title}>{t('setup.step10_title')}</Text>
+            <Text style={styles.subtitle}>{t('setup.step10_subtitle')}</Text>
             <View style={styles.photoGrid}>
               {slots.map((index) => {
                 const isUploaded = index < photos.length;
@@ -493,7 +499,7 @@ export default function ProfileSetupScreen() {
           </View>
           {isOptionalStep ? (
             <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
-              <Text style={styles.skipText}>Skip</Text>
+              <Text style={styles.skipText}>{t('setup.skip')}</Text>
             </TouchableOpacity>
           ) : (
             <View style={styles.placeholderButton} />
@@ -515,7 +521,7 @@ export default function ProfileSetupScreen() {
             {loading ? (
               <ActivityIndicator color="#FFFFFF" />
             ) : (
-              <Text style={styles.primaryButtonText}>{step === totalSteps ? 'Complete Profile' : 'Continue'}</Text>
+              <Text style={styles.primaryButtonText}>{step === totalSteps ? t('setup.complete_btn') : t('common.continue')}</Text>
             )}
           </TouchableOpacity>
         </View>

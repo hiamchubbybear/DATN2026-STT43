@@ -16,6 +16,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../../app/navigation/RootNavigator';
 import { chatService } from '../../../services/api/chatService';
+import { useTranslation } from 'react-i18next';
 
 const { width, height } = Dimensions.get('window');
 
@@ -30,6 +31,7 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export const ProfileDetail = ({ profile, onClose, onLike, onDislike }: ProfileDetailProps) => {
   const navigation = useNavigation<NavigationProp>();
+  const { t } = useTranslation();
   const [isMessaging, setIsMessaging] = React.useState(false);
 
   const handleMessage = async () => {
@@ -106,7 +108,7 @@ export const ProfileDetail = ({ profile, onClose, onLike, onDislike }: ProfileDe
                <IconLocation size={14} color="#ff4d6d" />
                <Text style={styles.locationBadgeText}>1 km</Text>
             </View>
-            <Text style={styles.locationText}>{profile.locationName || 'Tân Bình, TP. Hồ Chí Minh'}</Text>
+            <Text style={styles.locationText}>{profile.locationName || t('common.unknown_location', 'Unknown Location')}</Text>
           </View>
 
           {/* Interests/Tags */}
@@ -125,16 +127,16 @@ export const ProfileDetail = ({ profile, onClose, onLike, onDislike }: ProfileDe
 
           {/* Bio */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>About</Text>
-            <Text style={styles.bioText}>{profile.bio || 'Living my best life and exploring the world.'}</Text>
+            <Text style={styles.sectionTitle}>{t('common.about')}</Text>
+            <Text style={styles.bioText}>{profile.bio || t('profile.no_bio', 'Living my best life and exploring the world.')}</Text>
           </View>
 
           {/* Gallery */}
           <View style={styles.gallerySection}>
             <View style={styles.galleryHeader}>
-              <Text style={styles.sectionTitle}>Gallery</Text>
+              <Text style={styles.sectionTitle}>{t('common.gallery')}</Text>
               <TouchableOpacity>
-                <Text style={styles.seeAllText}>See all</Text>
+                <Text style={styles.seeAllText}>{t('common.see_all')}</Text>
               </TouchableOpacity>
             </View>
             <View style={styles.galleryGrid}>
