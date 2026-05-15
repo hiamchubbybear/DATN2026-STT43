@@ -18,14 +18,20 @@ export const adminApi = {
   login: (email: string, password: string) => 
     api.post('/auth/login', { email, password }),
 
-  getUsers: (params: { search?: string; role?: string; isBanned?: boolean; isVerified?: boolean; gender?: string; page?: number; pageSize?: number }) => 
+  getUsers: (params: { search?: string; status?: 'Active' | 'Suspended' | 'Banned' | 'ShadowBanned'; page?: number; pageSize?: number }) =>
     api.get('/admin/users', { params }),
 
   createUser: (data: any) =>
     api.post('/admin/users', data),
-  
+
   getUserDetails: (userId: string) =>
     api.get(`/admin/users/${userId}`),
+
+  moderateUser: (userId: string, action: 'Ban' | 'Unban' | 'Suspend' | 'ShadowBan' | 'Restore', reason: string, durationDays?: number) =>
+    api.post(`/admin/users/${userId}/moderate`, { action, reason, durationDays }),
+
+  forceLogoutUser: (userId: string) =>
+    api.post(`/admin/users/${userId}/force-logout`),
 
   getHealth: () =>
     api.get('/admin/health'),

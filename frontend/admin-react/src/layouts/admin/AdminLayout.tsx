@@ -116,7 +116,7 @@ export default function AdminLayout({ activeItem, onLogout, onMenuSelect, childr
 
       <main className="px-4 py-6 sm:px-6 lg:px-8">
         <div className="mx-auto w-full max-w-[var(--app-max-width)]">
-          <header className="mb-6 flex flex-col gap-4 rounded-2xl bg-white px-5 py-4 shadow-[0_16px_34px_-24px_rgba(0,0,0,0.2)] md:flex-row md:items-center md:justify-between">
+          <header className="sticky top-0 z-20 mb-6 flex flex-col gap-4 rounded-2xl border border-slate-100/80 bg-white/95 px-5 py-4 shadow-[0_16px_34px_-24px_rgba(0,0,0,0.2)] backdrop-blur-md md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-3">
               <button
                 type="button"
