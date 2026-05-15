@@ -11,6 +11,8 @@ import { useTranslation } from 'react-i18next';
 
 import { swipeService } from '../../../services/api/swipeService';
 import { Logger } from '../../../shared/utils/logger';
+import { useNotificationStore } from '../../../store/notificationStore';
+import { useFocusEffect } from '@react-navigation/native';
 
 const defaultAvatar = require('../../../../assets/images/anh2.jpg');
 
@@ -32,6 +34,14 @@ export const MatchesScreen = () => {
       if (showLoading) setLoading(false);
     }
   }, []);
+
+  const setHasUnreadMatches = useNotificationStore(state => state.setHasUnreadMatches);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      setHasUnreadMatches(false);
+    }, [setHasUnreadMatches])
+  );
 
   React.useEffect(() => {
     fetchData();
@@ -108,7 +118,12 @@ export const MatchesScreen = () => {
             style={styles.cardImage} 
           />
           <View style={styles.overlay}>
-            <Text style={styles.name}>{match.displayName}</Text>
+            <View style={styles.nameRowItem}>
+              <Text style={styles.name} numberOfLines={1}>{match.displayName}</Text>
+              {match.isIdentityVerified && (
+                <Ionicons name="checkmark-circle" size={14} color="#3B82F6" style={{ marginLeft: 4 }} />
+              )}
+            </View>
 
             <View style={styles.iconRow}>
               <View style={styles.roundIconDark}>
@@ -242,6 +257,11 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: normalizeFont(14),
     fontWeight: '700',
+    flexShrink: 1,
+  },
+  nameRowItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   iconRow: {
     marginTop: spacing(8),

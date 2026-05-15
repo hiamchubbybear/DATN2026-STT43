@@ -14,7 +14,8 @@ namespace DoAnTotNghiep.Application.Users.Swipes.GetMatches
         Guid UserId,
         string DisplayName,
         string AvatarUrl,
-        DateTime MatchedAt
+        DateTime MatchedAt,
+        bool IsIdentityVerified
     );
 
     public record GetMatchesQuery(Guid UserId) : IRequest<List<MatchDto>>;
@@ -46,7 +47,8 @@ namespace DoAnTotNghiep.Application.Users.Swipes.GetMatches
                         otherUserId,
                         profile.BasicInfo.DisplayName,
                         profile.Photos.FirstOrDefault(p => p.IsPrimary)?.Url ?? "",
-                        match.MatchedAt
+                        match.MatchedAt,
+                        profile.IsIdentityVerified
                     ));
                 }
             }

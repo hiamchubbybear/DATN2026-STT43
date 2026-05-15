@@ -10,6 +10,7 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -84,6 +85,11 @@ export default function EmailLoginScreen() {
           </View>
 
           <View style={styles.content}>
+            <Image 
+              source={require('../../../../assets/images/logo.png')} 
+              style={styles.logoImage} 
+              resizeMode="contain"
+            />
             <Text style={styles.title}>{t('auth.welcome_back')}</Text>
             <Text style={styles.description}>
               {t('auth.email_login_desc')}
@@ -186,7 +192,13 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingTop: 40,
+    paddingTop: 20,
+  },
+  logoImage: {
+    width: scale(64),
+    height: scale(64),
+    borderRadius: radius(16),
+    marginBottom: spacing(24),
   },
   welcomeContainer: {
     marginBottom: 44,

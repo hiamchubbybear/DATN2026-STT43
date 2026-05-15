@@ -38,7 +38,7 @@ const LivenessCamera: React.FC<LivenessCameraProps> = ({ onCapture, onClose }) =
     if (cameraRef.current) {
       try {
         const photo = await cameraRef.current.takePictureAsync({
-          quality: 0.8,
+          quality: 1, // Chụp với chất lượng cao nhất
           base64: false,
         });
         if (photo) {

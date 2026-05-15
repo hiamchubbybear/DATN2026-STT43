@@ -3,10 +3,15 @@ import { View, Text, TouchableOpacity, StyleSheet, Modal, FlatList } from 'react
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 
+interface EditSelectionOption {
+  label: string;
+  value: string;
+}
+
 interface EditSelectionModalProps {
   visible: boolean;
   title: string;
-  options: string[];
+  options: (string | EditSelectionOption)[];
   selectedValues: string | string[];
   isMultiSelect: boolean;
   onSelect: (value: string) => void;
@@ -24,11 +29,11 @@ export const EditSelectionModal = ({
 }: EditSelectionModalProps) => {
   const { t } = useTranslation();
   
-  const isSelected = (option: string) => {
+  const isSelected = (value: string) => {
     if (Array.isArray(selectedValues)) {
-      return selectedValues.includes(option);
+      return selectedValues.includes(value);
     }
-    return selectedValues === option;
+    return selectedValues === value;
   };
 
   if (!visible) return null;
@@ -50,15 +55,21 @@ export const EditSelectionModal = ({
         
         <FlatList
           data={options}
-          keyExtractor={(item) => item}
-          renderItem={({ item }) => (
-            <TouchableOpacity style={styles.optionItem} onPress={() => onSelect(item)}>
-              <Text style={styles.optionText}>{item}</Text>
-              {isSelected(item) && (
-                <Ionicons name="checkmark" size={20} color="#EE3F57" />
-              )}
-            </TouchableOpacity>
-          )}
+          keyExtractor={(item) => typeof item === 'string' ? item : item.value}
+          renderItem={({ item }) => {
+            const label = typeof item === 'string' ? item : item.label;
+            const value = typeof item === 'string' ? item : item.value;
+            const selected = isSelected(value);
+
+            return (
+              <TouchableOpacity style={styles.optionItem} onPress={() => onSelect(value)}>
+                <Text style={[styles.optionText, selected && styles.optionTextActive]}>{label}</Text>
+                {selected && (
+                  <Ionicons name="checkmark" size={20} color="#EE3F57" />
+                )}
+              </TouchableOpacity>
+            );
+          }}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
         />
@@ -121,6 +132,10 @@ const styles = StyleSheet.create({
   optionText: {
     fontSize: 16,
     color: '#374151',
+  },
+  optionTextActive: {
+    color: '#EE3F57',
+    fontWeight: '700',
   },
   modalDoneButton: {
     margin: 20,

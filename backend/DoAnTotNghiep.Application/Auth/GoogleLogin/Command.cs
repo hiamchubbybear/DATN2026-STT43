@@ -11,6 +11,6 @@ public class GoogleLoginCommand : IRequest<AuthResponse>
     public string? DeviceName { get; set; }
     public string? Platform { get; set; }
     public string? AppVersion { get; set; }
-    public string? PushToken { get; set; }
+    public string? FcmToken { get; set; }
     public string? IpAddress { get; set; }
 }

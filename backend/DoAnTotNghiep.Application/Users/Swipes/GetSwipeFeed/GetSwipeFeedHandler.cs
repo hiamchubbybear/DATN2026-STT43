@@ -2,6 +2,7 @@ using DoAnTotNghiep.Application.Common;
 using DoAnTotNghiep.Domain.Enum;
 using DoAnTotNghiep.Domain.Users;
 using MediatR;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -25,22 +26,26 @@ public record UserProfileDto(
     List<string> Photos,
     string LocationName,
     string Occupation,
-    List<string> Interests);
+    List<string> Interests,
+    double? DistanceKm = null);
 
 public class GetSwipeFeedHandler : IRequestHandler<GetSwipeFeedQuery, List<UserProfileDto>>
 {
     private readonly IUserProfileRepository _profileRepository;
     private readonly ISwipeRepository _swipeRepository;
     private readonly ICurrentUserService _currentUserService;
+    private readonly ILogger<GetSwipeFeedHandler> _logger;
 
     public GetSwipeFeedHandler(
         IUserProfileRepository profileRepository,
         ISwipeRepository swipeRepository,
-        ICurrentUserService currentUserService)
+        ICurrentUserService currentUserService,
+        ILogger<GetSwipeFeedHandler> logger)
     {
         _profileRepository = profileRepository;
         _swipeRepository   = swipeRepository;
         _currentUserService = currentUserService;
+        _logger = logger;
     }
 
     public async Task<List<UserProfileDto>> Handle(GetSwipeFeedQuery request, CancellationToken cancellationToken)
@@ -62,32 +67,42 @@ public class GetSwipeFeedHandler : IRequestHandler<GetSwipeFeedQuery, List<UserP
         // 2. Get IDs the user already swiped (to exclude from feed)
         var swipedIds = await _swipeRepository.GetSwipedTargetIdsAsync(currentUserId);
 
-        // 3. Primary fetch: apply gender + age filters
+        // 3. Primary fetch: try to get people nearby first
         var candidates = await _profileRepository.GetCandidatesAsync(
             me, 
             swipedIds, 
             0, 
-            50, 
+            100, // Increase pool size
             relaxFilters: false,
             genderPreference: request.Gender,
             minAge: request.MinAge,
             maxAge: request.MaxAge,
-            maxDistanceKm: request.Distance);
+            maxDistanceKm: request.Distance ?? 1000); // Default to a much larger distance if not specified
 
-        // 4. Fallback: relax all filters if primary returned nothing
-        if (!candidates.Any())
+        // 4. Fallback: if still very few people, grab anyone available (Global Fallback)
+        if (candidates.Count < 50)
         {
-            Console.WriteLine($"[Feed] No candidates with strict filters — retrying with relaxed filters.");
-            candidates = await _profileRepository.GetCandidatesAsync(
+            _logger.LogInformation("[Feed] Few candidates found ({Count}) — mixing in relaxed results.", candidates.Count);
+            var relaxed = await _profileRepository.GetCandidatesAsync(
                 me, 
                 swipedIds, 
                 0, 
-                50, 
+                100, 
                 relaxFilters: true,
                 genderPreference: request.Gender,
                 minAge: request.MinAge,
                 maxAge: request.MaxAge,
-                maxDistanceKm: request.Distance);
+                maxDistanceKm: null);
+                
+            // Merge and keep unique by UserId
+            var existingIds = candidates.Select(c => c.UserId).ToHashSet();
+            foreach(var r in relaxed)
+            {
+                if (!existingIds.Contains(r.UserId))
+                {
+                    candidates.Add(r);
+                }
+            }
         }
 
         Console.WriteLine($"[Feed] Candidates found: {candidates.Count}");
@@ -106,7 +121,7 @@ public class GetSwipeFeedHandler : IRequestHandler<GetSwipeFeedQuery, List<UserP
                            .Count(tag => myTags.Contains(tag))
             })
             .OrderByDescending(x => x.Score)
-            .Take(10)
+            .Take(50)
             .Select(x => x.Profile)
             .ToList();
 
@@ -119,8 +134,21 @@ public class GetSwipeFeedHandler : IRequestHandler<GetSwipeFeedQuery, List<UserP
             p.Photos.OrderBy(x => x.Order).Select(x => x.ThumbnailUrl ?? x.Url).ToList(),
             p.LocationName,
             p.Background.Occupation,
-            p.Lifestyle.Interests.Concat(p.Lifestyle.Hobbies).Distinct().ToList()
+            p.Lifestyle.Interests.Concat(p.Lifestyle.Hobbies).Distinct().ToList(),
+            CalculateDistance(me.Latitude, me.Longitude, p.Latitude, p.Longitude)
         )).ToList();
+    }
+
+    private static double CalculateDistance(double lat1, double lon1, double lat2, double lon2)
+    {
+        var d1 = lat1 * (Math.PI / 180.0);
+        var num1 = lon1 * (Math.PI / 180.0);
+        var d2 = lat2 * (Math.PI / 180.0);
+        var num2 = lon2 * (Math.PI / 180.0) - num1;
+        var d3 = Math.Pow(Math.Sin((d2 - d1) / 2.0), 2.0) +
+                 Math.Cos(d1) * Math.Cos(d2) * Math.Pow(Math.Sin(num2 / 2.0), 2.0);
+        
+        return Math.Round(6371 * (2.0 * Math.Atan2(Math.Sqrt(d3), Math.Sqrt(1.0 - d3))), 0);
     }
 
     private static int CalculateAge(DateTime dob)

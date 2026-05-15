@@ -101,7 +101,14 @@ public class GlobalExceptionHandler : IExceptionHandler
 
         context.Response.StatusCode = response.Status;
 
-        await context.Response.WriteAsJsonAsync(response, cancellationToken);
+        try 
+        {
+            await context.Response.WriteAsJsonAsync(response, cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogWarning("Request was cancelled by client before response could be sent. TraceId: {TraceId}", traceId);
+        }
 
         return true;
     }

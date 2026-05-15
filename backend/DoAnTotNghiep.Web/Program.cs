@@ -4,6 +4,8 @@ using DoAnTotNghiep.Infrastructure;
 using DoAnTotNghiep.Infrastructure.Persistence;
 using DoAnTotNghiep.Web;
 using DoAnTotNghiep.Web.Hubs;
+using DoAnTotNghiep.Web.Services;
+using DoAnTotNghiep.Application.Notifications;
 using FluentValidation;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -62,6 +64,7 @@ builder.Services.AddHealthChecks()
     .AddRedis(redisSettings!.ConnectionString, name: "redis", tags: ["cache", "ready"]);
 
 builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddScoped<ISignalRService, SignalRService>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>

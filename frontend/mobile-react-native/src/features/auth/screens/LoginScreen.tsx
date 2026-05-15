@@ -22,6 +22,7 @@ import { AuthBackButton } from "../../../shared/components/AuthBackButton";
 import { useToast } from "../../../shared/components/ToastProvider";
 import { useTranslation } from 'react-i18next';
 import { getFcmToken } from "../../../shared/utils/notificationHelper";
+import { getDeviceInfo } from "../../../shared/utils/deviceUtils";
 
 const GOOGLE_WEB_CLIENT_ID =
   process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ||
@@ -120,6 +121,7 @@ export const LoginScreen = () => {
     try {
       setLoading(true);
       const fcmToken = await getFcmToken();
+      const deviceInfo = getDeviceInfo(fcmToken);
       
       const API_URL = `${
         process.env.EXPO_PUBLIC_API_BASE_URL || "http://localhost:5017"
@@ -129,7 +131,11 @@ export const LoginScreen = () => {
       const res = await fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idToken, accessToken, fcmToken }),
+        body: JSON.stringify({ 
+          idToken, 
+          accessToken, 
+          ...deviceInfo
+        }),
       });
 
       const data = await res.json();

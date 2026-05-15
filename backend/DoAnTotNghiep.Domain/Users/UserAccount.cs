@@ -17,6 +17,7 @@ public class UserAccount(string email, string? hashPassword = null, AuthProvider
     public string Role { get; private set; } = "Client";
     public AuthProvider Provider { get; private set; } = provider;
     public string? ProviderId { get; private set; } = providerId;
+    public bool IsIdentityVerified { get; private set; } = false;
     
     public bool IsBanned { get; private set; } = false;
     public DateTime? BannedUntil { get; private set; }
@@ -41,6 +42,12 @@ public class UserAccount(string email, string? hashPassword = null, AuthProvider
     public void MarkAsVerified()
     {
         IsVerified = true;
+        SetUpdated();
+    }
+
+    public void MarkAsIdentityVerified()
+    {
+        IsIdentityVerified = true;
         SetUpdated();
     }
 

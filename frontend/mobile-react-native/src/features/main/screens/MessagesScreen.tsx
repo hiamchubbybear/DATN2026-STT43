@@ -9,6 +9,8 @@ import { apiClient } from '../../../services/api/apiClient';
 import { Logger } from '../../../shared/utils/logger';
 import { normalizeFont, radius, scale, spacing, verticalScale } from '../../../shared/utils/responsive';
 import { useTranslation } from 'react-i18next';
+import { useNotificationStore } from '../../../store/notificationStore';
+import { useFocusEffect } from '@react-navigation/native';
 
 const defaultAvatar = require('../../../../assets/images/anh1.jpg');
 
@@ -35,6 +37,14 @@ export const MessagesScreen = () => {
       if (showLoading) setLoading(false);
     }
   };
+
+  const setHasUnreadMessages = useNotificationStore(state => state.setHasUnreadMessages);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      setHasUnreadMessages(false);
+    }, [setHasUnreadMessages])
+  );
 
   React.useEffect(() => {
     fetchData();

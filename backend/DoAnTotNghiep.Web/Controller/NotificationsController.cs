@@ -54,5 +54,44 @@ public class NotificationsController(MongoDbContext db) : ControllerBase
 
         return Ok(ApiResponse<string>.Succeeded(string.Empty, "Deleted"));
     }
+
+    [HttpPatch("{id:guid}/read")]
+    public async Task<IActionResult> MarkAsRead(Guid id, CancellationToken ct)
+    {
+        var userId = GetUserId();
+
+        var update = Builders<Notification>.Update
+            .Set(x => x.IsRead, true)
+            .Set(x => x.ReadAt, DateTime.UtcNow);
+
+        var result = await db.Notifications.UpdateOneAsync(
+            x => x.Id == id && x.UserId == userId,
+            update,
+            cancellationToken: ct
+        );
+
+        if (result.ModifiedCount == 0)
+            return NotFound(ApiResponse<string>.Failed("Notification not found or already read"));
+
+        return Ok(ApiResponse<string>.Succeeded(string.Empty, "Marked as read"));
+    }
+
+    [HttpPost("read-all")]
+    public async Task<IActionResult> MarkAllAsRead(CancellationToken ct)
+    {
+        var userId = GetUserId();
+
+        var update = Builders<Notification>.Update
+            .Set(x => x.IsRead, true)
+            .Set(x => x.ReadAt, DateTime.UtcNow);
+
+        await db.Notifications.UpdateManyAsync(
+            x => x.UserId == userId && !x.IsRead,
+            update,
+            cancellationToken: ct
+        );
+
+        return Ok(ApiResponse<string>.Succeeded(string.Empty, "All notifications marked as read"));
+    }
 }
 

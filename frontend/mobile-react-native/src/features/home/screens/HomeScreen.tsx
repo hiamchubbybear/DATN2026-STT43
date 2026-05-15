@@ -3,7 +3,7 @@ import { View, StyleSheet, ActivityIndicator, Text, TouchableOpacity, Dimensions
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSwipeFeed, useSwipeAction } from '../../../services/api/useSwipe';
 import { SwipeableCard, SwipeableCardRef } from '../components/SwipeableCard';
-import { SwipeType, UserProfileDto } from '../../../services/api/swipeService';
+import { swipeService, SwipeType, UserProfileDto } from '../../../services/api/swipeService';
 import { IconFilter } from '../../../shared/components/icons/IconFilter';
 import { IconHeart } from '../../../shared/components/icons/IconHeart';
 import { IconClose } from '../../../shared/components/icons/IconClose';
@@ -12,13 +12,24 @@ import { spacing, radius, normalizeFont, scale } from '../../../shared/utils/res
 import { Modal } from 'react-native';
 import { ProfileDetail } from '../components/ProfileDetail';
 import { FilterModal } from '../components/FilterModal';
+import { MatchModal } from '../components/MatchModal';
+import { useMyProfile } from '../../../services/api/useSwipe';
+import { useNotificationStore } from '../../../store/notificationStore';
 import { Image } from 'expo-image';
 import { useTranslation } from 'react-i18next';
+import * as Location from 'expo-location';
+import { profileService } from '../../../services/api/profileService';
+
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../../../app/navigation/RootNavigator';
+import { chatService } from '../../../services/api/chatService';
 
 const { width } = Dimensions.get('window');
 
 export const HomeScreen = () => {
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { t } = useTranslation();
   const [filters, setFilters] = useState({
     gender: 'Everyone',
@@ -27,8 +38,14 @@ export const HomeScreen = () => {
     distance: 50,
   });
   const [showFilterModal, setShowFilterModal] = useState(false);
+  const [matchData, setMatchData] = useState<{ isVisible: boolean; user: UserProfileDto | null }>({
+    isVisible: false,
+    user: null,
+  });
 
   const { data: feedData, isLoading, refetch, isFetching } = useSwipeFeed(filters);
+  const { data: myProfile } = useMyProfile();
+  
   const swipeAction = useSwipeAction();
 
   const [profiles, setProfiles] = useState<UserProfileDto[]>([]);
@@ -36,6 +53,30 @@ export const HomeScreen = () => {
   const [selectedProfile, setSelectedProfile] = useState<UserProfileDto | null>(null);
   const fetchingMore = useRef(false);
   const cardRefs = useRef<{[key: string]: SwipeableCardRef}>({});
+
+  // Update location on mount
+  useEffect(() => {
+    const updateLocation = async () => {
+      try {
+        const { status } = await Location.getForegroundPermissionsAsync();
+        if (status === 'granted') {
+          const location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+          const { latitude, longitude } = location.coords;
+          
+          // Get reverse geocode for a readable name
+          const [address] = await Location.reverseGeocodeAsync({ latitude, longitude });
+          const locationName = address ? `${address.district || address.city || address.region}` : 'Nearby';
+
+          console.log(`[Home] Updating location: ${locationName} (${latitude}, ${longitude})`);
+          await profileService.updateLocation({ latitude, longitude, locationName });
+        }
+      } catch (error) {
+        console.error('[Home] Failed to update location:', error);
+      }
+    };
+
+    updateLocation();
+  }, []);
 
   // Reset profiles when filters change to trigger fresh data load
   useEffect(() => {
@@ -64,17 +105,34 @@ export const HomeScreen = () => {
 
   // Pre-fetch logic & Image preloading
   useEffect(() => {
-    if (profiles.length > 0) {
-      // Preload images for the next 5 profiles
-      const nextProfiles = profiles.slice(currentIndex, currentIndex + 5);
-      const urlsToPreload = nextProfiles.flatMap(p => p.photos);
-      Image.prefetch(urlsToPreload);
+    console.log(`[HomeScreen] useEffect triggered: currentIndex=${currentIndex}, profiles=${profiles.length}, isFetching=${isFetching}`);
+    const checkAndLoop = async () => {
+      if (profiles.length > 0) {
+        // Preload images for the next 10 profiles for zero-delay experience
+        const nextProfiles = profiles.slice(currentIndex, currentIndex + 10);
+        const urlsToPreload = nextProfiles.flatMap(p => p.photos);
+        Image.prefetch(urlsToPreload);
 
-      if (currentIndex >= profiles.length - 5 && !fetchingMore.current && !isFetching) {
-        fetchingMore.current = true;
-        refetch();
+        if (currentIndex > 0 && currentIndex === profiles.length) {
+          console.log('--- FEED EXHAUSTED ---');
+          console.log('Triggering automatic loop reset...');
+          try {
+            const success = await swipeService.resetSwipes();
+            console.log('Reset API Response:', success);
+            setProfiles([]);
+            setCurrentIndex(0);
+            refetch();
+          } catch (err) {
+            console.error('Failed to auto-reset swipes:', err);
+          }
+        } else if (currentIndex >= profiles.length - 8 && !fetchingMore.current && !isFetching && profiles.length > 0) {
+          fetchingMore.current = true;
+          refetch();
+        }
       }
-    }
+    };
+
+    checkAndLoop();
   }, [currentIndex, profiles, isFetching]);
 
   const handleSwipe = useCallback((type: SwipeType) => {
@@ -86,14 +144,21 @@ export const HomeScreen = () => {
     }
 
     // Trigger API call
-    swipeAction.mutate({ 
-      targetId: swipedProfile.userId, 
-      type 
-    });
+    swipeAction.mutate(
+      { targetId: swipedProfile.userId, type },
+      {
+        onSuccess: (data) => {
+          if (data.isMatch) {
+            setMatchData({ isVisible: true, user: swipedProfile });
+            useNotificationStore.getState().setHasUnreadMatches(true);
+          }
+        }
+      }
+    );
 
     // Move to next card
     setCurrentIndex(prev => prev + 1);
-  }, [currentIndex, profiles, swipeAction]); // Added profiles to dependencies
+  }, [currentIndex, profiles, swipeAction]);
 
   const onButtonPress = (type: SwipeType) => {
     const currentProfile = profiles[currentIndex];
@@ -118,7 +183,11 @@ export const HomeScreen = () => {
     <View style={styles.container}>
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + spacing(10) }]}>
-        <View style={styles.placeholder} />
+        <Image 
+          source={require('../../../../assets/images/logo.png')} 
+          style={styles.headerLogo} 
+          contentFit="contain"
+        />
         <View style={styles.titleContainer}>
           <Text style={styles.headerTitle}>{t('discover.title')}</Text>
           <Text style={styles.headerSubtitle}>{t('discover.subtitle')}</Text>
@@ -136,16 +205,23 @@ export const HomeScreen = () => {
         {hasNoProfiles ? (
           <View style={styles.noProfiles}>
             <Text style={styles.noProfilesText}>{t('discover.no_profiles')}</Text>
-            <TouchableOpacity 
-              style={styles.retryButton} 
-              onPress={() => {
-                setProfiles([]);
-                setCurrentIndex(0);
-                refetch();
-              }}
-            >
-              <Text style={styles.retryButtonText}>{t('discover.refresh')}</Text>
-            </TouchableOpacity>
+            <View style={styles.noProfilesActions}>
+              <TouchableOpacity 
+                style={styles.retryButton} 
+                onPress={async () => {
+                  try {
+                    await swipeService.resetSwipes();
+                    setProfiles([]);
+                    setCurrentIndex(0);
+                    refetch();
+                  } catch (err) {
+                    console.error('Failed to reset swipes:', err);
+                  }
+                }}
+              >
+                <Text style={styles.retryButtonText}>{t('discover.reset_loop')}</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         ) : (
           profiles
@@ -229,6 +305,43 @@ export const HomeScreen = () => {
           setFilters(newFilters);
         }}
       />
+
+      {/* Match Modal */}
+      {myProfile && matchData.user && (
+        <MatchModal
+          isVisible={matchData.isVisible}
+          currentUser={{
+            name: myProfile.basicInfo?.displayName || t('common.me', 'Me'),
+            avatar: myProfile.photos?.[0]?.url || '',
+          }}
+          matchedUser={{
+            name: matchData.user.displayName,
+            avatar: matchData.user.photos?.[0] || '',
+          }}
+          onClose={() => setMatchData({ isVisible: false, user: null })}
+          onSayHello={async () => {
+            const matchedUserId = matchData.user?.userId;
+            const matchedUserName = matchData.user?.displayName;
+            const matchedUserAvatar = matchData.user?.photos?.[0];
+            
+            setMatchData({ isVisible: false, user: null });
+            
+            if (matchedUserId) {
+              try {
+                const conversationId = await chatService.getOrCreateConversation(matchedUserId);
+                navigation.navigate('ChatRoom', {
+                  conversationId,
+                  receiverId: matchedUserId,
+                  receiverName: matchedUserName || t('common.user', 'User'),
+                  receiverAvatar: matchedUserAvatar,
+                });
+              } catch (error) {
+                console.error('Failed to start conversation:', error);
+              }
+            }
+          }}
+        />
+      )}
     </View>
   );
 };
@@ -249,6 +362,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: spacing(24),
     paddingBottom: spacing(10),
+  },
+  headerLogo: {
+    width: scale(32),
+    height: scale(32),
+    borderRadius: radius(8),
   },
   placeholder: {
     width: 48,
@@ -302,6 +420,10 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
     fontSize: normalizeFont(16),
+  },
+  noProfilesActions: {
+    flexDirection: 'row',
+    gap: spacing(12),
   },
   footer: {
     flexDirection: 'row',

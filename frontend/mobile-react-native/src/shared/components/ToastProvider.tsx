@@ -1,9 +1,9 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
-import { Animated, StyleSheet, Text, View, Dimensions, Platform, BlurView } from 'react-native';
+import { Animated, StyleSheet, Text, View, Dimensions, Platform, PanResponder } from 'react-native';
 import Svg, { Path, Circle, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { registerToastHandler, type ToastOptions, type ToastType } from '../services/toast';
 
-const { width } = Dimensions.get('window');
+const { width, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 interface ToastContextType {
   showToast: (options: ToastOptions) => void;
@@ -52,32 +52,77 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [toast, setToast] = useState<ToastOptions | null>(null);
   const opacity = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(-120)).current;
+  const panY = useRef(new Animated.Value(0)).current;
   const scale = useRef(new Animated.Value(0.9)).current;
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const panX = useRef(new Animated.Value(0)).current;
+
   const hideToast = useCallback(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    
     Animated.parallel([
-      Animated.timing(opacity, { toValue: 0, duration: 300, useNativeDriver: true }),
-      Animated.timing(translateY, { toValue: -120, duration: 350, useNativeDriver: true }),
-      Animated.timing(scale, { toValue: 0.95, duration: 300, useNativeDriver: true }),
-    ]).start(() => setToast(null));
-  }, [opacity, translateY, scale]);
+      Animated.timing(opacity, { toValue: 0, duration: 250, useNativeDriver: true }),
+      Animated.timing(translateY, { toValue: -120, duration: 300, useNativeDriver: true }),
+      Animated.timing(scale, { toValue: 0.9, duration: 250, useNativeDriver: true }),
+    ]).start(() => {
+      setToast(null);
+      panY.setValue(0);
+      panX.setValue(0);
+    });
+  }, [opacity, translateY, scale, panY, panX]);
 
   const showToast = useCallback((options: ToastOptions) => {
     if (timerRef.current) clearTimeout(timerRef.current);
     
     setToast(options);
+    panY.setValue(0);
+    panX.setValue(0);
     
     Animated.parallel([
       Animated.timing(opacity, { toValue: 1, duration: 400, useNativeDriver: true }),
-      Animated.spring(translateY, { toValue: 0, friction: 9, tension: 50, useNativeDriver: true }),
-      Animated.spring(scale, { toValue: 1, friction: 8, tension: 40, useNativeDriver: true }),
+      Animated.spring(translateY, { toValue: 0, friction: 9, tension: 60, useNativeDriver: true }),
+      Animated.spring(scale, { toValue: 1, friction: 8, tension: 50, useNativeDriver: true }),
     ]).start();
 
     timerRef.current = setTimeout(() => {
       hideToast();
     }, options.duration || 3500);
-  }, [opacity, translateY, scale, hideToast]);
+  }, [opacity, translateY, scale, hideToast, panY, panX]);
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_, gestureState) => 
+        Math.abs(gestureState.dy) > 5 || Math.abs(gestureState.dx) > 5,
+      onPanResponderMove: (_, gestureState) => {
+        panY.setValue(gestureState.dy < 0 ? gestureState.dy : gestureState.dy * 0.2);
+        panX.setValue(gestureState.dx);
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        const shouldDismiss = 
+          gestureState.dy < -30 || 
+          Math.abs(gestureState.dx) > width * 0.4 ||
+          Math.abs(gestureState.vx) > 0.5 ||
+          gestureState.vy < -0.5;
+
+        if (shouldDismiss) {
+          if (gestureState.dx > 0) {
+            Animated.timing(panX, { toValue: width, duration: 200, useNativeDriver: true }).start(hideToast);
+          } else if (gestureState.dx < 0) {
+            Animated.timing(panX, { toValue: -width, duration: 200, useNativeDriver: true }).start(hideToast);
+          } else {
+            hideToast();
+          }
+        } else {
+          Animated.parallel([
+            Animated.spring(panY, { toValue: 0, friction: 8, useNativeDriver: true }),
+            Animated.spring(panX, { toValue: 0, friction: 8, useNativeDriver: true }),
+          ]).start();
+        }
+      },
+    })
+  ).current;
 
   useEffect(() => {
     registerToastHandler(showToast);
@@ -93,16 +138,23 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
+  const combinedTranslateY = Animated.add(translateY, panY);
+
   return (
     <ToastContext.Provider value={{ showToast }}>
       {children}
       {toast && (
         <Animated.View 
+          {...panResponder.panHandlers}
           style={[
             styles.toastWrapper, 
             { 
               opacity, 
-              transform: [{ translateY }, { scale }],
+              transform: [
+                { translateY: combinedTranslateY }, 
+                { translateX: panX },
+                { scale }
+              ],
             }
           ]}
         >
@@ -142,6 +194,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     overflow: 'hidden',
     minHeight: 84,
+    borderWidth: 1,
+    borderColor: '#E4E4E7',
     ...Platform.select({
       ios: {
         shadowColor: '#000',
@@ -172,14 +226,14 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#18181B',
+    color: '#000000', // Pure black
     marginBottom: 2,
     letterSpacing: -0.3,
   },
   message: {
     fontSize: 14,
-    color: '#71717A',
+    color: '#18181B', // Very dark gray/black
     lineHeight: 18,
-    fontWeight: '500',
+    fontWeight: '600',
   },
 });

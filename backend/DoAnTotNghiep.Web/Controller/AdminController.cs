@@ -51,103 +51,6 @@ public class AdminController : ControllerBase
         return User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value ?? "system@mixer.com";
     }
 
-    [HttpGet("users")]
-    public async Task<IActionResult> GetUsers(
-        [FromQuery] string? search, 
-        [FromQuery] string? role,
-        [FromQuery] bool? isBanned,
-        [FromQuery] bool? isVerified,
-        [FromQuery] string? gender,
-        [FromQuery] int page = 1, 
-        [FromQuery] int pageSize = 12)
-    {
-        var builder = Builders<UserAccount>.Filter;
-        var filter = builder.Empty;
-
-        if (!string.IsNullOrEmpty(search))
-        {
-            var searchRegex = new MongoDB.Bson.BsonRegularExpression(search, "i");
-            
-            // Search in UserProfiles first to get matching UserIds
-            var matchingProfileIds = await _context.UserProfiles
-                .Find(Builders<UserProfile>.Filter.Regex(p => p.BasicInfo.DisplayName, searchRegex))
-                .Project(p => p.UserId)
-                .ToListAsync();
-
-            filter &= builder.Or(
-                builder.Regex(u => u.Email, searchRegex),
-                builder.In(u => u.Id, matchingProfileIds)
-            );
-        }
-
-        if (!string.IsNullOrEmpty(role))
-        {
-            filter &= builder.Eq(u => u.Role, role);
-        }
-
-        if (isBanned.HasValue)
-        {
-            filter &= builder.Eq(u => u.IsBanned, isBanned.Value);
-        }
-
-        if (isVerified.HasValue)
-        {
-            filter &= builder.Eq(u => u.IsVerified, isVerified.Value);
-        }
-
-        if (!string.IsNullOrEmpty(gender))
-        {
-            var userIdsWithGender = await _context.UserProfiles
-                .Find(p => p.BasicInfo.Gender.ToString() == gender)
-                .Project(p => p.UserId)
-                .ToListAsync();
-            filter &= builder.In(u => u.Id, userIdsWithGender);
-        }
-
-        var users = await _context.UserAccounts.Find(filter)
-            .SortByDescending(u => u.CreatedAt)
-            .Skip((page - 1) * pageSize)
-            .Limit(pageSize)
-            .ToListAsync();
-
-        var total = await _context.UserAccounts.CountDocumentsAsync(filter);
-
-        // Fetch profiles for these users to enrich the list
-        var userIds = users.Select(u => u.Id).ToList();
-        var profiles = await _context.UserProfiles.Find(p => userIds.Contains(p.UserId)).ToListAsync();
-        var profileMap = profiles.ToDictionary(p => p.UserId);
-
-        var enrichedUsers = users.Select(u => {
-            profileMap.TryGetValue(u.Id, out var profile);
-            return new {
-                u.Id,
-                u.Email,
-                u.Role,
-                u.IsBanned,
-                u.IsVerified,
-                u.CreatedAt,
-                DisplayName = !string.IsNullOrEmpty(profile?.BasicInfo?.DisplayName) 
-                    ? profile.BasicInfo.DisplayName 
-                    : u.Email.Split('@')[0],
-                Gender = profile?.BasicInfo?.Gender.ToString() ?? "N/A",
-                Avatar = profile?.Photos?.OrderBy(p => p.Order).FirstOrDefault()?.Url,
-                Location = !string.IsNullOrEmpty(profile?.LocationName) ? profile.LocationName : "Not set"
-            };
-        });
-
-        return Ok(new { total, users = enrichedUsers, page, pageSize });
-    }
-
-    [HttpGet("users/{userId}")]
-    public async Task<IActionResult> GetUserDetails(Guid userId)
-    {
-        var user = await _context.UserAccounts.Find(u => u.Id == userId).FirstOrDefaultAsync();
-        if (user == null) return NotFound();
-
-        var profile = await _context.UserProfiles.Find(p => p.UserId == userId).FirstOrDefaultAsync();
-        
-        return Ok(new { user, profile });
-    }
 
     [HttpPost("users/{userId}/ban")]
     public async Task<IActionResult> BanUser(Guid userId, [FromBody] BanRequest request)
@@ -384,6 +287,14 @@ public class AdminController : ControllerBase
             timestamp = DateTime.UtcNow
         });
 
+        // Also send a SignalR Warning event to trigger the red dot on mobile
+        await _hubContext.Clients.All.SendAsync("ReceiveWarning", new 
+        { 
+            title = request.Title, 
+            message = request.Content,
+            timestamp = DateTime.UtcNow
+        });
+
         return Ok(new { sentTo = totalUsers, status = "Push & SignalR Sent" });
     }
 
@@ -393,16 +304,24 @@ public class AdminController : ControllerBase
         // 1. Send via Firebase
         await _notificationService.SendPushToUserAsync(userId, request.Title, request.Content);
 
-        // 2. Send via SignalR for real-time popup
-        await _hubContext.Clients.Group($"User_{userId}").SendAsync("ReceiveNotification", new 
+        // 2. Save persistent notification to database
+        var notif = DoAnTotNghiep.Domain.Notifications.Notification.Create(
+            userId,
+            request.Title,
+            request.Content,
+            "admin"
+        );
+        await _context.Notifications.InsertOneAsync(notif);
+
+        // 3. Send via SignalR for real-time popup & red dot
+        await _hubContext.Clients.Group($"User_{userId}").SendAsync("ReceiveWarning", new 
         { 
             title = request.Title, 
             message = request.Content,
-            type = "ADMIN_DIRECT",
             timestamp = DateTime.UtcNow
         });
 
-        return Ok(new { message = "Push notification and SignalR event sent to user." });
+        return Ok(new { message = "Push notification, DB record, and SignalR event sent to user." });
     }
 
     [HttpGet("stats")]

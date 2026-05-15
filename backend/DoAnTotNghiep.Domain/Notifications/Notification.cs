@@ -8,6 +8,8 @@ public class Notification(Guid userId) : BaseEntity
     public string Title { get; private set; } = string.Empty;
     public string Content { get; private set; } = string.Empty;
     public string Type { get; private set; } = "info";
+    public bool IsRead { get; set; } = false;
+    public DateTime? ReadAt { get; set; }
 
     public static Notification Create(
         Guid userId,

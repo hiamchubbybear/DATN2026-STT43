@@ -52,8 +52,9 @@ export default function UserManagementContent() {
         page: currentPage,
         pageSize
       });
-      setUsers(response.data.users);
-      setTotalCount(response.data.total);
+      // The backend returns a PagedList structure: { items: [...], totalCount: ... }
+      setUsers(response.data?.items || response.data?.users || []);
+      setTotalCount(response.data?.totalCount || response.data?.total || 0);
     } catch (error) {
       console.error('Failed to fetch users', error);
     } finally {
@@ -159,7 +160,7 @@ export default function UserManagementContent() {
         {loading ? (
           <p>Loading data...</p>
         ) : (
-          users.map((user) => (
+          (users || []).map((user) => (
             <article key={user.id} className="rounded-2xl bg-white p-5 shadow-[0_16px_34px_-24px_rgba(0,0,0,0.2)] border border-slate-50">
               <div className="mb-4 flex items-start justify-between">
                 <div className="relative">

@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { swipeService, SwipeType } from './swipeService';
+import { profileService } from './profileService';
 
 export const useSwipeFeed = (filters?: {
   gender?: string;
@@ -16,6 +17,14 @@ export const useSwipeFeed = (filters?: {
     },
     staleTime: 0,
     gcTime: 0,
+  });
+};
+
+export const useMyProfile = () => {
+  return useQuery({
+    queryKey: ['myProfile'],
+    queryFn: () => profileService.getMyProfile(),
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 };
 

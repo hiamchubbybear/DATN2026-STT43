@@ -1,9 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { StyleSheet, Text, View, TouchableOpacity, Dimensions, Image } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Dimensions, Image, ActivityIndicator } from 'react-native';
 import Svg, { Path, Circle, Defs, LinearGradient, Stop, Rect } from 'react-native-svg';
 import { normalizeFont, radius, scale, spacing, verticalScale } from '../../../shared/utils/responsive';
 import { useTranslation } from 'react-i18next';
+import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import { swipeService, UserProfileDto } from '../../../services/api/swipeService';
 
 const { width } = Dimensions.get('window');
 
@@ -133,59 +136,142 @@ export const MainScreen = () => {
     );
   }
 
-  // --- CARDS VIEW ---
-  return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.header}>
-        <View style={styles.placeholder} />
-        <View style={styles.titleWrap}>
-          <Text style={styles.headerTitle}>{t('discover.title')}</Text>
-          <Text style={styles.headerSubtitle}>{t('common.unknown_location', 'Unknown Location')}</Text>
+  const [users, setUsers] = useState<UserProfileDto[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const navigation = useNavigation<any>();
+
+  useEffect(() => {
+    if (!showOnboarding) {
+      fetchUsers();
+    }
+  }, [showOnboarding]);
+
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      const data = await swipeService.getFeed();
+      setUsers(data || []);
+      setCurrentIndex(0);
+    } catch (error) {
+      console.error('Failed to fetch users:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const currentUser = users[currentIndex];
+
+  const handleNext = () => {
+    if (currentIndex < users.length - 1) {
+      setCurrentIndex(prev => prev + 1);
+    } else {
+      fetchUsers();
+    }
+  };
+
+  const renderContent = () => {
+    if (loading) {
+      return (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#F43F5E" />
         </View>
-        <TouchableOpacity style={styles.iconButton}>
-          <SvgFilter />
-        </TouchableOpacity>
-      </View>
+      );
+    }
 
+    if (!currentUser) {
+      return (
+        <View style={styles.emptyContainer}>
+          <Ionicons name="people-outline" size={80} color="#E5E7EB" />
+          <Text style={styles.emptyTitle}>{t('discover.no_users_title') || 'No more people'}</Text>
+          <Text style={styles.emptyText}>{t('discover.no_users_desc') || 'Try changing your filters or check back later'}</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={fetchUsers}>
+            <Text style={styles.retryButtonText}>{t('common.retry') || 'Retry'}</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+
+    return (
       <View style={styles.cardContainer}>
-        {/* Background Card */}
         <View style={styles.cardBackground} />
-
-        {/* Main Card */}
         <View style={styles.card}>
-          <Image source={require('../../../../assets/images/anh2.jpg')} style={styles.cardImage} />
+          {currentUser.photos && currentUser.photos.length > 0 ? (
+            <Image source={{ uri: currentUser.photos[0] }} style={styles.cardImage} />
+          ) : (
+            <View style={[styles.cardImage, { backgroundColor: '#F3F4F6', justifyContent: 'center', alignItems: 'center' }]}>
+              <Ionicons name="person" size={100} color="#D1D5DB" />
+            </View>
+          )}
 
           <View style={styles.distanceTag}>
             <SvgLocation />
-            <Text style={styles.distanceText}>1 km</Text>
+            <Text style={styles.distanceText}>
+              {currentUser.distanceKm !== undefined ? `${Math.round(currentUser.distanceKm)} km` : '1 km'}
+            </Text>
           </View>
 
           <View style={styles.paginationDots}>
-            <View style={[styles.dot, styles.dotActive]} />
-            <View style={styles.dot} />
-            <View style={styles.dot} />
-            <View style={styles.dot} />
-            <View style={styles.dot} />
+            {currentUser.photos?.slice(0, 5).map((_, idx) => (
+              <View key={idx} style={[styles.dot, idx === 0 && styles.dotActive]} />
+            ))}
           </View>
 
           <View style={styles.cardOverlay}>
             <SvgGradientOverlay />
             <View style={styles.cardInfo}>
-              <Text style={styles.cardName}>Jessica Parker, 23</Text>
-              <Text style={styles.cardBio}>Professional model</Text>
+              <View style={styles.nameRow}>
+                <Text style={styles.cardName}>{currentUser.displayName}, {currentUser.age}</Text>
+                {currentUser.isIdentityVerified && (
+                  <Ionicons name="checkmark-circle" size={20} color="#3B82F6" style={{ marginLeft: 6 }} />
+                )}
+              </View>
+              <Text style={styles.cardBio} numberOfLines={1}>
+                {currentUser.bio || currentUser.occupation || t('common.no_bio')}
+              </Text>
             </View>
           </View>
         </View>
       </View>
+    );
+  };
+
+  // --- CARDS VIEW ---
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('DiscoverySettings')}>
+          <SvgFilter />
+        </TouchableOpacity>
+        <View style={styles.titleWrap}>
+          <Text style={styles.headerTitle}>{t('discover.title')}</Text>
+          <Text style={styles.headerSubtitle}>{currentUser?.locationName || t('common.nearby')}</Text>
+        </View>
+        <TouchableOpacity style={styles.iconButton}>
+          <Ionicons name="notifications-outline" size={24} color="#F43F5E" />
+        </TouchableOpacity>
+      </View>
+
+      {renderContent()}
 
       <View style={[
         styles.actionButtons, 
-        { paddingBottom: insets.bottom + 84 } // Adjust for bottom tab bar and safe area
+        { paddingBottom: insets.bottom + 10 } 
       ]}>
-        <TouchableOpacity style={styles.actionButtonSmall}>
+        <TouchableOpacity style={styles.actionButtonSmall} onPress={handleNext}>
           <SvgCross />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.actionButtonLarge}>
+        <TouchableOpacity 
+          style={styles.actionButtonLarge}
+          onPress={async () => {
+            try {
+              await swipeService.swipeAction(currentUser.userId, 1);
+              handleNext();
+            } catch (e) {
+              handleNext();
+            }
+          }}
+        >
           <SvgHeartSolid />
         </TouchableOpacity>
         <TouchableOpacity style={styles.actionButtonSmall}>
@@ -239,6 +325,53 @@ const styles = StyleSheet.create({
   },
   placeholder: {
     width: 48,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: spacing(40),
+  },
+  emptyTitle: {
+    fontSize: normalizeFont(24),
+    fontWeight: '800',
+    color: '#111827',
+    marginTop: spacing(24),
+    textAlign: 'center',
+  },
+  emptyText: {
+    fontSize: normalizeFont(16),
+    color: '#6B7280',
+    marginTop: spacing(12),
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+  retryButton: {
+    marginTop: spacing(32),
+    backgroundColor: '#F43F5E',
+    paddingHorizontal: spacing(32),
+    paddingVertical: spacing(14),
+    borderRadius: radius(16),
+    shadowColor: '#F43F5E',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  retryButtonText: {
+    color: '#FFFFFF',
+    fontSize: normalizeFont(16),
+    fontWeight: '700',
+  },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing(4),
   },
   // --- ONBOARDING STYLES ---
   content: {

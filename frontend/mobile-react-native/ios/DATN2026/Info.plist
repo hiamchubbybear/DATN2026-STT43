@@ -26,6 +26,12 @@
     <string>App need access photo library to select and upload profile photos.</string>
     <key>NSCameraUsageDescription</key>
     <string>App need access camera to take and upload profile photos.</string>
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>DATN 2026 uses your location to show you nearby potential matches.</string>
+    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+    <string>DATN 2026 uses your location to show you nearby potential matches and update your discovery area.</string>
+    <key>NSLocationAlwaysUsageDescription</key>
+    <string>DATN 2026 uses your location to show you nearby potential matches even when the app is in the background.</string>
     <key>CFBundleURLTypes</key>
     <array>
       <dict>

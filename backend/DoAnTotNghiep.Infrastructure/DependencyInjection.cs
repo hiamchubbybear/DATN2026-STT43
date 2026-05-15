@@ -48,6 +48,8 @@ public static class DependencyInjection
         services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddScoped<Domain.Users.IFeedbackRepository, Repositories.FeedbackRepository>();
         services.AddScoped<Domain.Users.IUserReportRepository, Repositories.UserReportRepository>();
+        services.AddScoped<Domain.Notifications.INotificationRepository, Repositories.NotificationRepository>();
+        services.AddScoped<ITokenService, Persistence.Token.TokenService>();
         
         var redisSettings = configuration.GetSection("Redis").Get<RedisSettings>();
         

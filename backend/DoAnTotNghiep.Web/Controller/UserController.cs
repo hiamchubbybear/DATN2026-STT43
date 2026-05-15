@@ -74,6 +74,69 @@ public class UserController : ControllerBase
     }
 
     [Authorize]
+    [HttpPatch("me/basic-info")]
+    public async Task<IActionResult> UpdateBasicInfo([FromBody] Application.Users.Profile.UpdateBasicInfoCommand command)
+    {
+        var cmdWithUser = command with { UserId = GetUserId() };
+        await _mediator.Send(cmdWithUser);
+        return Ok(ApiResponse<string>.Succeeded(string.Empty, "Basic info updated"));
+    }
+
+    [Authorize]
+    [HttpPatch("me/background")]
+    public async Task<IActionResult> UpdateBackground([FromBody] Application.Users.Profile.UpdateBackgroundCommand command)
+    {
+        var cmdWithUser = command with { UserId = GetUserId() };
+        await _mediator.Send(cmdWithUser);
+        return Ok(ApiResponse<string>.Succeeded(string.Empty, "Background updated"));
+    }
+
+    [Authorize]
+    [HttpPatch("me/lifestyle")]
+    public async Task<IActionResult> UpdateLifestyle([FromBody] Application.Users.Profile.UpdateLifestyleCommand command)
+    {
+        var cmdWithUser = command with { UserId = GetUserId() };
+        await _mediator.Send(cmdWithUser);
+        return Ok(ApiResponse<string>.Succeeded(string.Empty, "Lifestyle updated"));
+    }
+
+    [Authorize]
+    [HttpPatch("me/dating-style")]
+    public async Task<IActionResult> UpdateDatingStyle([FromBody] Application.Users.Profile.UpdateDatingStyleCommand command)
+    {
+        var cmdWithUser = command with { UserId = GetUserId() };
+        await _mediator.Send(cmdWithUser);
+        return Ok(ApiResponse<string>.Succeeded(string.Empty, "Dating style updated"));
+    }
+
+    [Authorize]
+    [HttpPatch("me/location")]
+    public async Task<IActionResult> UpdateLocation([FromBody] Application.Users.Profile.UpdateLocationCommand command)
+    {
+        var cmdWithUser = command with { UserId = GetUserId() };
+        await _mediator.Send(cmdWithUser);
+        return Ok(ApiResponse<string>.Succeeded(string.Empty, "Location updated"));
+    }
+
+    [Authorize]
+    [HttpPatch("me/bio")]
+    public async Task<IActionResult> UpdateBio([FromBody] Application.Users.Profile.UpdateBioCommand command)
+    {
+        var cmdWithUser = command with { UserId = GetUserId() };
+        await _mediator.Send(cmdWithUser);
+        return Ok(ApiResponse<string>.Succeeded(string.Empty, "Bio updated"));
+    }
+
+    [Authorize]
+    [HttpPatch("me/preferences")]
+    public async Task<IActionResult> UpdatePreferences([FromBody] Application.Users.Profile.UpdatePreferencesCommand command)
+    {
+        var cmdWithUser = command with { UserId = GetUserId() };
+        await _mediator.Send(cmdWithUser);
+        return Ok(ApiResponse<string>.Succeeded(string.Empty, "Preferences updated"));
+    }
+
+    [Authorize]
     [HttpPost("report")]
     public async Task<IActionResult> ReportUser([FromForm] UserReportSubmitRequest request)
     {
@@ -129,6 +192,38 @@ public class UserController : ControllerBase
         var review = new AppReview(GetUserId(), request.Rating, request.Comment);
         await _context.AppReviews.InsertOneAsync(review);
         return Ok(ApiResponse<Guid>.Succeeded(review.Id, "Review submitted"));
+    }
+
+    [Authorize]
+    [HttpPost("photos")]
+    public async Task<IActionResult> UploadPhoto(IFormFile file)
+    {
+        var result = await _mediator.Send(new UploadPhotoCommand(file));
+        return Ok(ApiResponse<string>.Succeeded(result, "Photo uploaded successfully"));
+    }
+
+    [Authorize]
+    [HttpDelete("photos/{photoId}")]
+    public async Task<IActionResult> DeletePhoto(Guid photoId)
+    {
+        await _mediator.Send(new DeletePhotoCommand(photoId));
+        return Ok(ApiResponse<string>.Succeeded(string.Empty, "Photo deleted successfully"));
+    }
+
+    [Authorize]
+    [HttpPatch("photos/reorder")]
+    public async Task<IActionResult> ReorderPhotos([FromBody] ReorderPhotosCommand command)
+    {
+        await _mediator.Send(command);
+        return Ok(ApiResponse<string>.Succeeded(string.Empty, "Photos reordered successfully"));
+    }
+
+    [Authorize]
+    [HttpPatch("photos/{photoId}/primary")]
+    public async Task<IActionResult> SetPrimaryPhoto(Guid photoId)
+    {
+        await _mediator.Send(new SetPrimaryPhotoCommand(photoId));
+        return Ok(ApiResponse<string>.Succeeded(string.Empty, "Primary photo set successfully"));
     }
 }
 

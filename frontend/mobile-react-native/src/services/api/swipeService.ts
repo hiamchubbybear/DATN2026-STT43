@@ -9,6 +9,8 @@ export interface UserProfileDto {
   locationName: string;
   occupation: string;
   interests: string[];
+  isIdentityVerified: boolean;
+  distanceKm?: number;
 }
 
 export enum SwipeType {
@@ -57,6 +59,11 @@ export const swipeService = {
 
   getMatches: async (): Promise<any[]> => {
     const response = await apiClient.get<any>('/api/v1/swipes/matches');
+    return response.data.data;
+  },
+  
+  resetSwipes: async (): Promise<boolean> => {
+    const response = await apiClient.post<any>('/api/v1/swipes/reset');
     return response.data.data;
   },
 

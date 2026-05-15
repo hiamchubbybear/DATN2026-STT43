@@ -49,7 +49,7 @@ public class UserVerification : BaseEntity
         RejectReason = reason;
     }
 
-    public void SetAiResults(double livenessScore, bool livenessPass, 
+    public void SetAiResults(double livenessScore, bool livenessPass,
         double similarityScore, bool faceMatch, string details)
     {
         LivenessScore = livenessScore;
@@ -58,7 +58,7 @@ public class UserVerification : BaseEntity
         IsFaceMatched = faceMatch;
         AiVerificationDetails = details;
         AiVerifiedAt = DateTime.UtcNow;
-        
+
         // Auto-approve if both pass with high confidence
         // Note: Thresholds could be configurable, but using 0.85 as suggested in plan
         if (livenessPass && faceMatch && livenessScore >= 0.85 && similarityScore >= 0.85)

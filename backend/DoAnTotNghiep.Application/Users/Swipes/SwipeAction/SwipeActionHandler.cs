@@ -1,8 +1,11 @@
 using DoAnTotNghiep.Application.Common;
+using DoAnTotNghiep.Application.Exception;
 using DoAnTotNghiep.Application.Notifications;
 using DoAnTotNghiep.Application.Observability;
 using DoAnTotNghiep.Domain.Users;
 using MediatR;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,26 +23,38 @@ public class SwipeActionHandler : IRequestHandler<SwipeActionCommand, SwipeActio
     private readonly ICurrentUserService _currentUserService;
     private readonly ICacheService _cacheService;
     private readonly INotificationService _notificationService;
+    private readonly ISignalRService _signalRService;
     private readonly IUserProfileRepository _userProfileRepository;
+    private readonly IUserReportRepository _reportRepository;
+    private readonly DoAnTotNghiep.Domain.Notifications.INotificationRepository _notificationRepository;
     private readonly IMetricsService _metrics;
     private readonly IFraudDetectionService _fraudDetectionService;
+    private readonly ILogger<SwipeActionHandler> _logger;
 
     public SwipeActionHandler(
         ISwipeRepository swipeRepository,
         ICurrentUserService currentUserService,
         ICacheService cacheService,
         INotificationService notificationService,
+        ISignalRService signalRService,
         IUserProfileRepository userProfileRepository,
+        IUserReportRepository reportRepository,
+        DoAnTotNghiep.Domain.Notifications.INotificationRepository notificationRepository,
         IMetricsService metrics,
-        IFraudDetectionService fraudDetectionService)
+        IFraudDetectionService fraudDetectionService,
+        ILogger<SwipeActionHandler> logger)
     {
         _swipeRepository = swipeRepository;
         _currentUserService = currentUserService;
         _cacheService = cacheService;
         _notificationService = notificationService;
+        _signalRService = signalRService;
         _userProfileRepository = userProfileRepository;
+        _reportRepository = reportRepository;
+        _notificationRepository = notificationRepository;
         _metrics = metrics;
         _fraudDetectionService = fraudDetectionService;
+        _logger = logger;
     }
 
     public async Task<SwipeActionResponse> Handle(SwipeActionCommand request, CancellationToken cancellationToken)
@@ -50,7 +65,45 @@ public class SwipeActionHandler : IRequestHandler<SwipeActionCommand, SwipeActio
         // 0. Fraud detection check (Fast swiping)
         if (await _fraudDetectionService.IsSwipingTooFastAsync(currentUserId, cancellationToken))
         {
-            throw new System.Exception("Slow down! You're swiping too fast.");
+            _logger.LogWarning("Spam detected for User {UserId}: Swiping too fast", currentUserId);
+
+            /* 
+            // Commented out to reduce spam as requested
+            await _notificationService.SendPushToUserAsync(
+                currentUserId,
+                "⚠️ Cảnh báo hành vi!",
+                "Bạn đang quẹt quá nhanh. Vui lòng chậm lại để đảm bảo cộng đồng văn minh. Hành vi này đã được ghi nhận.",
+                new Dictionary<string, string> { { "type", "warning" } }
+            );
+            */
+
+            // Send Real-time SignalR Warning
+            await _signalRService.SendWarningAsync(
+                currentUserId,
+                "⚠️ Cảnh báo hệ thống",
+                "Bạn đang quẹt quá nhanh. Vui lòng chậm lại. Hành vi này đã được ghi nhận vào hồ sơ."
+            );
+
+            // Save persistent notification to database
+            var dbNotif = DoAnTotNghiep.Domain.Notifications.Notification.Create(
+                currentUserId,
+                "Cảnh báo hành vi",
+                "Bạn đã quẹt quá nhanh nhiều lần. Hành vi này vi phạm chính sách cộng đồng và đã được báo cáo cho quản trị viên.",
+                "warning"
+            );
+            await _notificationRepository.AddAsync(dbNotif);
+
+            // Auto-flag: Create a system report
+            var report = new UserReport(
+                Guid.Empty, // System Reporter
+                currentUserId,
+                "Hệ thống: Phát hiện Spam",
+                "Người dùng vi phạm quy định về tốc độ quẹt thẻ (Fast Swiping Detection). Hệ thống đã tự động gắn cờ.",
+                new List<string>()
+            );
+            await _reportRepository.CreateAsync(report);
+
+            throw new TooManyRequestsException("Slow down! You're swiping too fast. A warning has been sent.");
         }
 
         // 1. Check if already swiped

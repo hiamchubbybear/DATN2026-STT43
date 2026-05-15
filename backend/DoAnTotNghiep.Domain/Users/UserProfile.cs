@@ -13,30 +13,59 @@ public class UserProfile(Guid userId) : BaseEntity
     [BsonConstructor]
     private UserProfile() : this(Guid.Empty) { }
 
+    [BsonElement]
     public Guid UserId { get; private set; } = userId;
     public string Email { get; set; } = string.Empty;
+    [BsonElement]
     public UserStatus Status { get; private set; } = UserStatus.Active;
     public DateTime? SuspendedUntil { get; private set; }
+    public bool IsIdentityVerified { get; private set; } = false;
 
+    [BsonElement]
     public BasicInfo BasicInfo { get; private set; } = new();
+    
+    [BsonElement]
     public Background Background { get; private set; } = new();
+    
+    [BsonElement]
     public Lifestyle Lifestyle { get; private set; } = new();
+    
+    [BsonElement]
     public DatingStyle DatingStyle { get; private set; } = new();
+    
+    [BsonElement]
     public List<Photo> Photos { get; set; } = [];
 
-    // Existing fields for ProfileHandlers
-
+    [BsonElement]
     public string Bio { get; private set; } = string.Empty;
+    
     public Gender Gender => BasicInfo.Gender;
+    
+    [BsonElement]
     public string InterestedIn { get; private set; } = string.Empty;
 
+    [BsonElement]
     public double Latitude { get; private set; } = 0;
+    
+    [BsonElement]
     public double Longitude { get; private set; } = 0;
+    
+    [BsonElement]
+    public Point Location { get; private set; } = new(0, 0);
+    
+    [BsonElement]
     public string LocationName { get; private set; } = string.Empty;
 
+    [BsonElement]
     public GenderPreference LookingFor { get; private set; } = GenderPreference.Everyone;
+    
+    [BsonElement]
     public int MinAgePreference { get; private set; } = 18;
+    
+    [BsonElement]
     public int MaxAgePreference { get; private set; } = 100;
+    
+    [BsonElement]
     public int MaxDistanceKm { get; private set; } = 50;
 
     public void Ban()
@@ -62,6 +91,12 @@ public class UserProfile(Guid userId) : BaseEntity
     public void ShadowBan()
     {
         Status = UserStatus.ShadowBanned;
+        SetUpdated();
+    }
+
+    public void MarkAsIdentityVerified()
+    {
+        IsIdentityVerified = true;
         SetUpdated();
     }
 
@@ -107,6 +142,7 @@ public class UserProfile(Guid userId) : BaseEntity
             throw new ArgumentException("Invalid longitude");
         Latitude = latitude;
         Longitude = longitude;
+        Location = new Point(longitude, latitude);
         LocationName = locationName?.Trim() ?? string.Empty;
         SetUpdated();
     }

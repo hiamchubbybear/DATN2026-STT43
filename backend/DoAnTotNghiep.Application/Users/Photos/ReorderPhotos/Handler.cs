@@ -1,4 +1,4 @@
-﻿using DoAnTotNghiep.Application.Common;
+using DoAnTotNghiep.Application.Common;
 using DoAnTotNghiep.Application.Exception;
 using DoAnTotNghiep.Domain.Users;
 using MediatR;
@@ -6,7 +6,7 @@ using MongoDB.Driver;
 
 namespace DoAnTotNghiep.Application.Users.Photos.ReorderPhotos
 {
-    public class Handler : IRequestHandler<ReoderPhotosCommand>
+    public class Handler : IRequestHandler<ReorderPhotosCommand>
     {
         private readonly IUserProfileRepository _repo;
         private readonly ICurrentUserService _current;
@@ -20,7 +20,7 @@ namespace DoAnTotNghiep.Application.Users.Photos.ReorderPhotos
             _cache = cache;
         }
 
-        public async Task Handle(ReoderPhotosCommand request, CancellationToken cancellationToken)
+        public async Task Handle(ReorderPhotosCommand request, CancellationToken cancellationToken)
         {
             if (!Guid.TryParse(_current.UserId, out var userId))
                 throw new UnauthorizedException("Invalid user");

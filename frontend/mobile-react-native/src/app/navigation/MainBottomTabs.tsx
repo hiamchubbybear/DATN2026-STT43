@@ -15,6 +15,8 @@ import {
   spacing,
 } from "../../shared/utils/responsive";
 
+import { useNotificationStore } from "../../store/notificationStore";
+
 export type MainTabParamList = {
   Main: undefined;
   Matches: undefined;
@@ -41,6 +43,8 @@ const ICONS: Record<
 
 export const MainBottomTabs = () => {
   const insets = useSafeAreaInsets();
+  const { hasUnreadMessages, hasUnreadMatches, hasUnreadNotifications } = useNotificationStore();
+
   const tabBottomInset =
     Platform.OS === "android" ? Math.max(insets.bottom, 10) : insets.bottom;
   const tabBarBaseHeight = scale(
@@ -70,6 +74,11 @@ export const MainBottomTabs = () => {
             ? ICONS[routeName].active
             : ICONS[routeName].inactive;
 
+          let hasBadge = false;
+          if (routeName === "Messages") hasBadge = hasUnreadMessages;
+          if (routeName === "Matches") hasBadge = hasUnreadMatches;
+          if (routeName === "Notifications") hasBadge = hasUnreadNotifications;
+
           return (
             <View style={styles.tabInner}>
               <Ionicons
@@ -77,6 +86,7 @@ export const MainBottomTabs = () => {
                 size={normalizeFont(22)}
                 color={color}
               />
+              {hasBadge && <View style={styles.badge} />}
               {focused ? <View style={styles.activeDot} /> : null}
             </View>
           );
@@ -126,5 +136,17 @@ const styles = StyleSheet.create({
     backgroundColor: "#EE3F57",
     borderWidth: scale(1.5),
     borderColor: "#ECEFF3",
+  },
+  badge: {
+    position: "absolute",
+    top: spacing(2),
+    right: spacing(2),
+    width: scale(10),
+    height: scale(10),
+    borderRadius: radius(5),
+    backgroundColor: "#FF4D6D",
+    borderWidth: 2,
+    borderColor: "#ECEFF3",
+    zIndex: 20,
   },
 });

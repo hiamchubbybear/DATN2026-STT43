@@ -139,15 +139,15 @@ export const ProfileMainScreen = () => {
         >
           <View style={styles.verificationIconBg}>
             <Ionicons 
-              name={profile.isVerified ? "checkmark-circle" : "shield-checkmark-outline"} 
+              name={profile.isIdentityVerified ? "checkmark-circle" : "shield-checkmark-outline"} 
               size={24} 
-              color={profile.isVerified ? "#10B981" : "#6B7280"} 
+              color={profile.isIdentityVerified ? "#10B981" : "#6B7280"} 
             />
           </View>
           <View style={{ flex: 1, marginLeft: 12 }}>
             <Text style={styles.verificationTitle}>{t('verification.title')}</Text>
-            <Text style={[styles.verificationStatus, profile.isVerified && { color: '#10B981' }]}>
-              {profile.isVerified ? t('verification.status.approved') : t('verification.status.pending')}
+            <Text style={[styles.verificationStatus, profile.isIdentityVerified && { color: '#10B981' }]}>
+              {profile.isIdentityVerified ? t('verification.status.approved') : t('verification.status.pending')}
             </Text>
           </View>
           <Ionicons name="chevron-forward" size={20} color="#D1D5DB" />
@@ -421,7 +421,7 @@ const styles = StyleSheet.create({
     right: 16,
   },
   card: {
-    marginTop: -24,
+    marginTop: 12,
     marginHorizontal: 10,
     borderRadius: 24,
     backgroundColor: '#FFFFFF',

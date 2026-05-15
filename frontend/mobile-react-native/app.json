@@ -12,6 +12,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.tranvanhuy16032004.datn2026",
+      "googleServicesFile": "./GoogleService-Info.plist",
       "scheme": "datn2026",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
@@ -24,6 +25,7 @@
     },
     "android": {
       "package": "com.tranvanhuy16032004.datn2026",
+      "googleServicesFile": "./google-services.json",
       "usesCleartextTraffic": true,
       "intentFilters": [
         {

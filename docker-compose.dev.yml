@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  redis:
+    build:
+      context: ./docker/redis
+    container_name: datn_redis_dev
+    ports:
+      - "6379:6379"
+    restart: always
+
+  mongodb:
+    image: mongo:latest
+    container_name: datn_mongodb_dev
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    restart: always
+
+volumes:
+  mongodb_data:

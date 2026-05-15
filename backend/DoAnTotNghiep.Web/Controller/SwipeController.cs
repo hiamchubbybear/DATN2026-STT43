@@ -42,6 +42,13 @@ public class SwipeController : ControllerBase
         return Ok(ApiResponse<List<DoAnTotNghiep.Application.Users.Swipes.GetMatches.MatchDto>>.Succeeded(result));
     }
 
+    [HttpPost("reset")]
+    public async Task<IActionResult> ResetSwipes()
+    {
+        var result = await _mediator.Send(new DoAnTotNghiep.Application.Users.Swipes.ResetSwipes.ResetSwipesCommand());
+        return Ok(ApiResponse<bool>.Succeeded(result));
+    }
+
     private Guid GetUserId()
     {
         var userIdClaim = User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value

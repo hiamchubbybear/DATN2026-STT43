@@ -11,7 +11,7 @@ interface BasicInfoSectionProps {
   setDob: (val: string) => void;
   gender: string;
   languages: string[];
-  onOpenModal: (type: string, title: string, options: string[]) => void;
+  onOpenModal: (type: string, title: string, options: (string | { label: string; value: string })[]) => void;
   onSave: () => void;
   isSaving: boolean;
 }
@@ -51,19 +51,54 @@ export const BasicInfoSection = ({
       <Text style={styles.label}>{t('profile_edit.gender')}</Text>
       <TouchableOpacity 
         style={styles.selector} 
-        onPress={() => onOpenModal('gender', t('profile_edit.select_gender'), [t('discover.men'), t('discover.women'), t('common.other')])}
+        onPress={() => onOpenModal('gender', t('profile_edit.select_gender'), [
+          { label: t('discover.men'), value: 'Male' },
+          { label: t('discover.women'), value: 'Female' },
+          { label: t('common.other'), value: 'Other' }
+        ])}
       >
-        <Text style={gender ? styles.selectorText : styles.placeholderText}>{gender || t('profile_edit.select_gender')}</Text>
+        <Text style={gender ? styles.selectorText : styles.placeholderText}>
+          {gender === 'Male' ? t('discover.men') : gender === 'Female' ? t('discover.women') : gender === 'Other' ? t('common.other') : t('profile_edit.select_gender')}
+        </Text>
         <Ionicons name="chevron-down" size={20} color="#9CA3AF" />
       </TouchableOpacity>
 
       <Text style={styles.label}>{t('profile_edit.languages')}</Text>
       <TouchableOpacity 
         style={styles.selector} 
-        onPress={() => onOpenModal('languages', t('profile_edit.select_languages'), ['Vietnamese', 'English', 'Korean', 'Japanese', 'Chinese', 'French'])}
+        onPress={() => onOpenModal('languages', t('profile_edit.select_languages'), [
+          { label: t('common.choices.lang_vi'), value: 'Vietnamese' },
+          { label: t('common.choices.lang_en'), value: 'English' },
+          { label: t('common.choices.lang_ko'), value: 'Korean' },
+          { label: t('common.choices.lang_ja'), value: 'Japanese' },
+          { label: t('common.choices.lang_zh'), value: 'Chinese' },
+          { label: t('common.choices.lang_fr'), value: 'French' },
+          { label: t('common.choices.lang_es'), value: 'Spanish' },
+          { label: t('common.choices.lang_de'), value: 'German' },
+          { label: t('common.choices.lang_it'), value: 'Italian' },
+          { label: t('common.choices.lang_ru'), value: 'Russian' },
+          { label: t('common.choices.lang_th'), value: 'Thai' }
+        ])}
       >
         <Text style={languages.length > 0 ? styles.selectorText : styles.placeholderText}>
-          {languages.length > 0 ? languages.join(', ') : t('profile_edit.select_languages')}
+          {languages.length > 0 
+            ? languages.map(l => {
+                switch(l) {
+                  case 'Vietnamese': return t('common.choices.lang_vi');
+                  case 'English': return t('common.choices.lang_en');
+                  case 'Korean': return t('common.choices.lang_ko');
+                  case 'Japanese': return t('common.choices.lang_ja');
+                  case 'Chinese': return t('common.choices.lang_zh');
+                  case 'French': return t('common.choices.lang_fr');
+                  case 'Spanish': return t('common.choices.lang_es');
+                  case 'German': return t('common.choices.lang_de');
+                  case 'Italian': return t('common.choices.lang_it');
+                  case 'Russian': return t('common.choices.lang_ru');
+                  case 'Thai': return t('common.choices.lang_th');
+                  default: return l;
+                }
+              }).join(', ') 
+            : t('profile_edit.select_languages')}
         </Text>
         <Ionicons name="chevron-down" size={20} color="#9CA3AF" />
       </TouchableOpacity>

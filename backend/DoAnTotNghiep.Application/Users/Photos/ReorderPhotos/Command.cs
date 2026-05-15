@@ -1,4 +1,4 @@
-﻿using MediatR;
+using MediatR;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,5 +7,5 @@ using System.Threading.Tasks;
 
 namespace DoAnTotNghiep.Application.Users.Photos.ReorderPhotos
 {
-    public record ReoderPhotosCommand(List<Guid> PhotoIds) : IRequest;
+    public record ReorderPhotosCommand(List<Guid> PhotoIds) : IRequest;
 }

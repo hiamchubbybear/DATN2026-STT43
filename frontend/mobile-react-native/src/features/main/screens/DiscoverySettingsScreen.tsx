@@ -22,6 +22,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 export const DiscoverySettingsScreen = () => {
   const navigation = useNavigation();
   const { showToast } = useToast();
+  const { t } = useTranslation();
   
   const [ageRange, setAgeRange] = useState([18, 100]);
   const [maxDistance, setMaxDistance] = useState(50);
@@ -59,16 +60,16 @@ export const DiscoverySettingsScreen = () => {
       
       showToast({
         type: 'success',
-        title: 'Settings Saved',
-        message: 'Discovery preferences updated'
+        title: t('common.success'),
+        message: t('discover_settings.success_save')
       });
       navigation.goBack();
     } catch (error) {
       Logger.error('Failed to update discovery settings', error);
       showToast({
         type: 'error',
-        title: 'Error',
-        message: 'Could not save settings'
+        title: t('common.error'),
+        message: t('discover_settings.error_save')
       });
     } finally {
       setSaving(false);
@@ -89,12 +90,12 @@ export const DiscoverySettingsScreen = () => {
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Ionicons name="chevron-back" size={24} color="#111827" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Discovery Settings</Text>
+        <Text style={styles.headerTitle}>{t('discover_settings.title')}</Text>
         <TouchableOpacity onPress={handleSave} disabled={saving}>
           {saving ? (
             <ActivityIndicator size="small" color="#F43F5E" />
           ) : (
-            <Text style={styles.saveText}>Save</Text>
+            <Text style={styles.saveText}>{t('discover_settings.save')}</Text>
           )}
         </TouchableOpacity>
       </View>
@@ -102,7 +103,7 @@ export const DiscoverySettingsScreen = () => {
       <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
         <View style={styles.section}>
           <View style={styles.prefHeader}>
-            <Text style={styles.label}>Age Range</Text>
+            <Text style={styles.label}>{t('discover_settings.age_range')}</Text>
             <Text style={styles.value}>{ageRange[0]} - {ageRange[1]}</Text>
           </View>
           
@@ -126,7 +127,7 @@ export const DiscoverySettingsScreen = () => {
 
         <View style={[styles.section, { marginTop: 24 }]}>
           <View style={styles.prefHeader}>
-            <Text style={styles.label}>Maximum Distance</Text>
+            <Text style={styles.label}>{t('discover_settings.max_distance')}</Text>
             <Text style={styles.value}>{maxDistance} km</Text>
           </View>
           
@@ -146,7 +147,7 @@ export const DiscoverySettingsScreen = () => {
         <View style={styles.infoBox}>
           <Ionicons name="information-circle-outline" size={20} color="#6B7280" />
           <Text style={styles.infoText}>
-            We'll show you people within this range. Sometimes we might show people slightly outside if we run out of options.
+            {t('discover_settings.info_text')}
           </Text>
         </View>
       </ScrollView>

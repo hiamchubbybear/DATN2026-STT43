@@ -1,7 +1,9 @@
 import * as signalR from '@microsoft/signalr';
 import { useAuthStore } from '../../store/authStore';
 import { useChatStore } from '../../store/chatStore';
-import { API_CONFIG } from '../../constants/config'; // assuming this exists, we will use process.env if not.
+import { useNotificationStore } from '../../store/notificationStore';
+import { API_CONFIG } from '../../constants/config'; 
+import { toast } from '../../shared/services/toast';
 
 class ChatSignalRService {
   private hubConnection: signalR.HubConnection | null = null;
@@ -63,6 +65,8 @@ class ChatSignalRService {
 
     this.hubConnection.on('ReceiveMessage', (data: any) => {
       console.log('Received message:', data);
+      
+      // Update chat store
       useChatStore.getState().addMessage(data.conversationId, {
         id: data.reqId,
         conversationId: data.conversationId,
@@ -70,6 +74,31 @@ class ChatSignalRService {
         payload: data.payload,
         timestamp: data.timestamp || new Date().toISOString(),
       });
+
+      // Show toast if the message is from someone else
+      // In a real app, we would also check if the user is already on the ChatDetail screen for this conversation
+      toast.show({
+        title: 'Tin nhắn mới',
+        message: data.payload,
+        type: 'info',
+        duration: 3000,
+      });
+
+      // Update notification badge
+      useNotificationStore.getState().setHasUnreadMessages(true);
+    });
+
+    this.hubConnection.on('ReceiveWarning', (data: any) => {
+      console.log('Received system warning:', data);
+      toast.show({
+        title: data.title || 'Cảnh báo hệ thống',
+        message: data.message || '',
+        type: 'error',
+        duration: 7000,
+      });
+
+      // Show red dot on notifications tab
+      useNotificationStore.getState().setHasUnreadNotifications(true);
     });
 
     this.hubConnection.on('Ack', (data: any) => {

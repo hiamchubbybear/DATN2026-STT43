@@ -5,6 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { normalizeFont, radius, spacing } from '../../../shared/utils/responsive';
 import { UserProfileDto } from '../../../services/api/swipeService';
 import { IconLocation } from '../../../shared/components/icons/IconLocation';
+import { Ionicons } from '@expo/vector-icons';
 
 const { width, height } = Dimensions.get('window');
 const CARD_HEIGHT = height * 0.7;
@@ -35,7 +36,15 @@ export const SwipeCard: React.FC<Props> = ({ profile, onPressInfo }) => {
         <View style={styles.locationBadgeContainer}>
           <View style={styles.locationBadge}>
             <IconLocation size={12} color="#fff" />
-            <Text style={styles.locationBadgeText}>1 km</Text>
+            <Text style={styles.locationBadgeText}>
+              {profile.distanceKm !== undefined && profile.distanceKm !== null
+                ? profile.distanceKm > 1000
+                  ? '> 1000 km'
+                  : profile.distanceKm === 0
+                    ? '< 1 km'
+                    : `${Math.round(profile.distanceKm)} km`
+                : 'Unknown'}
+            </Text>
           </View>
         </View>
         
@@ -78,9 +87,16 @@ export const SwipeCard: React.FC<Props> = ({ profile, onPressInfo }) => {
         activeOpacity={0.9}
         onPress={onPressInfo}
       >
-        <Text style={styles.name}>
-          {profile?.displayName || 'Unknown'}, {profile?.age || ''}
-        </Text>
+        <View style={styles.nameContainer}>
+          <Text style={styles.name}>
+            {profile?.displayName || 'Unknown'}, {profile?.age || ''}
+          </Text>
+          {profile?.isIdentityVerified && (
+            <View style={styles.verifiedBadge}>
+              <Ionicons name="checkmark-circle" size={20} color="#3B82F6" />
+            </View>
+          )}
+        </View>
         {profile?.occupation ? <Text style={styles.occupation}>{profile.occupation}</Text> : null}
       </TouchableOpacity>
     </View>
@@ -169,5 +185,12 @@ const styles = StyleSheet.create({
     color: '#eee',
     fontSize: normalizeFont(16),
     marginTop: spacing(4),
+  },
+  nameContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  verifiedBadge: {
+    marginLeft: spacing(6),
   },
 });

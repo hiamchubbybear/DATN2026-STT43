@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard, Alert, ActivityIndicator } from 'react-native';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard, Alert, ActivityIndicator, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -85,6 +85,11 @@ export default function EmailSignUpDetailsScreen() {
           </View>
           
           <View style={styles.content}>
+            <Image 
+              source={require('../../../../assets/images/logo.png')} 
+              style={styles.logoImage} 
+              resizeMode="contain"
+            />
             <Text style={styles.title}>{t('auth.signUp_title')}</Text>
             <Text style={styles.description}>
               {t('auth.signUp_details_desc')}
@@ -185,6 +190,13 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+    paddingTop: 20,
+  },
+  logoImage: {
+    width: scale(64),
+    height: scale(64),
+    borderRadius: radius(16),
+    marginBottom: spacing(24),
   },
   title: {
     fontSize: normalizeFont(32),

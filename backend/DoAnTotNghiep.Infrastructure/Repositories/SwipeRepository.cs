@@ -52,4 +52,11 @@ public sealed class SwipeRepository : ISwipeRepository
             .SortByDescending(x => x.MatchedAt)
             .ToListAsync();
     }
+    
+    public async Task ClearSwipesAsync(Guid userId)
+    {
+        await _swipes.DeleteManyAsync(x => x.ActorId == userId);
+        // Also clear matches if resetting everything for looping
+        await _matches.DeleteManyAsync(x => x.UserOneId == userId || x.UserTwoId == userId);
+    }
 }

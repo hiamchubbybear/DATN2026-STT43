@@ -13,7 +13,7 @@ export interface ApiError {
 
 export const apiClient = axios.create({
   baseURL: process.env.EXPO_PUBLIC_API_BASE_URL || 'https://datn.chessy.dev',
-  timeout: 10000,
+  timeout: 60000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -95,6 +95,9 @@ apiClient.interceptors.response.use(
       // Server responded with an error
       const data = error.response.data;
       message = data?.message || data?.Message || data?.detail || data?.Detail || data?.error || `Server Error (${error.response.status})`;
+    } else if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+      // Handle timeout specifically
+      message = 'Request timed out. The server is taking too long to respond. Please try again.';
     } else if (error.request) {
       // Request made but no response (Network error)
       message = 'Cannot connect to the server. Please check your internet connection.';

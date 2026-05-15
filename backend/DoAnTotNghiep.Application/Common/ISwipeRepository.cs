@@ -13,4 +13,5 @@ public interface ISwipeRepository
     Task AddMatchAsync(UserMatch match);
     Task<List<UserMatch>> GetMatchesAsync(Guid userId);
     Task<bool> HasLikedAsync(Guid actorId, Guid targetId);
+    Task ClearSwipesAsync(Guid userId);
 }

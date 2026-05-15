@@ -115,7 +115,8 @@ namespace DoAnTotNghiep.Application.Users.Recommendation
                     c.LocationName ?? "",
                     c.Photos.FirstOrDefault(p => p.IsPrimary)?.ThumbnailUrl ?? c.Photos.FirstOrDefault(p => p.IsPrimary)?.Url,
                     Math.Round(distance, 1),
-                    Math.Round(score, 2)
+                    Math.Round(score, 2),
+                    c.IsIdentityVerified
                 ));
 
                 if (results.Count >= request.Take * 3)

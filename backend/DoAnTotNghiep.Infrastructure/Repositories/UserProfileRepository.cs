@@ -3,6 +3,7 @@ using DoAnTotNghiep.Domain.Enum;
 using DoAnTotNghiep.Domain.Users;
 using DoAnTotNghiep.Infrastructure.Persistence;
 using MongoDB.Driver;
+using MongoDB.Bson.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -71,7 +72,7 @@ public class UserProfileRepository : IUserProfileRepository
 
         // 2. Gender preference filter
         var effectiveGenderPref = genderPreference ?? me.LookingFor;
-        if (effectiveGenderPref != GenderPreference.Everyone
+        if (!relaxFilters && effectiveGenderPref != GenderPreference.Everyone
             && effectiveGenderPref != GenderPreference.None)
         {
             var targetGender = effectiveGenderPref == GenderPreference.Male ? Gender.Male : Gender.Female;
@@ -84,17 +85,30 @@ public class UserProfileRepository : IUserProfileRepository
             var effectiveMinAge = minAge ?? me.MinAgePreference;
             var effectiveMaxAge = maxAge ?? me.MaxAgePreference;
             
-            var minDob = DateTime.UtcNow.AddYears(-(effectiveMaxAge + 1));
-            var maxDob = DateTime.UtcNow.AddYears(-(effectiveMinAge - 1));
+            var minDob = DateTime.UtcNow.AddYears(-effectiveMaxAge - 1).AddDays(1);
+            var maxDob = DateTime.UtcNow.AddYears(-effectiveMinAge);
             filters.Add(builder.Gte(x => x.BasicInfo.Dob, minDob));
             filters.Add(builder.Lte(x => x.BasicInfo.Dob, maxDob));
         }
 
+        // 4. Distance filter
+        var effectiveDistance = maxDistanceKm ?? me.MaxDistanceKm;
+        if (!relaxFilters && effectiveDistance > 0 && me.Location != null)
+        {
+            // GeoWithinCenterSphere is more robust in complex $and queries
+            // distance in radians = distance / earth radius (approx 6378.1 km)
+            double radians = (double)effectiveDistance / 6378.1;
+            filters.Add(builder.GeoWithinCenterSphere(x => x.Location, me.Location.Coordinates[0], me.Location.Coordinates[1], radians));
+        }
+
         var finalFilter = builder.And(filters);
         
-        return await _profiles
-            .Find(finalFilter)
-            .SortByDescending(x => x.CreatedAt)
+        var query = _profiles.Find(finalFilter);
+        
+        // Note: GeoWithinCenterSphere allows combining with other sorts, unlike $near.
+        query = query.SortByDescending(x => x.CreatedAt);
+
+        return await query
             .Skip(skip)
             .Limit(take)
             .ToListAsync();

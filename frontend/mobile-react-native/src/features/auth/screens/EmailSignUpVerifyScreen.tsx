@@ -10,6 +10,7 @@ import { useAuthStore } from '../../../store/authStore';
 import { useToast } from '../../../shared/components/ToastProvider';
 import { useTranslation } from 'react-i18next';
 import { normalizeFont, radius, scale, spacing, verticalScale } from '../../../shared/utils/responsive';
+import { getFcmToken } from '../../../shared/utils/notificationHelper';
 
 const { width } = Dimensions.get('window');
 
@@ -235,6 +236,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#E5E7EB',
     justifyContent: 'center',
+    alignItems: 'center',
     backgroundColor: '#FFFFFF',
   },
   codeBoxFocused: {
@@ -248,6 +250,7 @@ const styles = StyleSheet.create({
     fontSize: normalizeFont(18),
     fontWeight: '600',
     color: '#111111',
+    textAlign: 'center',
   },
   codeTextFilled: {
     color: '#FFFFFF',

@@ -34,7 +34,8 @@ public class ProfileHandlers(IUserProfileRepository profileRepository) :
             profile.LocationName,
             profile.MinAgePreference, 
             profile.MaxAgePreference, 
-            profile.MaxDistanceKm);
+            profile.MaxDistanceKm,
+            profile.IsIdentityVerified);
     }
 
     public async Task<UserProfileDto> Handle(GetMyProfileQuery request, CancellationToken cancellationToken)
@@ -60,7 +61,8 @@ public class ProfileHandlers(IUserProfileRepository profileRepository) :
             profile.LocationName,
             profile.MinAgePreference, 
             profile.MaxAgePreference, 
-            profile.MaxDistanceKm);
+            profile.MaxDistanceKm,
+            profile.IsIdentityVerified);
     }
 
     private async Task<UserProfile> EnsureProfileExists(Guid userId)

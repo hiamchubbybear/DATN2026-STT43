@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Alert, RefreshControl, StyleSheet, Text, TouchableOpacity, View, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -6,6 +6,8 @@ import { normalizeFont, radius, scale, spacing, verticalScale } from '../../../s
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { notificationService, type NotificationDto } from '../../../services/api/notificationService';
 import { useTranslation } from 'react-i18next';
+import { useNotificationStore } from '../../../store/notificationStore';
+import { useFocusEffect } from '@react-navigation/native';
 
 function formatTime(iso: string, t: any) {
   const d = new Date(iso);
@@ -38,10 +40,18 @@ function toneForType(type?: string) {
 export const NotificationsMainScreen = () => {
   const qc = useQueryClient();
   const { t } = useTranslation();
+  const setHasUnreadNotifications = useNotificationStore(s => s.setHasUnreadNotifications);
+
   const { data, isLoading, isRefetching, refetch } = useQuery({
     queryKey: ['notifications'],
     queryFn: notificationService.list,
   });
+
+  useFocusEffect(
+    React.useCallback(() => {
+      setHasUnreadNotifications(false);
+    }, [setHasUnreadNotifications])
+  );
 
   const del = useMutation({
     mutationFn: (id: string) => notificationService.delete(id),
@@ -79,7 +89,7 @@ export const NotificationsMainScreen = () => {
           ) : null}
 
           {(data || []).map((item) => {
-            const t = toneForType(item.type);
+            const toneConfig = toneForType(item.type);
             return (
             <TouchableOpacity
               key={item.id}
@@ -93,21 +103,21 @@ export const NotificationsMainScreen = () => {
               }
             >
               <View style={styles.leading}>
-                <View style={[styles.alertIconWrap, { backgroundColor: t.bg }]}>
+                <View style={[styles.alertIconWrap, { backgroundColor: toneConfig.bg }]}>
                   <Ionicons
-                    name={t.icon}
+                    name={toneConfig.icon}
                     size={normalizeFont(18)}
-                    color={t.tone}
+                    color={toneConfig.tone}
                   />
                 </View>
               </View>
-
+ 
               <View style={styles.listBody}>
                 <Text style={styles.listTitle}>{item.title}</Text>
                 <Text style={styles.listMessage} numberOfLines={1}>{item.content}</Text>
                 <Text style={styles.typeText}>{(item.type || 'info').toUpperCase()}</Text>
               </View>
-
+ 
               <View style={styles.listMeta}>
                 <Text style={styles.timeText}>{formatTime(item.createdAt, t)}</Text>
                 <TouchableOpacity

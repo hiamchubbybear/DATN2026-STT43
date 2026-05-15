@@ -10,6 +10,7 @@ import { profileService } from '../../../services/api/profileService';
 import { useToast } from '../../../shared/components/ToastProvider';
 import { Logger } from '../../../shared/utils/logger';
 import { useTranslation } from 'react-i18next';
+import * as Location from 'expo-location';
 
 // Components
 import { EditProfileHeader } from '../components/EditProfile/EditProfileHeader';
@@ -129,7 +130,18 @@ export const EditProfileScreen = () => {
           await profileService.updateDatingStyle({ freeTimePrefer, dateStyle });
           break;
         case 'location':
-          await profileService.updateLocation({ locationName, latitude: 0, longitude: 0 });
+          setSavingSection('location');
+          const { status } = await Location.getForegroundPermissionsAsync();
+          let latitude = 0;
+          let longitude = 0;
+          
+          if (status === 'granted') {
+            const currentLoc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+            latitude = currentLoc.coords.latitude;
+            longitude = currentLoc.coords.longitude;
+          }
+          
+          await profileService.updateLocation({ locationName, latitude, longitude });
           break;
       }
       showToast({ type: 'success', text1: t('common.success'), text2: `${t(`profile_edit.${section}`)} ${t('profile_edit.success_update')}` });
@@ -141,10 +153,10 @@ export const EditProfileScreen = () => {
     }
   };
 
-  const openModal = (type: string, title: string, options: string[]) => {
+  const openModal = (type: string, title: string, options: (string | { label: string; value: string })[]) => {
     setModalType(type);
     setModalTitle(title);
-    setModalOptions(options);
+    setModalOptions(options as any);
     setModalVisible(true);
   };
 
@@ -211,7 +223,7 @@ export const EditProfileScreen = () => {
             onPress={() => setActiveModal('lifestyle')} 
           />
           <MenuButton 
-            icon="calendar-outline" title={t('profile_edit.dating_style')} 
+            icon="calendar-outline" title={t('profile_edit.datingStyle')} 
             onPress={() => setActiveModal('datingStyle')} 
           />
           <MenuButton 

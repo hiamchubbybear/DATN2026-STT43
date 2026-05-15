@@ -25,18 +25,15 @@ export async function getFcmToken() {
   }
 
   try {
-    // For Expo Go, use expoPushToken. For production/preview, you might want the native FCM token.
-    // However, the backend is using FirebaseMessaging, which expects an FCM token.
-    // To get the device's FCM token in Expo, we use getDevicePushTokenAsync.
-    
-    // NOTE: getDevicePushTokenAsync returns the native FCM token on Android and APNS token on iOS.
-    // FirebaseMessaging.SendAsync expects the FCM token.
-    
-    const deviceToken = (await Notifications.getDevicePushTokenAsync()).data;
-    console.log('FCM Device Token:', deviceToken);
-    return deviceToken;
+    // We use Expo Push Token to support iOS notifications without a paid developer account
+    // This token works with Expo's push service
+    const expoToken = (await Notifications.getExpoPushTokenAsync({
+      projectId: Constants.expoConfig?.extra?.eas?.projectId,
+    })).data;
+    console.log('Expo Push Token:', expoToken);
+    return expoToken;
   } catch (error) {
-    console.error('Error getting FCM token:', error);
+    console.error('Error getting Expo Push token:', error);
     return null;
   }
 }

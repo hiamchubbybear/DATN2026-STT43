@@ -8,6 +8,7 @@ namespace DoAnTotNghiep.Application.Users.Recommendation
         string LocationName,
         string? ThumbnailUrl,
         double DistanceKm,
-        double Score
+        double Score,
+        bool IsIdentityVerified
         );
 }

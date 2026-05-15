@@ -17,7 +17,8 @@ public class MongoDbContext : IMongoDbContext
     {
         try
         {
-            // Register global GuidSerializer for all Guids
+            // Register global GuidSerializer to handle MongoDB Guids correctly
+            // In MongoDB Driver 3.x, GuidRepresentation is handled via GuidSerializer.
             BsonSerializer.RegisterSerializer(new GuidSerializer(GuidRepresentation.Standard));
 
             // For MongoDB Driver 3.x, we should register class maps carefully
@@ -28,65 +29,6 @@ public class MongoDbContext : IMongoDbContext
                     cm.AutoMap();
                     cm.MapIdProperty(c => c.Id)
                         .SetSerializer(new GuidSerializer(GuidRepresentation.Standard));
-                });
-
-                BsonClassMap.RegisterClassMap<DoAnTotNghiep.Domain.Users.UserProfile>(cm =>
-                {
-                    cm.AutoMap();
-                    cm.MapProperty(c => c.UserId)
-                        .SetSerializer(new GuidSerializer(GuidRepresentation.Standard));
-                });
-
-                BsonClassMap.RegisterClassMap<DoAnTotNghiep.Domain.Users.UserAccount>(cm =>
-                {
-                    cm.AutoMap();
-                });
-
-                BsonClassMap.RegisterClassMap<DoAnTotNghiep.Domain.Chat.ChatMessage>(cm =>
-                {
-                    cm.AutoMap();
-                    cm.MapProperty(c => c.ConversationId)
-                        .SetSerializer(new GuidSerializer(GuidRepresentation.Standard));
-                });
-
-                BsonClassMap.RegisterClassMap<DoAnTotNghiep.Domain.Chat.Conversation>(cm =>
-                {
-                    cm.AutoMap();
-                });
-
-                BsonClassMap.RegisterClassMap<DoAnTotNghiep.Domain.Users.UserSwipe>(cm =>
-                {
-                    cm.AutoMap();
-                    cm.MapProperty(c => c.ActorId)
-                        .SetSerializer(new GuidSerializer(GuidRepresentation.Standard));
-                    cm.MapProperty(c => c.TargetId)
-                        .SetSerializer(new GuidSerializer(GuidRepresentation.Standard));
-                });
-
-                BsonClassMap.RegisterClassMap<DoAnTotNghiep.Domain.Users.UserMatch>(cm =>
-                {
-                    cm.AutoMap();
-                    cm.MapProperty(c => c.UserOneId)
-                        .SetSerializer(new GuidSerializer(GuidRepresentation.Standard));
-                    cm.MapProperty(c => c.UserTwoId)
-                        .SetSerializer(new GuidSerializer(GuidRepresentation.Standard));
-                });
-
-                BsonClassMap.RegisterClassMap<DoAnTotNghiep.Domain.Admin.AuditLog>(cm =>
-                {
-                    cm.AutoMap();
-                    cm.MapProperty(c => c.ActorId)
-                        .SetSerializer(new GuidSerializer(GuidRepresentation.Standard));
-                });
-
-                BsonClassMap.RegisterClassMap<DoAnTotNghiep.Domain.Admin.SystemConfig>(cm =>
-                {
-                    cm.AutoMap();
-                });
-
-                BsonClassMap.RegisterClassMap<DoAnTotNghiep.Domain.MasterData.MasterHobby>(cm =>
-                {
-                    cm.AutoMap();
                 });
             }
         }
@@ -100,7 +42,8 @@ public class MongoDbContext : IMongoDbContext
 
     public MongoDbContext(MongoSettings settings)
     {
-        var client = new MongoClient(settings.ConnectionString);
+        var clientSettings = MongoClientSettings.FromConnectionString(settings.ConnectionString);
+        var client = new MongoClient(clientSettings);
         _database = client.GetDatabase(settings.Database);
     }
 
@@ -138,7 +81,8 @@ public class MongoDbInitializer
 
     public MongoDbInitializer(MongoSettings settings, IPasswordHasher hasher)
     {
-        var client = new MongoClient(settings.ConnectionString);
+        var clientSettings = MongoClientSettings.FromConnectionString(settings.ConnectionString);
+        var client = new MongoClient(clientSettings);
         _database = client.GetDatabase(settings.Database);
         _hasher = hasher;
     }
@@ -164,6 +108,10 @@ public class MongoDbInitializer
         var sessionCollection = _database.GetCollection<Session>("user_sessions");
         await sessionCollection.Indexes.CreateOneAsync(new CreateIndexModel<Session>(
             Builders<Session>.IndexKeys.Ascending(u => u.CreatedAt)));
+
+        var profileCollection = _database.GetCollection<UserProfile>("user_profiles");
+        await profileCollection.Indexes.CreateOneAsync(new CreateIndexModel<UserProfile>(
+            Builders<UserProfile>.IndexKeys.Geo2DSphere(u => u.Location)));
 
         await SeedMasterDataAsync();
     }
@@ -236,6 +184,7 @@ public class MongoDbInitializer
             var adminProfile = new UserProfile(adminUser?.Id ?? Guid.NewGuid());
             adminProfile.UpdateBasicInfo("System Admin", new DateTime(1990, 1, 1), Gender.Other, ["English", "Vietnamese"]);
             adminProfile.UpdateBio("Hệ thống Mixer Admin", Gender.Other, "Everyone");
+            adminProfile.UpdateLocation(10.762622, 106.660172, "Hồ Chí Minh, Việt Nam");
             await profileCol.InsertOneAsync(adminProfile);
 
             // Create 50 fake users and reports for testing

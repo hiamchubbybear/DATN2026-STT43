@@ -81,7 +81,7 @@ public class GoogleLoginHandler : IRequestHandler<GoogleLoginCommand, AuthRespon
             request.IpAddress,
             request.Platform,
             request.AppVersion,
-            request.PushToken,
+            request.FcmToken,
             refreshToken
         );
         await _sessionRepository.CreateSession(session);

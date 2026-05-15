@@ -28,8 +28,8 @@ const VerificationFlow: React.FC = () => {
   const pickImage = async (type: 'front' | 'back') => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      quality: 0.8,
+      allowsEditing: false, // Lấy toàn bộ ảnh gốc, không ép crop
+      quality: 1,           // Chất lượng tối đa
     });
 
     if (!result.canceled) {

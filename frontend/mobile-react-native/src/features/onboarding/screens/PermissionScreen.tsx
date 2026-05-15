@@ -16,6 +16,7 @@ import Svg, { Path, Circle } from 'react-native-svg';
 import { spacing, radius, normalizeFont, scale } from '../../../shared/utils/responsive';
 import { useAuthStore } from '../../../store/authStore';
 import { useTranslation } from 'react-i18next';
+import { profileService } from '../../../services/api/profileService';
 
 const IconLocation = () => (
   <View style={[styles.iconContainer, { backgroundColor: '#DBEAFE' }]}>
@@ -74,7 +75,19 @@ export const PermissionScreen = ({ navigation }: any) => {
     }
   };
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
+    try {
+      if (locationStatus === 'granted') {
+        const location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+        const { latitude, longitude } = location.coords;
+        const [address] = await Location.reverseGeocodeAsync({ latitude, longitude });
+        const locationName = address ? `${address.district || address.city || address.region}` : 'Nearby';
+        
+        await profileService.updateLocation({ latitude, longitude, locationName });
+      }
+    } catch (error) {
+      console.error('[Permission] Failed to update location:', error);
+    }
     navigation.replace('DiscoverySetting');
   };
 

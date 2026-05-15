@@ -23,6 +23,7 @@ import { UserProfileScreen } from '../../features/main/screens/UserProfileScreen
 import { ChatRoomScreen } from '../../features/chat/screens/ChatRoomScreen';
 import { IdentityVerificationScreen } from '../../features/main/screens/IdentityVerificationScreen';
 import { AppFeedbackScreen } from '../../features/main/screens/AppFeedbackScreen';
+import { NotificationManager } from '../../shared/components/NotificationManager';
 
 export type RootStackParamList = {
   Onboarding: undefined;
@@ -58,6 +59,7 @@ export const RootNavigator = () => {
 
   return (
     <NavigationContainer>
+      <NotificationManager />
       <Stack.Navigator 
         screenOptions={{ 
           headerShown: false,

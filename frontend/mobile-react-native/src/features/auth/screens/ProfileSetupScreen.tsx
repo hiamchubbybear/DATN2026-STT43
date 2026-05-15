@@ -53,7 +53,7 @@ export default function ProfileSetupScreen() {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1);
-  const totalSteps = 10;
+  const totalSteps = 13;
 
   // Form states
   const [displayName, setDisplayName] = useState('');
@@ -67,6 +67,9 @@ export default function ProfileSetupScreen() {
   const [smoking, setSmoking] = useState('Non-smoker');
   const [socialLevel, setSocialLevel] = useState('Socially active');
   const [hobbies, setHobbies] = useState<string[]>([]);
+  const [interests, setInterests] = useState<string[]>([]);
+  const [freeTimePrefer, setFreeTimePrefer] = useState<string[]>([]);
+  const [dateStyle, setDateStyle] = useState<string[]>([]);
   const [languages, setLanguages] = useState<string[]>(['Vietnamese']);
   const [photos, setPhotos] = useState<string[]>([]);
 
@@ -91,7 +94,7 @@ export default function ProfileSetupScreen() {
         return;
       }
     }
-    if (step === 10 && photos.length === 0) {
+    if (step === 13 && photos.length === 0) {
       showToast({
         title: t('common.error'),
         message: t('setup.step10_subtitle'),
@@ -186,6 +189,9 @@ export default function ProfileSetupScreen() {
         smoking,
         socialLevel,
         hobbies,
+        interests,
+        freeTimePrefer,
+        dateStyle,
         languages: languages.length > 0 ? languages : ['English'],
       });
 
@@ -256,7 +262,6 @@ export default function ProfileSetupScreen() {
               keyboardType="numeric"
               maxLength={10}
               placeholderTextColor="#9CA3AF"
-              autoFocus
             />
           </>
         );
@@ -266,14 +271,18 @@ export default function ProfileSetupScreen() {
             <Text style={styles.title}>{t('setup.step3_title')}</Text>
             <Text style={styles.subtitle}>{t('setup.step3_subtitle')}</Text>
             <View style={styles.optionsContainer}>
-              {['Male', 'Female', 'Other'].map((g) => (
+              {[
+                { label: t('discover.men'), value: 'Male' },
+                { label: t('discover.women'), value: 'Female' },
+                { label: t('common.other'), value: 'Other' }
+              ].map((g) => (
                 <TouchableOpacity
-                  key={g}
-                  style={[styles.optionButton, gender === g && styles.optionButtonActive]}
-                  onPress={() => setGender(g)}
+                  key={g.value}
+                  style={[styles.optionButton, gender === g.value && styles.optionButtonActive]}
+                  onPress={() => setGender(g.value)}
                 >
-                  <Text style={[styles.optionText, gender === g && styles.optionTextActive]}>
-                    {g === 'Male' ? t('discover.men') : g === 'Female' ? t('discover.women') : t('common.other')}
+                  <Text style={[styles.optionText, gender === g.value && styles.optionTextActive]}>
+                    {g.label}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -286,14 +295,18 @@ export default function ProfileSetupScreen() {
             <Text style={styles.title}>{t('setup.step4_title')}</Text>
             <Text style={styles.subtitle}>{t('setup.step4_subtitle')}</Text>
             <View style={styles.optionsContainer}>
-              {['Male', 'Female', 'Everyone'].map((g) => (
+              {[
+                { label: t('discover.men'), value: 'Male' },
+                { label: t('discover.women'), value: 'Female' },
+                { label: t('discover.everyone'), value: 'Everyone' }
+              ].map((g) => (
                 <TouchableOpacity
-                  key={g}
-                  style={[styles.optionButton, interestedIn === g && styles.optionButtonActive]}
-                  onPress={() => setInterestedIn(g)}
+                  key={g.value}
+                  style={[styles.optionButton, interestedIn === g.value && styles.optionButtonActive]}
+                  onPress={() => setInterestedIn(g.value)}
                 >
-                  <Text style={[styles.optionText, interestedIn === g && styles.optionTextActive]}>
-                    {g === 'Male' ? t('discover.men') : g === 'Female' ? t('discover.women') : t('common.everyone', 'Everyone')}
+                  <Text style={[styles.optionText, interestedIn === g.value && styles.optionTextActive]}>
+                    {g.label}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -309,7 +322,7 @@ export default function ProfileSetupScreen() {
               <Text style={styles.label}>{t('setup.step5_occupation')}</Text>
               <TextInput
                 style={styles.inputLarge}
-                placeholder="e.g. Software Engineer"
+                placeholder={t('profile_edit.occupation_placeholder')}
                 value={occupation}
                 onChangeText={setOccupation}
                 placeholderTextColor="#9CA3AF"
@@ -334,7 +347,7 @@ export default function ProfileSetupScreen() {
             <Text style={styles.subtitle}>{t('setup.step6_subtitle')}</Text>
             <TextInput
               style={[styles.inputLarge, styles.textArea]}
-              placeholder="I love going on spontaneous road trips..."
+              placeholder={t('profile_edit.bio_placeholder')}
               value={bio}
               onChangeText={setBio}
               placeholderTextColor="#9CA3AF"
@@ -351,39 +364,51 @@ export default function ProfileSetupScreen() {
             
             <Text style={styles.sectionLabel}>{t('setup.step7_drinking')}</Text>
             <View style={styles.chipsContainer}>
-              {['Not for me', 'Socially', 'Frequently', 'Sober'].map((item) => (
+              {[
+                { label: t('common.choices.freq_no'), value: 'Never' },
+                { label: t('common.choices.freq_sometimes'), value: 'Socially' },
+                { label: t('common.choices.freq_often'), value: 'Frequently' }
+              ].map((item) => (
                 <TouchableOpacity
-                  key={item}
-                  style={[styles.chip, drinking === item && styles.chipActive]}
-                  onPress={() => setDrinking(item)}
+                  key={item.value}
+                  style={[styles.chip, drinking === item.value && styles.chipActive]}
+                  onPress={() => setDrinking(item.value)}
                 >
-                  <Text style={[styles.chipText, drinking === item && styles.chipTextActive]}>{item}</Text>
+                  <Text style={[styles.chipText, drinking === item.value && styles.chipTextActive]}>{item.label}</Text>
                 </TouchableOpacity>
               ))}
             </View>
 
             <Text style={[styles.sectionLabel, { marginTop: 20 }]}>{t('setup.step7_smoking')}</Text>
             <View style={styles.chipsContainer}>
-              {['Non-smoker', 'Socially', 'Frequently', 'Trying to quit'].map((item) => (
+              {[
+                { label: t('common.choices.freq_no'), value: 'Never' },
+                { label: t('common.choices.freq_sometimes'), value: 'Socially' },
+                { label: t('common.choices.freq_often'), value: 'Frequently' }
+              ].map((item) => (
                 <TouchableOpacity
-                  key={item}
-                  style={[styles.chip, smoking === item && styles.chipActive]}
-                  onPress={() => setSmoking(item)}
+                  key={item.value}
+                  style={[styles.chip, smoking === item.value && styles.chipActive]}
+                  onPress={() => setSmoking(item.value)}
                 >
-                  <Text style={[styles.chipText, smoking === item && styles.chipTextActive]}>{item}</Text>
+                  <Text style={[styles.chipText, smoking === item.value && styles.chipTextActive]}>{item.label}</Text>
                 </TouchableOpacity>
               ))}
             </View>
 
             <Text style={[styles.sectionLabel, { marginTop: 20 }]}>{t('setup.step7_social')}</Text>
             <View style={styles.chipsContainer}>
-              {['Homebody', 'Socially active', 'Party animal'].map((item) => (
+              {[
+                { label: t('common.choices.soc_introvert'), value: 'Introvert' },
+                { label: t('common.choices.soc_extrovert'), value: 'Extrovert' },
+                { label: t('common.choices.soc_ambivert'), value: 'Ambivert' }
+              ].map((item) => (
                 <TouchableOpacity
-                  key={item}
-                  style={[styles.chip, socialLevel === item && styles.chipActive]}
-                  onPress={() => setSocialLevel(item)}
+                  key={item.value}
+                  style={[styles.chip, socialLevel === item.value && styles.chipActive]}
+                  onPress={() => setSocialLevel(item.value)}
                 >
-                  <Text style={[styles.chipText, socialLevel === item && styles.chipTextActive]}>{item}</Text>
+                  <Text style={[styles.chipText, socialLevel === item.value && styles.chipTextActive]}>{item.label}</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -391,9 +416,40 @@ export default function ProfileSetupScreen() {
         );
       case 8:
         const hobbyList = [
-          'Photography', 'Travel', 'Coffee', 'Music', 'Gaming', 'Reading', 'Sports', 'Cooking', 'Art',
-          'Hiking', 'Movies', 'Dancing', 'Fitness', 'Yoga', 'Wine', 'Foodie', 'Animals', 'Technology',
-          'Fashion', 'Netflix', 'Gardening', 'Swimming', 'Coding', 'Tattoos', 'Cars', 'Outdoors'
+          { label: t('common.choices.hobby_reading'), value: 'Reading' },
+          { label: t('common.choices.hobby_gaming'), value: 'Gaming' },
+          { label: t('common.choices.hobby_cooking'), value: 'Cooking' },
+          { label: t('common.choices.hobby_hiking'), value: 'Hiking' },
+          { label: t('common.choices.hobby_photo'), value: 'Photography' },
+          { label: t('common.choices.hobby_music'), value: 'Music' },
+          { label: t('common.choices.hobby_travel'), value: 'Traveling' },
+          { label: t('common.choices.hobby_sports'), value: 'Sports' },
+          { label: t('common.choices.hobby_coffee'), value: 'Coffee' },
+          { label: t('common.choices.hobby_art'), value: 'Art' },
+          { label: t('common.choices.hobby_movies'), value: 'Movies' },
+          { label: t('common.choices.hobby_dancing'), value: 'Dancing' },
+          { label: t('common.choices.hobby_fitness'), value: 'Fitness' },
+          { label: t('common.choices.hobby_yoga'), value: 'Yoga' },
+          { label: t('common.choices.hobby_wine'), value: 'Wine' },
+          { label: t('common.choices.hobby_foodie'), value: 'Foodie' },
+          { label: t('common.choices.hobby_animals'), value: 'Animals' },
+          { label: t('common.choices.hobby_netflix'), value: 'Netflix' },
+          { label: t('common.choices.hobby_gardening'), value: 'Gardening' },
+          { label: t('common.choices.hobby_swimming'), value: 'Swimming' },
+          { label: t('common.choices.hobby_coding'), value: 'Coding' },
+          { label: t('common.choices.hobby_tattoos'), value: 'Tattoos' },
+          { label: t('common.choices.hobby_cars'), value: 'Cars' },
+          { label: t('common.choices.hobby_outdoors'), value: 'Outdoors' },
+          { label: t('common.choices.hobby_baking'), value: 'Baking' },
+          { label: t('common.choices.hobby_climbing'), value: 'Climbing' },
+          { label: t('common.choices.hobby_skating'), value: 'Skating' },
+          { label: t('common.choices.hobby_thrift'), value: 'Thrifting' },
+          { label: t('common.choices.hobby_concerts'), value: 'Concerts' },
+          { label: t('common.choices.hobby_museums'), value: 'Museums' },
+          { label: t('common.choices.hobby_camping'), value: 'Camping' },
+          { label: t('common.choices.hobby_surfing'), value: 'Surfing' },
+          { label: t('common.choices.hobby_pottery'), value: 'Pottery' },
+          { label: t('common.choices.hobby_karaoke'), value: 'Karaoke' }
         ];
         return (
           <>
@@ -401,14 +457,14 @@ export default function ProfileSetupScreen() {
             <Text style={styles.subtitle}>{t('setup.step8_subtitle')}</Text>
             <View style={styles.chipsContainer}>
               {hobbyList.map((h) => {
-                const isActive = hobbies.includes(h);
+                const isActive = hobbies.includes(h.value);
                 return (
                   <TouchableOpacity
-                    key={h}
+                    key={h.value}
                     style={[styles.chip, isActive && styles.chipActive]}
-                    onPress={() => toggleArrayItem(h, hobbies, setHobbies)}
+                    onPress={() => toggleArrayItem(h.value, hobbies, setHobbies)}
                   >
-                    <Text style={[styles.chipText, isActive && styles.chipTextActive]}>{h}</Text>
+                    <Text style={[styles.chipText, isActive && styles.chipTextActive]}>{h.label}</Text>
                   </TouchableOpacity>
                 );
               })}
@@ -416,24 +472,52 @@ export default function ProfileSetupScreen() {
           </>
         );
       case 9:
-        const langList = [
-          'Vietnamese', 'English', 'Korean', 'Japanese', 'Chinese', 'French', 'Spanish', 
-          'German', 'Italian', 'Russian', 'Thai', 'Cantonese', 'Mandarin'
+        const interestList = [
+          { label: t('common.choices.int_tech'), value: 'Technology' },
+          { label: t('common.choices.int_art'), value: 'Art & Design' },
+          { label: t('common.choices.int_science'), value: 'Science' },
+          { label: t('common.choices.int_fashion'), value: 'Fashion' },
+          { label: t('common.choices.int_movies'), value: 'Movies & TV' },
+          { label: t('common.choices.int_anime'), value: 'Anime & Manga' },
+          { label: t('common.choices.int_politics'), value: 'Politics' },
+          { label: t('common.choices.int_business'), value: 'Business & Startups' },
+          { label: t('common.choices.int_music'), value: 'Music' },
+          { label: t('common.choices.int_sports'), value: 'Sports' },
+          { label: t('common.choices.int_cooking'), value: 'Cooking' },
+          { label: t('common.choices.int_travel'), value: 'Travel' },
+          { label: t('common.choices.int_gaming'), value: 'Gaming' },
+          { label: t('common.choices.int_fitness'), value: 'Fitness & Health' },
+          { label: t('common.choices.int_finance'), value: 'Finance' },
+          { label: t('common.choices.int_history'), value: 'History' },
+          { label: t('common.choices.int_psychology'), value: 'Psychology' },
+          { label: t('common.choices.int_nature'), value: 'Nature' },
+          { label: t('common.choices.int_astrology'), value: 'Astrology' },
+          { label: t('common.choices.int_charity'), value: 'Charity & Volunteering' },
+          { label: t('common.choices.int_literature'), value: 'Literature' },
+          { label: t('common.choices.int_philosophy'), value: 'Philosophy' },
+          { label: t('common.choices.int_environment'), value: 'Environment' },
+          { label: t('common.choices.int_space'), value: 'Space & Astronomy' },
+          { label: t('common.choices.int_wellness'), value: 'Wellness' },
+          { label: t('common.choices.int_architecture'), value: 'Architecture' },
+          { label: t('common.choices.int_podcasts'), value: 'Podcasts' },
+          { label: t('common.choices.int_diy'), value: 'DIY & Crafting' },
+          { label: t('common.choices.int_marketing'), value: 'Marketing' },
+          { label: t('common.choices.int_journalism'), value: 'Journalism' }
         ];
         return (
           <>
-            <Text style={styles.title}>{t('setup.step9_title')}</Text>
-            <Text style={styles.subtitle}>{t('setup.step9_subtitle')}</Text>
+            <Text style={styles.title}>{t('profile_edit.interests_label')}</Text>
+            <Text style={styles.subtitle}>{t('profile_edit.select_interests')}</Text>
             <View style={styles.chipsContainer}>
-              {langList.map((lang) => {
-                const isActive = languages.includes(lang);
+              {interestList.map((i) => {
+                const isActive = interests.includes(i.value);
                 return (
                   <TouchableOpacity
-                    key={lang}
+                    key={i.value}
                     style={[styles.chip, isActive && styles.chipActive]}
-                    onPress={() => toggleArrayItem(lang, languages, setLanguages)}
+                    onPress={() => toggleArrayItem(i.value, interests, setInterests)}
                   >
-                    <Text style={[styles.chipText, isActive && styles.chipTextActive]}>{lang}</Text>
+                    <Text style={[styles.chipText, isActive && styles.chipTextActive]}>{i.label}</Text>
                   </TouchableOpacity>
                 );
               })}
@@ -441,6 +525,125 @@ export default function ProfileSetupScreen() {
           </>
         );
       case 10:
+        const langList = [
+          { label: t('common.choices.lang_vi'), value: 'Vietnamese' },
+          { label: t('common.choices.lang_en'), value: 'English' },
+          { label: t('common.choices.lang_ko'), value: 'Korean' },
+          { label: t('common.choices.lang_ja'), value: 'Japanese' },
+          { label: t('common.choices.lang_zh'), value: 'Chinese' },
+          { label: t('common.choices.lang_fr'), value: 'French' },
+          { label: t('common.choices.lang_es'), value: 'Spanish' },
+          { label: t('common.choices.lang_de'), value: 'German' },
+          { label: t('common.choices.lang_it'), value: 'Italian' },
+          { label: t('common.choices.lang_ru'), value: 'Russian' },
+          { label: t('common.choices.lang_th'), value: 'Thai' }
+        ];
+        return (
+          <>
+            <Text style={styles.title}>{t('setup.step9_title')}</Text>
+            <Text style={styles.subtitle}>{t('setup.step9_subtitle')}</Text>
+            <View style={styles.chipsContainer}>
+              {langList.map((lang) => {
+                const isActive = languages.includes(lang.value);
+                return (
+                  <TouchableOpacity
+                    key={lang.value}
+                    style={[styles.chip, isActive && styles.chipActive]}
+                    onPress={() => toggleArrayItem(lang.value, languages, setLanguages)}
+                  >
+                    <Text style={[styles.chipText, isActive && styles.chipTextActive]}>{lang.label}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </>
+        );
+      case 11:
+        const freeTimeList = [
+          { label: t('common.choices.ft_stay'), value: 'Staying In' },
+          { label: t('common.choices.ft_out'), value: 'Going Out' },
+          { label: t('common.choices.ft_chill'), value: 'Chilling' },
+          { label: t('common.choices.ft_prod'), value: 'Productive' },
+          { label: t('common.choices.ft_adv'), value: 'Adventurous' },
+          { label: t('common.choices.ft_gym'), value: 'Gym' },
+          { label: t('common.choices.ft_read'), value: 'Reading' },
+          { label: t('common.choices.ft_game'), value: 'Gaming' },
+          { label: t('common.choices.ft_brunch'), value: 'Brunching' },
+          { label: t('common.choices.ft_farmers_market'), value: 'Farmers Market' },
+          { label: t('common.choices.ft_volunteering'), value: 'Volunteering' },
+          { label: t('common.choices.ft_meditating'), value: 'Meditating' },
+          { label: t('common.choices.ft_puzzles'), value: 'Puzzles / Lego' },
+          { label: t('common.choices.ft_exhibition'), value: 'Art Exhibition' },
+          { label: t('common.choices.ft_live_music'), value: 'Live Music' },
+          { label: t('common.choices.ft_hiking'), value: 'Hiking / Nature' },
+          { label: t('common.choices.ft_cafe_hopping'), value: 'Cafe Hopping' },
+          { label: t('common.choices.ft_skating'), value: 'Skating / Boarding' }
+        ];
+        return (
+          <>
+            <Text style={styles.title}>{t('profile_edit.free_time_label')}</Text>
+            <Text style={styles.subtitle}>{t('profile_edit.select_preference')}</Text>
+            <View style={styles.chipsContainer}>
+              {freeTimeList.map((ft) => {
+                const isActive = freeTimePrefer.includes(ft.value);
+                return (
+                  <TouchableOpacity
+                    key={ft.value}
+                    style={[styles.chip, isActive && styles.chipActive]}
+                    onPress={() => toggleArrayItem(ft.value, freeTimePrefer, setFreeTimePrefer)}
+                  >
+                    <Text style={[styles.chipText, isActive && styles.chipTextActive]}>{ft.label}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </>
+        );
+      case 12:
+        const datingStyleList = [
+          { label: t('common.choices.ds_coffee'), value: 'Coffee' },
+          { label: t('common.choices.ds_dinner'), value: 'Dinner' },
+          { label: t('common.choices.ds_movie'), value: 'Movies' },
+          { label: t('common.choices.ds_walk'), value: 'Long Walks' },
+          { label: t('common.choices.ds_act'), value: 'Active' },
+          { label: t('common.choices.ds_bar'), value: 'Bar' },
+          { label: t('common.choices.ds_museum'), value: 'Museum' },
+          { label: t('common.choices.ds_concert'), value: 'Concert' },
+          { label: t('common.choices.ds_sport'), value: 'Sport' },
+          { label: t('common.choices.ds_cooking'), value: 'Cooking' },
+          { label: t('common.choices.ds_travel'), value: 'Travel' },
+          { label: t('common.choices.ds_arcade'), value: 'Arcade / Games' },
+          { label: t('common.choices.ds_picnic'), value: 'Picnic' },
+          { label: t('common.choices.ds_bowling'), value: 'Bowling' },
+          { label: t('common.choices.ds_workshop'), value: 'Workshop / Class' },
+          { label: t('common.choices.ds_karaoke'), value: 'Karaoke' },
+          { label: t('common.choices.ds_festival'), value: 'Festival / Fair' },
+          { label: t('common.choices.ds_bookstore'), value: 'Bookstore Date' },
+          { label: t('common.choices.ds_zoo'), value: 'Zoo / Aquarium' },
+          { label: t('common.choices.ds_beach'), value: 'Beach Trip' },
+          { label: t('common.choices.ds_sports_game'), value: 'Watch Sports' }
+        ];
+        return (
+          <>
+            <Text style={styles.title}>{t('profile_edit.date_style_label')}</Text>
+            <Text style={styles.subtitle}>{t('profile_edit.select_style')}</Text>
+            <View style={styles.chipsContainer}>
+              {datingStyleList.map((ds) => {
+                const isActive = dateStyle.includes(ds.value);
+                return (
+                  <TouchableOpacity
+                    key={ds.value}
+                    style={[styles.chip, isActive && styles.chipActive]}
+                    onPress={() => toggleArrayItem(ds.value, dateStyle, setDateStyle)}
+                  >
+                    <Text style={[styles.chipText, isActive && styles.chipTextActive]}>{ds.label}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </>
+        );
+      case 13:
         const slots = [0, 1, 2, 3, 4, 5];
         return (
           <>
@@ -485,7 +688,7 @@ export default function ProfileSetupScreen() {
   };
 
   const progressPercentage = (step / totalSteps) * 100;
-  const isOptionalStep = step >= 5 && step <= 9;
+  const isOptionalStep = step >= 5 && step <= 12;
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -497,6 +700,11 @@ export default function ProfileSetupScreen() {
           <View style={styles.progressBarContainer}>
             <View style={[styles.progressBarFill, { width: `${progressPercentage}%` }]} />
           </View>
+          <Image 
+            source={require('../../../../assets/images/logo.png')} 
+            style={styles.headerLogo} 
+            resizeMode="contain"
+          />
           {isOptionalStep ? (
             <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
               <Text style={styles.skipText}>{t('setup.skip')}</Text>
@@ -570,6 +778,12 @@ const styles = StyleSheet.create({
     borderRadius: radius(4),
     marginHorizontal: spacing(16),
     overflow: 'hidden',
+  },
+  headerLogo: {
+    width: scale(24),
+    height: scale(24),
+    borderRadius: radius(6),
+    marginLeft: spacing(12),
   },
   progressBarFill: {
     height: '100%',

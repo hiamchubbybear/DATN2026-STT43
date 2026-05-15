@@ -12,6 +12,7 @@ import { IconHeart } from '../../../shared/components/icons/IconHeart';
 import { IconClose } from '../../../shared/components/icons/IconClose';
 import { IconStar } from '../../../shared/components/icons/IconStar';
 import { IconBack } from '../../../shared/components/icons/IconBack';
+import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../../app/navigation/RootNavigator';
@@ -83,9 +84,14 @@ export const ProfileDetail = ({ profile, onClose, onLike, onDislike }: ProfileDe
         <View style={styles.infoContent}>
           <View style={styles.headerRow}>
             <View>
-              <Text style={styles.nameText}>
-                {profile?.displayName}, {profile?.age}
-              </Text>
+              <View style={styles.nameContainer}>
+                <Text style={styles.nameText}>
+                  {profile?.displayName}, {profile?.age}
+                </Text>
+                {profile?.isIdentityVerified && (
+                  <Ionicons name="checkmark-circle" size={24} color="#3B82F6" style={styles.verifiedIcon} />
+                )}
+              </View>
               <Text style={styles.occupationText}>{profile?.occupation}</Text>
             </View>
             <TouchableOpacity 
@@ -238,6 +244,14 @@ const styles = StyleSheet.create({
     fontSize: normalizeFont(16),
     color: '#666',
     marginTop: spacing(4),
+  },
+  nameContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing(8),
+  },
+  verifiedIcon: {
+    marginTop: spacing(2),
   },
   sendButton: {
     width: spacing(54),

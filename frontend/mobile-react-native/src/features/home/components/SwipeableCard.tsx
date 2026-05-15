@@ -40,20 +40,20 @@ export const SwipeableCard = React.memo(forwardRef<SwipeableCardRef, SwipeableCa
 
     const swipeOut = (type: SwipeType) => {
       'worklet';
+      // Trigger the next card immediatey to remove delay
+      runOnJS(onSwipe)(type);
+
       // Like is DOWN (+), Dislike is UP (-)
       const destY = type === SwipeType.Like ? SCREEN_HEIGHT : -SCREEN_HEIGHT;
       
-      // Faster, snappier spring for swiping out
+      // Snappier transition out
       translateY.value = withSpring(destY, { 
-        damping: 20, 
-        stiffness: 200, 
-        mass: 0.5 
-      }, (finished) => {
-        if (finished) {
-           runOnJS(onSwipe)(type);
-        }
+        damping: 25, 
+        stiffness: 250, 
+        mass: 0.4,
+        velocity: 50
       });
-      opacity.value = withTiming(0, { duration: 150 });
+      opacity.value = withTiming(0, { duration: 100 });
     };
 
     useImperativeHandle(ref, () => ({
