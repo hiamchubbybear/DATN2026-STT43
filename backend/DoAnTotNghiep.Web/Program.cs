@@ -117,7 +117,7 @@ try
         builder.Services.AddSignalR().AddStackExchangeRedis(options =>
         {
             options.Configuration = redisConfig;
-            options.Configuration.ChannelPrefix = "PsyConnect";
+            options.Configuration.ChannelPrefix = "Mixer";
         });
         Log.Information("Redis backplane enabled and connected.");
     }

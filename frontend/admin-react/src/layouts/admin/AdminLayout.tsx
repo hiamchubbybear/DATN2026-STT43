@@ -41,7 +41,7 @@ export default function AdminLayout({ activeItem, onLogout, onMenuSelect, childr
     <div className="min-h-screen bg-[#F3F3F3] text-slate-700 lg:flex">
       <aside className="hidden w-72 shrink-0 flex-col border-r border-slate-200 bg-white px-6 py-8 lg:sticky lg:top-0 lg:flex lg:h-screen">
         <div>
-          <img src={logoImage} alt="WeCare" className="mb-4 h-12 w-12 rounded-xl object-cover" />
+          <img src={logoImage} alt="Mixer" className="mb-4 h-12 w-12 rounded-xl object-cover" />
           <h2 className="text-xl font-bold text-slate-800">Mixer</h2>
           <p className="mt-1 text-sm text-slate-400">Dashboard</p>
         </div>

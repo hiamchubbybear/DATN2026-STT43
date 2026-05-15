@@ -47,8 +47,8 @@ namespace DoAnTotNghiep.Infrastructure.Security
             var creds = new SigningCredentials(
                 key, SecurityAlgorithms.HmacSha256);
             var token = new JwtSecurityToken(
-                issuer: "DATN-2026",
-                audience: "DATN-2026",
+                issuer: "Mixer",
+                audience: "Mixer",
                 claims: claims,
                 expires: DateTime.UtcNow.AddDays(EXPIRE_TIME),
                 signingCredentials: creds

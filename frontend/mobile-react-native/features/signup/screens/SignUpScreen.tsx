@@ -37,7 +37,7 @@ export function SignUpScreen() {
         </Pressable>
 
         <View style={styles.centerSection}>
-          <Image source={require('@/assets/images/logo.png')} style={styles.logoImage} />
+          <Image source={require('@/assets/images/logo_v2.png')} style={styles.logoImage} />
 
           <Text style={styles.title}>Sign up to continue</Text>
 

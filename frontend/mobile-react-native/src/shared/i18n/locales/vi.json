@@ -204,7 +204,9 @@
     "apply": "Áp dụng",
     "everyone": "Mọi người",
     "show_me": "Hiển thị",
+    "reset": "Xem lại từ đầu",
     "reset_loop": "Xem lại từ đầu",
+    "no_profiles": "Đã hết người để xem",
     "today": "Hôm nay",
     "yesterday": "Hôm qua",
     "earlier": "Trước đó"
@@ -431,10 +433,36 @@
     "language": "Ngôn ngữ",
     "version": "Phiên bản",
     "incognito_mode": "Chế độ ẩn danh",
+    "incognito_failed": "Cập nhật chế độ ẩn danh thất bại",
     "help_support": "Trợ giúp & Hỗ trợ",
     "report_problem": "Báo cáo sự cố",
     "rate_app": "Đánh giá ứng dụng",
-    "report_history": "Lịch sử báo cáo"
+    "report_history": "Lịch sử báo cáo",
+    "change_password_desc": "Mật khẩu mới của bạn phải khác với các mật khẩu đã sử dụng trước đây.",
+    "oldPassword": "Mật khẩu cũ",
+    "oldPassword_placeholder": "Nhập mật khẩu cũ",
+    "newPassword": "Mật khẩu mới",
+    "newPassword_placeholder": "Nhập mật khẩu mới",
+    "confirmPassword": "Xác nhận mật khẩu mới",
+    "confirmPassword_placeholder": "Xác nhận mật khẩu mới",
+    "updatePassword": "Cập nhật mật khẩu",
+    "change_password_success": "Mật khẩu đã được cập nhật thành công",
+    "delete_warning_title": "Xóa tài khoản vĩnh viễn",
+    "delete_warning_desc": "Khi bạn xóa tài khoản, toàn bộ dữ liệu bao gồm tương hợp, tin nhắn và thông tin hồ sơ sẽ bị xóa sạch khỏi máy chủ và không thể khôi phục.",
+    "delete_confirm_text": "Tôi hiểu rằng hành động này là vĩnh viễn và dữ liệu của tôi không thể khôi phục được.",
+    "confirm_delete_checkbox": "Vui lòng xác nhận rằng bạn đã hiểu các hệ quả",
+    "delete_final_confirm": "Hành động này không thể hoàn tác. Toàn bộ dữ liệu của bạn sẽ bị xóa vĩnh viễn. Bạn có chắc chắn không?",
+    "delete_success": "Tài khoản của bạn đã được xóa thành công.",
+    "push_notifications": "Thông báo đẩy",
+    "new_matches": "Tương hợp mới",
+    "new_matches_desc": "Nhận thông báo khi bạn có tương hợp mới",
+    "new_messages": "Tin nhắn mới",
+    "new_messages_desc": "Nhận thông báo khi bạn có tin nhắn mới",
+    "account_warnings": "Cảnh báo tài khoản",
+    "account_warnings_desc": "Cảnh báo an toàn và thông báo hạn chế tài khoản",
+    "marketing": "Tiếp thị",
+    "promotions": "Khuyến mãi & Mẹo",
+    "promotions_desc": "Nhận ưu đãi và mẹo để tìm kiếm tương hợp tốt hơn"
   },
   "rating": {
     "title": "Bạn thích Mixer chứ?",
@@ -489,5 +517,8 @@
     "subtitle": "Hãy bắt đầu cuộc trò chuyện ngay bây giờ",
     "say_hello": "Gửi lời chào",
     "keep_swiping": "Tiếp tục quẹt"
+  },
+  "discovery": {
+    "reset": "Xem lại từ đầu"
   }
 }

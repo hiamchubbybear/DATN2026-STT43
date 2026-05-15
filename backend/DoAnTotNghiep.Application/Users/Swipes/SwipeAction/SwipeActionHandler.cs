@@ -2,6 +2,7 @@ using DoAnTotNghiep.Application.Common;
 using DoAnTotNghiep.Application.Exception;
 using DoAnTotNghiep.Application.Notifications;
 using DoAnTotNghiep.Application.Observability;
+using DoAnTotNghiep.Domain.Enum;
 using DoAnTotNghiep.Domain.Users;
 using MediatR;
 using Microsoft.AspNetCore.SignalR;
@@ -84,14 +85,39 @@ public class SwipeActionHandler : IRequestHandler<SwipeActionCommand, SwipeActio
                 "Bạn đang quẹt quá nhanh. Vui lòng chậm lại. Hành vi này đã được ghi nhận vào hồ sơ."
             );
 
-            // Save persistent notification to database
-            var dbNotif = DoAnTotNghiep.Domain.Notifications.Notification.Create(
+            // 1. Send warning push first
+            await _notificationService.SendPushToUserAsync(
                 currentUserId,
-                "Cảnh báo hành vi",
-                "Bạn đã quẹt quá nhanh nhiều lần. Hành vi này vi phạm chính sách cộng đồng và đã được báo cáo cho quản trị viên.",
-                "warning"
+                "⚠️ Cảnh báo hành vi!",
+                "Bạn đang quẹt quá nhanh. Vui lòng chậm lại để đảm bảo cộng đồng văn minh.",
+                new Dictionary<string, string> { { "type", "warning" } }
             );
-            await _notificationRepository.AddAsync(dbNotif);
+
+            // 2. Check if we should restrict account (e.g. if they keep doing it)
+            // For now, let's just trigger a shadow ban if they hit the limit
+            var profile = await _userProfileRepository.GetByUserIdAsync(currentUserId);
+            if (profile != null && profile.Status == UserStatus.Active)
+            {
+                profile.ShadowBan();
+                await _userProfileRepository.UpdateAsync(profile);
+
+                // Save persistent notification
+                var dbNotif = DoAnTotNghiep.Domain.Notifications.Notification.Create(
+                    currentUserId,
+                    "Tài khoản bị hạn chế",
+                    "Chúng tôi phát hiện hành vi lạm dụng tính năng quẹt thẻ. Tài khoản của bạn đã bị hạn chế hiển thị trong 24h tới để đảm bảo an toàn hệ thống.",
+                    "admin"
+                );
+                await _notificationRepository.AddAsync(dbNotif);
+
+                // Send formal restriction push
+                await _notificationService.SendPushToUserAsync(
+                    currentUserId,
+                    "Tài khoản bị hạn chế",
+                    "Tính năng Khám phá của bạn tạm thời bị khóa do vi phạm quy định.",
+                    new Dictionary<string, string> { { "type", "admin" } }
+                );
+            }
 
             // Auto-flag: Create a system report
             var report = new UserReport(

@@ -1,4 +1,5 @@
 using DoAnTotNghiep.Application.Chat;
+using DoAnTotNghiep.Domain.Common;
 using DoAnTotNghiep.Infrastructure.Persistence;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -37,9 +38,12 @@ public class ChatPersistenceBackgroundService : BackgroundService
 
                 using (var scope = _serviceProvider.CreateScope())
                 {
+                    var encryptionService = scope.ServiceProvider.GetRequiredService<IEncryptionService>();
+                    message.Encrypt(encryptionService);
+
                     var mongoContext = scope.ServiceProvider.GetRequiredService<MongoDbContext>();
                     await mongoContext.ChatMessages.InsertOneAsync(message, cancellationToken: stoppingToken);
-                    _logger.LogInformation("Persisted chat message {MsgId} to MongoDB", message.Id);
+                    _logger.LogInformation("Persisted encrypted chat message {MsgId} to MongoDB", message.Id);
                 }
             }
             catch (OperationCanceledException)

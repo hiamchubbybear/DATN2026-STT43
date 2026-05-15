@@ -1,14 +1,18 @@
 {
   "expo": {
-    "name": "DATN 2026",
+    "name": "Mixer",
     "slug": "datn2026",
     "scheme": "datn2026",
     "owner": "tranvanhuy16032004",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/logo.png",
+    "icon": "./assets/images/logo_v2.png",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "notification": {
+      "icon": "./assets/images/logo_v2.png",
+      "color": "#EE3F57"
+    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.tranvanhuy16032004.datn2026",
@@ -41,9 +45,9 @@
       ],
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/logo.png",
+        "foregroundImage": "./assets/images/logo_v2.png",
         "backgroundImage": "./assets/images/anh1.jpg",
-        "monochromeImage": "./assets/images/logo.png"
+        "monochromeImage": "./assets/images/logo_v2.png"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
@@ -58,14 +62,14 @@
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/logo.png"
+      "favicon": "./assets/images/logo_v2.png"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/logo.png",
+          "image": "./assets/images/logo_v2.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff",

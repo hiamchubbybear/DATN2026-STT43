@@ -88,7 +88,7 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
       <section className="hidden items-center justify-center bg-[linear-gradient(135deg,#F27121_10%,#E94057_60%,#8A2387_100%)] p-12 text-white lg:flex">
         <div className="text-center">
           <div className="mx-auto mb-8 flex h-24 w-24 items-center justify-center rounded-3xl bg-white/20 backdrop-blur-sm">
-            <img src={logoImage} alt="WeCare Logo" className="h-16 w-16 rounded-2xl object-cover" />
+            <img src={logoImage} alt="Mixer Logo" className="h-16 w-16 rounded-2xl object-cover" />
           </div>
 
           <h2 className="text-fluid-xl font-bold tracking-tight">Mixer</h2>

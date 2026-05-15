@@ -98,6 +98,10 @@ public class FirebaseNotificationService : INotificationService
             {
                 Token = pushToken,
                 Notification = new Notification { Title = title, Body = body },
+                Android = new AndroidConfig 
+                { 
+                    Notification = new AndroidNotification { Icon = "notification_icon", Color = "#EE3F57" } 
+                },
                 Data = data
             });
             _logger.LogInformation("[FCM] Successfully sent push to token: {Token}", pushToken);
@@ -158,6 +162,10 @@ public class FirebaseNotificationService : INotificationService
         {
             Topic = "all",
             Notification = new Notification { Title = title, Body = body },
+            Android = new AndroidConfig 
+            { 
+                Notification = new AndroidNotification { Icon = "notification_icon", Color = "#EE3F57" } 
+            },
             Data = data
         });
         _metrics.RecordNotificationSent("push_broadcast");

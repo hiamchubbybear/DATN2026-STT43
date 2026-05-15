@@ -20,6 +20,7 @@ public class UserProfile(Guid userId) : BaseEntity
     public UserStatus Status { get; private set; } = UserStatus.Active;
     public DateTime? SuspendedUntil { get; private set; }
     public bool IsIdentityVerified { get; private set; } = false;
+    public bool IsIncognito { get; set; } = false;
 
     [BsonElement]
     public BasicInfo BasicInfo { get; private set; } = new();

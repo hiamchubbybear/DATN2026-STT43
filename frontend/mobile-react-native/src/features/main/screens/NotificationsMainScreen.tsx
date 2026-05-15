@@ -6,8 +6,8 @@ import { normalizeFont, radius, scale, spacing, verticalScale } from '../../../s
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { notificationService, type NotificationDto } from '../../../services/api/notificationService';
 import { useTranslation } from 'react-i18next';
-import { useNotificationStore } from '../../../store/notificationStore';
 import { useFocusEffect } from '@react-navigation/native';
+import { useNotificationStore } from '../../../store/notificationStore';
 
 function formatTime(iso: string, t: any) {
   const d = new Date(iso);
@@ -55,18 +55,17 @@ export const NotificationsMainScreen = () => {
 
   const del = useMutation({
     mutationFn: (id: string) => notificationService.delete(id),
-    onMutate: async (id) => {
-      await qc.cancelQueries({ queryKey: ['notifications'] });
-      const prev = qc.getQueryData<NotificationDto[]>(['notifications']);
-      qc.setQueryData<NotificationDto[]>(['notifications'], (cur) => (cur || []).filter((x) => x.id !== id));
-      return { prev };
-    },
-    onError: (_err, _id, ctx) => {
-      if (ctx?.prev) qc.setQueryData(['notifications'], ctx.prev);
-    },
-    onSettled: () => {
-      qc.invalidateQueries({ queryKey: ['notifications'] });
-    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['notifications'] }),
+  });
+
+  const markRead = useMutation({
+    mutationFn: (id: string) => notificationService.markAsRead(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['notifications'] }),
+  });
+
+  const markAllRead = useMutation({
+    mutationFn: () => notificationService.markAllAsRead(),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['notifications'] }),
   });
 
   return (
@@ -77,7 +76,14 @@ export const NotificationsMainScreen = () => {
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => refetch()} />}
       >
-        <Text style={styles.title}>{t('notifications.title')}</Text>
+        <View style={styles.headerRow}>
+          <Text style={styles.title}>{t('notifications.title')}</Text>
+          {(data || []).some(x => !x.isRead) && (
+            <TouchableOpacity onPress={() => markAllRead.mutate()}>
+              <Text style={styles.readAllText}>{t('notifications.mark_all_read', 'Read all')}</Text>
+            </TouchableOpacity>
+          )}
+        </View>
 
         <Text style={styles.sectionTitle}>{t('notifications.section_title')}</Text>
         <View style={styles.list}>
@@ -93,8 +99,9 @@ export const NotificationsMainScreen = () => {
             return (
             <TouchableOpacity
               key={item.id}
-              style={styles.listRow}
+              style={[styles.listRow, !item.isRead && styles.unreadRow]}
               activeOpacity={0.85}
+              onPress={() => !item.isRead && markRead.mutate(item.id)}
               onLongPress={() =>
                 Alert.alert(t('notifications.delete_title'), t('notifications.delete_confirm'), [
                   { text: t('common.cancel'), style: 'cancel' },
@@ -113,7 +120,10 @@ export const NotificationsMainScreen = () => {
               </View>
  
               <View style={styles.listBody}>
-                <Text style={styles.listTitle}>{item.title}</Text>
+                <View style={styles.titleRow}>
+                  <Text style={[styles.listTitle, !item.isRead && styles.unreadTitle]}>{item.title}</Text>
+                  {!item.isRead && <View style={styles.unreadDot} />}
+                </View>
                 <Text style={styles.listMessage} numberOfLines={1}>{item.content}</Text>
                 <Text style={styles.typeText}>{(item.type || 'info').toUpperCase()}</Text>
               </View>
@@ -154,7 +164,18 @@ const styles = StyleSheet.create({
     fontSize: normalizeFont(32),
     fontWeight: '800',
     color: '#333333',
+  },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
     marginBottom: spacing(10),
+  },
+  readAllText: {
+    fontSize: normalizeFont(14),
+    color: '#EE3F57',
+    fontWeight: '600',
+    marginBottom: spacing(6),
   },
   sectionTitle: {
     marginTop: spacing(8),
@@ -185,7 +206,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: spacing(12),
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: '#F1F5F9',
+  },
+  unreadRow: {
+    backgroundColor: '#FAFAFA',
   },
   leading: {
     width: scale(54),
@@ -205,8 +229,22 @@ const styles = StyleSheet.create({
   },
   listTitle: {
     fontSize: normalizeFont(14),
-    fontWeight: '600',
+    fontWeight: '500',
     color: '#333333',
+  },
+  unreadTitle: {
+    fontWeight: '700',
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing(6),
+  },
+  unreadDot: {
+    width: scale(6),
+    height: scale(6),
+    borderRadius: radius(3),
+    backgroundColor: '#EE3F57',
   },
   listMessage: {
     marginTop: spacing(4),

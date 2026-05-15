@@ -1,5 +1,6 @@
 using DoAnTotNghiep.Application.Chat;
 using DoAnTotNghiep.Domain.Chat;
+using DoAnTotNghiep.Domain.Common;
 using DoAnTotNghiep.Infrastructure.Persistence;
 using MongoDB.Driver;
 using System;
@@ -12,10 +13,12 @@ namespace DoAnTotNghiep.Infrastructure.Repositories;
 public class ChatMessageRepository : IChatMessageRepository
 {
     private readonly MongoDbContext _context;
+    private readonly IEncryptionService _encryptionService;
 
-    public ChatMessageRepository(MongoDbContext context)
+    public ChatMessageRepository(MongoDbContext context, IEncryptionService encryptionService)
     {
         _context = context;
+        _encryptionService = encryptionService;
     }
 
     public async Task<List<ChatMessage>> GetHistoryAsync(Guid conversationId, DateTime? before, int limit, CancellationToken cancellationToken)
@@ -28,11 +31,14 @@ public class ChatMessageRepository : IChatMessageRepository
             filter &= filterBuilder.Lt(x => x.CreatedAt, before.Value);
         }
 
-        return await _context.ChatMessages
+        var messages = await _context.ChatMessages
             .Find(filter)
             .SortByDescending(x => x.CreatedAt)
             .Limit(limit)
             .ToListAsync(cancellationToken);
+
+        messages.ForEach(m => m.Decrypt(_encryptionService));
+        return messages;
     }
 
     public async Task DeleteByConversationIdAsync(Guid conversationId, CancellationToken cancellationToken = default)

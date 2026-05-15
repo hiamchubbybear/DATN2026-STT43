@@ -8,6 +8,7 @@ import {
   ActivityIndicator, 
   Dimensions,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import MultiSlider from '@ptomasroos/react-native-multi-slider';
 import Slider from '@react-native-community/slider';
 import { SafeAreaView } from 'react-native-safe-area-context';

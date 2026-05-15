@@ -205,6 +205,7 @@
     "apply": "Apply Filters",
     "everyone": "Everyone",
     "show_me": "Show Me",
+    "reset": "Restart Discovery",
     "reset_loop": "Restart Discovery",
     "today": "Today",
     "yesterday": "Yesterday",
@@ -433,10 +434,36 @@
     "language": "Language",
     "version": "Version",
     "incognito_mode": "Incognito Mode",
+    "incognito_failed": "Failed to update incognito mode",
     "help_support": "Help & Support",
     "report_problem": "Report Problem",
     "rate_app": "Rate App",
-    "report_history": "Report History"
+    "report_history": "Report History",
+    "change_password_desc": "Your new password must be different from previous used passwords.",
+    "oldPassword": "Old Password",
+    "oldPassword_placeholder": "Enter old password",
+    "newPassword": "New Password",
+    "newPassword_placeholder": "Enter new password",
+    "confirmPassword": "Confirm New Password",
+    "confirmPassword_placeholder": "Confirm new password",
+    "updatePassword": "Update Password",
+    "change_password_success": "Password updated successfully",
+    "delete_warning_title": "Delete Account Permanently",
+    "delete_warning_desc": "Once you delete your account, there is no going back. All your matches, messages, and profile information will be wiped from our servers.",
+    "delete_confirm_text": "I understand that this action is permanent and my data cannot be recovered.",
+    "confirm_delete_checkbox": "Please confirm that you understand the consequences",
+    "delete_final_confirm": "This action is irreversible. All your data will be permanently deleted. Are you absolutely sure?",
+    "delete_success": "Your account has been deleted.",
+    "push_notifications": "Push Notifications",
+    "new_matches": "New Matches",
+    "new_matches_desc": "Get notified when you have a new match",
+    "new_messages": "New Messages",
+    "new_messages_desc": "Get notified when you receive a message",
+    "account_warnings": "Account Warnings",
+    "account_warnings_desc": "Safety alerts and account restriction notices",
+    "marketing": "Marketing",
+    "promotions": "Promotions & Tips",
+    "promotions_desc": "Receive offers and tips on how to find better matches"
   },
   "rating": {
     "title": "Enjoying Mixer?",
@@ -491,5 +518,8 @@
     "subtitle": "Start a conversation now with each other",
     "say_hello": "Say hello",
     "keep_swiping": "Keep swiping"
+  },
+  "discovery": {
+    "reset": "Restart Discovery"
   }
 }

@@ -16,6 +16,7 @@ import { HomeScreen } from '../../features/home/screens/HomeScreen';
 import { MainBottomTabs, MainTabParamList } from './MainBottomTabs';
 import { PermissionScreen } from '../../features/onboarding/screens/PermissionScreen';
 import { DiscoverySettingScreen } from '../../features/onboarding/screens/DiscoverySettingScreen';
+import { DiscoverySettingsScreen } from '../../features/main/screens/DiscoverySettingsScreen';
 import { SettingsScreen } from '../../features/main/screens/SettingsScreen';
 import { EditProfileScreen } from '../../features/main/screens/EditProfileScreen';
 import { EditGalleryScreen } from '../../features/main/screens/EditGalleryScreen';
@@ -24,6 +25,9 @@ import { ChatRoomScreen } from '../../features/chat/screens/ChatRoomScreen';
 import { IdentityVerificationScreen } from '../../features/main/screens/IdentityVerificationScreen';
 import { AppFeedbackScreen } from '../../features/main/screens/AppFeedbackScreen';
 import { NotificationManager } from '../../shared/components/NotificationManager';
+import { ChangePasswordScreen } from '../../features/main/screens/ChangePasswordScreen';
+import { DeleteAccountScreen } from '../../features/main/screens/DeleteAccountScreen';
+import { NotificationSettingsScreen } from '../../features/main/screens/NotificationSettingsScreen';
 
 export type RootStackParamList = {
   Onboarding: undefined;
@@ -37,7 +41,7 @@ export type RootStackParamList = {
   ResetPassword: { email: string; token: string };
   ProfileSetup: undefined;
   Permission: undefined;
-  DiscoverySetting: undefined;
+  DiscoverySettings: undefined;
   Home: undefined;
   MainTabs: NavigatorScreenParams<MainTabParamList> | undefined;
   Settings: undefined;
@@ -48,6 +52,9 @@ export type RootStackParamList = {
   IdentityVerification: undefined;
   AppFeedback: undefined;
   ChatRoom: { conversationId: string; receiverId: string; receiverName: string; receiverAvatar?: string };
+  ChangePassword: undefined;
+  NotificationSettings: undefined;
+  DeleteAccount: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -83,7 +90,7 @@ export const RootNavigator = () => {
           <>
             <Stack.Screen name="ProfileSetup" component={ProfileSetupScreen} />
             <Stack.Screen name="Permission" component={PermissionScreen} />
-            <Stack.Screen name="DiscoverySetting" component={DiscoverySettingScreen} />
+            <Stack.Screen name="DiscoverySettings" component={DiscoverySettingScreen} />
             <Stack.Screen name="IdentityVerification" component={IdentityVerificationScreen} />
             <Stack.Screen name="AppFeedback" component={AppFeedbackScreen} />
           </>
@@ -122,6 +129,22 @@ export const RootNavigator = () => {
             <Stack.Screen 
               name="IdentityVerification" 
               component={IdentityVerificationScreen} 
+            />
+            <Stack.Screen 
+              name="DiscoverySettings" 
+              component={DiscoverySettingsScreen} 
+            />
+            <Stack.Screen 
+              name="ChangePassword" 
+              component={ChangePasswordScreen} 
+            />
+            <Stack.Screen 
+              name="NotificationSettings" 
+              component={NotificationSettingsScreen} 
+            />
+            <Stack.Screen 
+              name="DeleteAccount" 
+              component={DeleteAccountScreen} 
             />
           </>
         )}

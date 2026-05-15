@@ -27,4 +27,20 @@ public class Conversation : BaseEntity
         LastMessageAt = DateTime.UtcNow;
         SetUpdated();
     }
+
+    public void Encrypt(IEncryptionService encryptionService)
+    {
+        if (!string.IsNullOrEmpty(LastMessage))
+        {
+            LastMessage = encryptionService.Encrypt(LastMessage);
+        }
+    }
+
+    public void Decrypt(IEncryptionService encryptionService)
+    {
+        if (!string.IsNullOrEmpty(LastMessage))
+        {
+            LastMessage = encryptionService.Decrypt(LastMessage);
+        }
+    }
 }

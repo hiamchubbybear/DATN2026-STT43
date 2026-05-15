@@ -701,7 +701,7 @@ export default function ProfileSetupScreen() {
             <View style={[styles.progressBarFill, { width: `${progressPercentage}%` }]} />
           </View>
           <Image 
-            source={require('../../../../assets/images/logo.png')} 
+            source={require('../../../../assets/images/logo_v2.png')} 
             style={styles.headerLogo} 
             resizeMode="contain"
           />

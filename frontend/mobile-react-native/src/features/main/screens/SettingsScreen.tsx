@@ -28,11 +28,34 @@ import { AppRatingModal } from '../../../shared/components/AppRatingModal';
 
 import { useTranslation } from 'react-i18next';
 
+import { userService } from '../../../services/api/userService';
+import { Switch } from 'react-native';
+
 export const SettingsScreen = () => {
-  const { logout } = useAuthStore();
+  const { logout, user } = useAuthStore();
   const navigation = useNavigation();
   const { t, i18n } = useTranslation();
   const [ratingVisible, setRatingVisible] = React.useState(false);
+  const [isIncognito, setIsIncognito] = React.useState(user?.isIncognito || false);
+  const [loadingIncognito, setLoadingIncognito] = React.useState(false);
+
+  React.useEffect(() => {
+    if (user) {
+      setIsIncognito(user.isIncognito || false);
+    }
+  }, [user]);
+
+  const handleToggleIncognito = async (value: boolean) => {
+    setLoadingIncognito(true);
+    try {
+      await userService.updateIncognito(value);
+      setIsIncognito(value);
+    } catch (error) {
+      Alert.alert(t('common.error'), t('settings.incognito_failed', 'Failed to update incognito mode'));
+    } finally {
+      setLoadingIncognito(false);
+    }
+  };
 
   const handleLogout = () => {
     Alert.alert(t('settings.logout'), t('settings.logout_confirm', 'Are you sure you want to logout?'), [
@@ -74,24 +97,38 @@ export const SettingsScreen = () => {
       <ScrollView style={styles.container}>
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t('settings.account')}</Text>
-          <SettingsItem icon="person-outline" label={t('settings.personalInfo')} color="#6366F1" onPress={() => navigation.navigate('EditProfile' as any)} />
-          <SettingsItem icon="options-outline" label={t('settings.discoverySettings')} color="#F43F5E" onPress={() => navigation.navigate('DiscoverySettings' as any)} />
+          <SettingsItem icon="person-outline" label={t('settings.personalInfo')} color="#6366F1" onPress={() => navigation.navigate('EditProfile')} />
+          <SettingsItem icon="options-outline" label={t('settings.discoverySettings')} color="#F43F5E" onPress={() => navigation.navigate('DiscoverySettings')} />
           <SettingsItem icon="language-outline" label={`${t('settings.language')} (${i18n.language.toUpperCase()})`} color="#10B981" onPress={toggleLanguage} />
-          <SettingsItem icon="lock-closed-outline" label={t('settings.changePassword')} color="#8B5CF6" />
-          <SettingsItem icon="notifications-outline" label={t('settings.notifications')} color="#F59E0B" />
+          <SettingsItem icon="lock-closed-outline" label={t('settings.changePassword')} color="#8B5CF6" onPress={() => navigation.navigate('ChangePassword' as any)} />
+          <SettingsItem icon="notifications-outline" label={t('settings.notifications')} color="#F59E0B" onPress={() => navigation.navigate('NotificationSettings' as any)} />
         </View>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t('settings.privacy')}</Text>
           <SettingsItem icon="shield-checkmark-outline" label={t('settings.privacy')} color="#10B981" />
-          <SettingsItem icon="eye-off-outline" label={t('settings.incognito_mode')} color="#6B7280" />
+          <View style={styles.row}>
+            <View style={styles.rowLeft}>
+              <View style={[styles.iconWrap, { backgroundColor: '#6B728010' }]}>
+                <Ionicons name="eye-off-outline" size={20} color="#6B7280" />
+              </View>
+              <Text style={styles.rowText}>{t('settings.incognito_mode')}</Text>
+            </View>
+            <Switch 
+              value={isIncognito} 
+              onValueChange={handleToggleIncognito}
+              disabled={loadingIncognito}
+              trackColor={{ false: '#E5E7EB', true: '#EE3F57' }}
+              thumbColor="#FFFFFF"
+            />
+          </View>
         </View>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t('settings.support')}</Text>
-          <SettingsItem icon="help-circle-outline" label={t('settings.help_support')} color="#3B82F6" />
-          <SettingsItem icon="bug-outline" label={t('settings.report_problem')} color="#F43F5E" onPress={() => console.log('Report problem')} />
-          <SettingsItem icon="document-text-outline" label={t('settings.report_history')} color="#F59E0B" onPress={() => navigation.navigate('ReportHistory' as any)} />
+          <SettingsItem icon="help-circle-outline" label={t('settings.help_support')} color="#3B82F6" onPress={() => Alert.alert(t('settings.help_support'), 'Email: support@mixer.app')} />
+          <SettingsItem icon="bug-outline" label={t('settings.report_problem')} color="#F43F5E" onPress={() => Alert.alert(t('settings.report_problem'), 'Please contact support@mixer.app with details.')} />
+          <SettingsItem icon="document-text-outline" label={t('settings.report_history')} color="#F59E0B" onPress={() => navigation.navigate('ReportHistory')} />
           <SettingsItem icon="star-outline" label={t('settings.rate_app')} color="#F59E0B" onPress={() => setRatingVisible(true)} />
         </View>
 
@@ -107,7 +144,7 @@ export const SettingsScreen = () => {
             icon="trash-outline" 
             label={t('settings.deleteAccount')} 
             color="#EF4444" 
-            onPress={handleDeleteAccount} 
+            onPress={() => navigation.navigate('DeleteAccount')} 
             showArrow={false} 
           />
         </View>

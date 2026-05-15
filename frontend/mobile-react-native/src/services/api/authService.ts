@@ -65,8 +65,8 @@ export const authService = {
     return response.data;
   },
 
-  deleteAccount: async (email: string) => {
-    const response = await apiClient.delete('/api/auth/delete-account', { data: { email } });
+  deleteAccount: async (email: string, password: string) => {
+    const response = await apiClient.delete('/api/auth/delete-account', { data: { email, password } });
     return response.data;
   },
 

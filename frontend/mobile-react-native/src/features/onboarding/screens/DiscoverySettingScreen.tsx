@@ -27,9 +27,15 @@ export const DiscoverySettingScreen = ({ navigation }: any) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <Ionicons name="chevron-back" size={24} color="#111827" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>{t('setup.discovery_title')}</Text>
+        <View style={{ width: 40 }} />
+      </View>
       <View style={styles.container}>
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          <Text style={styles.title}>{t('setup.discovery_title')}</Text>
           <Text style={styles.subtitle}>
             {t('setup.discovery_subtitle')}
           </Text>
@@ -109,6 +115,27 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: '#FFFFFF',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    height: 56,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#111827',
   },
   container: {
     flex: 1,

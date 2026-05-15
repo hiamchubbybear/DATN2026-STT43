@@ -34,9 +34,10 @@ export const AppRatingModal = ({ visible, onClose }: AppRatingModalProps) => {
 
     setLoading(true);
     try {
-      // Simulate API call
-      console.log('Submitting app review:', { rating, comment });
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await apiClient.post('/api/users/review', {
+        rating,
+        comment
+      });
       
       showToast({ 
         type: 'success', 

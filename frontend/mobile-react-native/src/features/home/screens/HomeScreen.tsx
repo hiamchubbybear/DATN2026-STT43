@@ -184,7 +184,7 @@ export const HomeScreen = () => {
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + spacing(10) }]}>
         <Image 
-          source={require('../../../../assets/images/logo.png')} 
+          source={require('../../../../assets/images/logo_v2.png')} 
           style={styles.headerLogo} 
           contentFit="contain"
         />
@@ -204,7 +204,8 @@ export const HomeScreen = () => {
       <View style={styles.stackContainer}>
         {hasNoProfiles ? (
           <View style={styles.noProfiles}>
-            <Text style={styles.noProfilesText}>{t('discover.no_profiles')}</Text>
+            <Text style={styles.noProfilesText}>{t('discover.no_users_title')}</Text>
+            <Text style={styles.noProfilesDesc}>{t('discover.no_users_desc')}</Text>
             <View style={styles.noProfilesActions}>
               <TouchableOpacity 
                 style={styles.retryButton} 

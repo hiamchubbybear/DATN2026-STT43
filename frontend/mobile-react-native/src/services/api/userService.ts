@@ -1,16 +1,13 @@
 import { apiClient } from './apiClient';
 
-export interface UserDiscoverDto {
-  userId: string;
-  displayName: string;
-  email: string;
-  avatarUrl?: string;
-}
-
 export const userService = {
-  discoverUsers: async (): Promise<UserDiscoverDto[]> => {
-    const response = await apiClient.get('/api/users/discover');
-    // The backend returns ApiResponse<List<UserSearchDto>>
-    return response.data.data;
+  updateIncognito: async (isIncognito: boolean) => {
+    const res = await apiClient.patch('/api/users/me/incognito', { isIncognito });
+    return res.data;
+  },
+  
+  updateNotifications: async (settings: { push: boolean, email: boolean, match: boolean, message: boolean }) => {
+    const res = await apiClient.patch('/api/settings/notifications', settings);
+    return res.data;
   },
 };

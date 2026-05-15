@@ -1,4 +1,5 @@
 using DoAnTotNghiep.Application.Common;
+using DoAnTotNghiep.Domain.Common;
 using DoAnTotNghiep.Application.Email;
 using DoAnTotNghiep.Application.Notifications;
 using DoAnTotNghiep.Application.Observability;
@@ -82,6 +83,7 @@ public static class DependencyInjection
         services.AddScoped<IContentModerationService, Moderation.ContentModerationService>();
         
         services.AddHttpClient<IAiVerificationService, AiVerification.AiVerificationService>();
+        services.AddSingleton<IEncryptionService, EncryptionService>();
 
         return services;
     }

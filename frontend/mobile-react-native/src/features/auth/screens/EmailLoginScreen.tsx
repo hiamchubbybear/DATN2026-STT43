@@ -86,7 +86,7 @@ export default function EmailLoginScreen() {
 
           <View style={styles.content}>
             <Image 
-              source={require('../../../../assets/images/logo.png')} 
+              source={require('../../../../assets/images/logo_v2.png')} 
               style={styles.logoImage} 
               resizeMode="contain"
             />

@@ -12,6 +12,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using DoAnTotNghiep.Domain.Users;
 using DoAnTotNghiep.Application.Common;
+using MongoDB.Driver;
 
 namespace DoAnTotNghiep.Web.Controllers;
 
@@ -137,6 +138,20 @@ public class UserController : ControllerBase
     }
 
     [Authorize]
+    [HttpPatch("me/incognito")]
+    public async Task<IActionResult> UpdateIncognito([FromBody] UpdateIncognitoRequest request)
+    {
+        var userId = GetUserId();
+        var profile = await _context.UserProfiles.Find(x => x.UserId == userId).FirstOrDefaultAsync();
+        if (profile == null) return NotFound(ApiResponse<string>.Failed("Profile not found"));
+        
+        profile.IsIncognito = request.IsIncognito;
+        await _context.UserProfiles.ReplaceOneAsync(x => x.Id == profile.Id, profile);
+        
+        return Ok(ApiResponse<bool>.Succeeded(profile.IsIncognito, "Incognito mode updated"));
+    }
+
+    [Authorize]
     [HttpPost("report")]
     public async Task<IActionResult> ReportUser([FromForm] UserReportSubmitRequest request)
     {
@@ -248,4 +263,9 @@ public class SubmitVerificationRequest
     public IFormFile FrontImage { get; set; } = null!;
     public IFormFile BackImage { get; set; } = null!;
     public IFormFile SelfieImage { get; set; } = null!;
+}
+
+public class UpdateIncognitoRequest
+{
+    public bool IsIncognito { get; set; }
 }

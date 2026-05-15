@@ -22,11 +22,8 @@ public class ChangePasswordCommandHandler : IRequestHandler<ChangePasswordComman
         if (user == null)
             throw new NotFoundException("User not found");
         
-        string hashedOldPassword = _passwordHasher.Hash(request.OldPassword);
-        // Assuming BCrypt Verify is needed, wait! Actually IPasswordHasher in the original code hashes.
-        // Let's assume the hasher can verify... if not, we compare hashes. Wait, BCrypt generates different hash each time.
-        // Let's check IPasswordHasher implementation or just use Verify. I will assume we have to use GetHash and compare? No, bcrypt has Verify.
-        // Actually, looking at IPasswordHasher we don't know the exact methods. Let's just update the password.
+        if (!_passwordHasher.Verify(request.OldPassword, user.HashPassword ?? ""))
+            throw new BadRequestException("Invalid old password");
         
         user.UpdatePassword(_passwordHasher.Hash(request.NewPassword));
         await _userRepository.UpdateAsync(user);

@@ -66,6 +66,22 @@ public class ChatMessage : BaseEntity
             SetUpdated();
         }
     }
+
+    public void Encrypt(IEncryptionService encryptionService)
+    {
+        if (!string.IsNullOrEmpty(Content))
+        {
+            Content = encryptionService.Encrypt(Content);
+        }
+    }
+
+    public void Decrypt(IEncryptionService encryptionService)
+    {
+        if (!string.IsNullOrEmpty(Content))
+        {
+            Content = encryptionService.Decrypt(Content);
+        }
+    }
 }
 
 public class EncryptedKey

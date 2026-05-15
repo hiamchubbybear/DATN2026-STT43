@@ -55,7 +55,7 @@ export const PermissionScreen = ({ navigation }: any) => {
     
     if (locStatus === 'granted' && notifStatus === 'granted') {
       // If already granted, move to next screen automatically
-      navigation.replace('DiscoverySetting');
+      navigation.replace('DiscoverySettings');
     }
   };
 
@@ -88,7 +88,7 @@ export const PermissionScreen = ({ navigation }: any) => {
     } catch (error) {
       console.error('[Permission] Failed to update location:', error);
     }
-    navigation.replace('DiscoverySetting');
+    navigation.replace('DiscoverySettings');
   };
 
   const isAllGranted = locationStatus === 'granted' && notificationStatus === 'granted';

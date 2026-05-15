@@ -69,6 +69,8 @@ public class UserProfileRepository : IUserProfileRepository
             excluded.AddRange(excludeUserIds);
 
         filters.Add(builder.Nin(x => x.UserId, excluded));
+        filters.Add(builder.Eq(x => x.Status, UserStatus.Active));
+        filters.Add(builder.Eq(x => x.IsIncognito, false));
 
         // 2. Gender preference filter
         var effectiveGenderPref = genderPreference ?? me.LookingFor;
