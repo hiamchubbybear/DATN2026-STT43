@@ -1,32 +1,34 @@
 import { useEffect, useState } from 'react';
+import { Search } from 'lucide-react';
 import { adminApi } from '../../../shared/services/api';
 import UserDetailModal from './UserDetailModal';
 import CreateUserModal from './CreateUserModal';
 
+type UserStatus = 'Active' | 'Suspended' | 'Banned' | 'ShadowBanned';
+
 type UserCard = {
-  id: string;
-  email: string;
+  userId: string;
   displayName: string;
-  gender: string;
-  avatar?: string;
+  age: number;
+  email: string;
   location: string;
-  isVerified: boolean;
-  isBanned: boolean;
-  role: string;
+  status: UserStatus;
   createdAt: string;
+};
+
+const statusBadgeClass: Record<UserStatus, string> = {
+  Active: 'bg-emerald-100 text-emerald-600',
+  Suspended: 'bg-amber-100 text-amber-600',
+  Banned: 'bg-red-100 text-red-600',
+  ShadowBanned: 'bg-slate-200 text-slate-600',
 };
 
 export default function UserManagementContent() {
   const [users, setUsers] = useState<UserCard[]>([]);
   const [loading, setLoading] = useState(true);
-  const [totalCount, setTotalCount] = useState(0);
   const [search, setSearch] = useState('');
-  const [filters, setFilters] = useState({
-    status: 'ALL', // ALL, ACTIVE, BANNED
-    verified: 'ALL', // ALL, VERIFIED, UNVERIFIED
-    gender: '', // Male, Female, Other
-  });
-  const [selectedUserData, setSelectedUserData] = useState<any>(null);
+  const [statusFilter, setStatusFilter] = useState<'ALL' | UserStatus>('ALL');
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -35,64 +37,58 @@ export default function UserManagementContent() {
   useEffect(() => {
     const timer = setTimeout(() => {
       fetchUsers();
-    }, 500);
+    }, 400);
     return () => clearTimeout(timer);
-  }, [search, filters, currentPage]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search, statusFilter]);
 
   const fetchUsers = async () => {
+    setLoading(true);
     try {
-      const isBanned = filters.status === 'BANNED' ? true : filters.status === 'ACTIVE' ? false : undefined;
-      const isVerified = filters.verified === 'VERIFIED' ? true : filters.verified === 'UNVERIFIED' ? false : undefined;
-
       const response = await adminApi.getUsers({
-        search,
-        isBanned,
-        isVerified,
-        gender: filters.gender || undefined,
-        page: currentPage,
-        pageSize
+        search: search || undefined,
+        status: statusFilter === 'ALL' ? undefined : statusFilter,
+        page: 1,
+        pageSize: 200,
       });
-      // The backend returns a PagedList structure: { items: [...], totalCount: ... }
-      setUsers(response.data?.items || response.data?.users || []);
-      setTotalCount(response.data?.totalCount || response.data?.total || 0);
+      const data = Array.isArray(response.data) ? response.data : [];
+      setUsers(data);
+      setCurrentPage(1);
     } catch (error) {
       console.error('Failed to fetch users', error);
+      setUsers([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleViewDetail = async (userId: string) => {
-    try {
-      const res = await adminApi.getUserDetails(userId);
-      setSelectedUserData(res.data);
-    } catch (e) {
-      alert('Failed to fetch user details');
-    }
-  };
-
   const handleBan = async (userId: string) => {
-    if (window.confirm('Are you sure you want to ban this account?')) {
-      try {
-        await adminApi.banUser(userId, 'Community standards violation');
-        fetchUsers();
-      } catch (error) {
-        alert('Failed to ban account');
-      }
+    const reason = window.prompt('Reason for ban:', 'Community standards violation');
+    if (!reason) return;
+    try {
+      await adminApi.moderateUser(userId, 'Ban', reason);
+      fetchUsers();
+    } catch (error) {
+      console.error(error);
+      alert('Failed to ban account');
     }
   };
 
   const handleUnban = async (userId: string) => {
     try {
-      await adminApi.unbanUser(userId);
+      await adminApi.moderateUser(userId, 'Unban', 'Unbanned by admin');
       fetchUsers();
     } catch (error) {
+      console.error(error);
       alert('Failed to unban account');
     }
   };
-  const totalPages = Math.ceil(totalCount / pageSize);
+
+  const totalCount = users.length;
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
   const from = totalCount === 0 ? 0 : (currentPage - 1) * pageSize + 1;
   const to = Math.min(currentPage * pageSize, totalCount);
+  const pagedUsers = users.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   return (
     <div className="space-y-6">
@@ -106,14 +102,10 @@ export default function UserManagementContent() {
 
         <div className="flex w-full flex-col gap-3 sm:flex-row md:w-auto">
           <label className="relative block min-w-[260px]">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
+            <Search
               className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#ADAFBB]"
-            >
-              <path d="M11 4a7 7 0 1 1 0 14 7 7 0 0 1 0-14Zm0 0 9 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-            </svg>
+              aria-hidden
+            />
             <input
               type="text"
               placeholder="Search profiles..."
@@ -124,34 +116,15 @@ export default function UserManagementContent() {
           </label>
 
           <select
-            value={filters.status}
-            onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as 'ALL' | UserStatus)}
             className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-fluid-sm font-medium text-slate-600 outline-none transition focus:border-[#EE3F57]"
           >
             <option value="ALL">All Status</option>
-            <option value="ACTIVE">Active</option>
-            <option value="BANNED">Banned</option>
-          </select>
-
-          <select
-            value={filters.verified}
-            onChange={(e) => setFilters(prev => ({ ...prev, verified: e.target.value }))}
-            className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-fluid-sm font-medium text-slate-600 outline-none transition focus:border-[#EE3F57]"
-          >
-            <option value="ALL">Verification</option>
-            <option value="VERIFIED">Verified</option>
-            <option value="UNVERIFIED">Unverified</option>
-          </select>
-
-          <select
-            value={filters.gender}
-            onChange={(e) => setFilters(prev => ({ ...prev, gender: e.target.value }))}
-            className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-fluid-sm font-medium text-slate-600 outline-none transition focus:border-[#EE3F57]"
-          >
-            <option value="">Genders</option>
-            <option value="Male">Male</option>
-            <option value="Female">Female</option>
-            <option value="Other">Other</option>
+            <option value="Active">Active</option>
+            <option value="Suspended">Suspended</option>
+            <option value="Banned">Banned</option>
+            <option value="ShadowBanned">Shadow Banned</option>
           </select>
         </div>
       </section>
@@ -160,91 +133,70 @@ export default function UserManagementContent() {
         {loading ? (
           <p>Loading data...</p>
         ) : (
-          (users || []).map((user) => (
-            <article key={user.id} className="rounded-2xl bg-white p-5 shadow-[0_16px_34px_-24px_rgba(0,0,0,0.2)] border border-slate-50">
-              <div className="mb-4 flex items-start justify-between">
-                <div className="relative">
-                  {user.avatar ? (
-                    <img 
-                      src={user.avatar} 
-                      className="h-14 w-14 rounded-full object-cover border-2 border-[#EE3F57]/20" 
-                      alt={user.displayName} 
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none';
-                        (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
-                      }}
-                    />
-                  ) : null}
-                  {(!user.avatar || user.avatar) && (
-                    <div className={`${user.avatar ? 'hidden' : ''} h-14 w-14 rounded-full bg-slate-200 flex items-center justify-center font-bold text-slate-400`}>
-                      {(user.displayName || user.email.split('@')[0] || 'U').substring(0, 1).toUpperCase()}
-                    </div>
-                  )}
-                  {user.isVerified && (
-                    <span className="absolute -bottom-1 -right-1 inline-flex h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-emerald-500 text-[10px] text-white">
-                      ✓
-                    </span>
-                  )}
+          pagedUsers.map((user) => {
+            const initial = (user.displayName || user.email || 'U').substring(0, 1).toUpperCase();
+            const badgeClass = statusBadgeClass[user.status] ?? 'bg-slate-100 text-slate-600';
+            return (
+              <article key={user.userId} className="rounded-2xl bg-white p-5 shadow-[0_16px_34px_-24px_rgba(0,0,0,0.2)] border border-slate-50">
+                <div className="mb-4 flex items-start justify-between">
+                  <div className="h-14 w-14 rounded-full bg-slate-200 flex items-center justify-center font-bold text-slate-500 text-lg">
+                    {initial}
+                  </div>
+
+                  <span className={`rounded-full px-3 py-1 text-xs font-semibold uppercase ${badgeClass}`}>
+                    {user.status}
+                  </span>
                 </div>
 
-                <span
-                  className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                    user.isBanned ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-600'
-                  }`}
-                >
-                  {user.isBanned ? 'BANNED' : 'ACTIVE'}
-                </span>
-              </div>
+                <h3 className="text-fluid-base font-bold text-slate-800 truncate">
+                  {user.displayName || (user.email ? user.email.split('@')[0] : 'Unknown User')}
+                </h3>
+                <p className="text-xs text-[#ADAFBB] mb-2 truncate">{user.email || 'No email'}</p>
 
-              <h3 className="text-fluid-base font-bold text-slate-800 truncate">{user.displayName || user.email.split('@')[0] || 'Unknown User'}</h3>
-              <p className="text-xs text-[#ADAFBB] mb-2">{user.email}</p>
-              
-              <div className="space-y-1.5 mb-4">
-                <div className="flex items-center gap-2 text-xs text-slate-500">
-                    <span className="font-semibold text-slate-700">Role:</span> {user.role}
-                </div>
-                <div className="flex items-center gap-2 text-xs text-slate-500">
-                    <span className="font-semibold text-slate-700">Gender:</span> {user.gender}
-                </div>
-                <div className="flex items-center gap-2 text-xs text-slate-500">
-                    <span className="font-semibold text-slate-700">Location:</span> {user.location}
-                </div>
-                <div className="flex items-center gap-2 text-xs text-slate-500">
+                <div className="space-y-1.5 mb-4">
+                  <div className="flex items-center gap-2 text-xs text-slate-500">
+                    <span className="font-semibold text-slate-700">Age:</span> {user.age || 'N/A'}
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-slate-500">
+                    <span className="font-semibold text-slate-700">Location:</span> {user.location || 'Not set'}
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-slate-500">
                     <span className="font-semibold text-slate-700">Joined:</span> {new Date(user.createdAt).toLocaleDateString()}
+                  </div>
                 </div>
-              </div>
 
-              <div className="mt-5 flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleViewDetail(user.id)}
-                  className="flex-1 rounded-xl bg-[#8A2387]/10 px-3 py-2 text-fluid-sm font-medium text-[#8A2387] transition hover:bg-[#8A2387]/15"
-                >
-                  View Details
-                </button>
-                {user.isBanned ? (
+                <div className="mt-5 flex gap-2">
                   <button
                     type="button"
-                    onClick={() => handleUnban(user.id)}
-                    className="flex-1 rounded-xl border border-emerald-200 bg-white px-3 py-2 text-fluid-sm font-medium text-emerald-600 transition hover:border-emerald-500 hover:text-emerald-500"
+                    onClick={() => setSelectedUserId(user.userId)}
+                    className="flex-1 rounded-xl bg-[#8A2387]/10 px-3 py-2 text-fluid-sm font-medium text-[#8A2387] transition hover:bg-[#8A2387]/15"
                   >
-                    Unban
+                    View Details
                   </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => handleBan(user.id)}
-                    className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-fluid-sm font-medium text-slate-600 transition hover:border-[#EE3F57] hover:text-[#EE3F57]"
-                  >
-                    Ban Account
-                  </button>
-                )}
-              </div>
-            </article>
-          ))
+                  {user.status === 'Banned' ? (
+                    <button
+                      type="button"
+                      onClick={() => handleUnban(user.userId)}
+                      className="flex-1 rounded-xl border border-emerald-200 bg-white px-3 py-2 text-fluid-sm font-medium text-emerald-600 transition hover:border-emerald-500 hover:text-emerald-500"
+                    >
+                      Unban
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => handleBan(user.userId)}
+                      className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-fluid-sm font-medium text-slate-600 transition hover:border-[#EE3F57] hover:text-[#EE3F57]"
+                    >
+                      Ban Account
+                    </button>
+                  )}
+                </div>
+              </article>
+            );
+          })
         )}
 
-        <article 
+        <article
           onClick={() => setShowCreateModal(true)}
           className="flex min-h-[230px] cursor-pointer group flex-col items-center justify-center rounded-2xl border-2 border-dashed border-[#ADAFBB] bg-white/70 p-5 text-center transition hover:border-[#EE3F57] hover:bg-white"
         >
@@ -259,8 +211,8 @@ export default function UserManagementContent() {
 
         <div className="flex items-center gap-2">
           {(() => {
-            const delta = 2; // Số trang hiển thị quanh trang hiện tại
-            const pages = [];
+            const delta = 2;
+            const pages: (number | string)[] = [];
             for (let i = 1; i <= totalPages; i++) {
               if (i === 1 || i === totalPages || (i >= currentPage - delta && i <= currentPage + delta)) {
                 pages.push(i);
@@ -292,17 +244,17 @@ export default function UserManagementContent() {
         </div>
       </footer>
 
-      {selectedUserData && (
-        <UserDetailModal 
-          data={selectedUserData} 
-          onClose={() => setSelectedUserData(null)} 
+      {selectedUserId && (
+        <UserDetailModal
+          userId={selectedUserId}
+          onClose={() => setSelectedUserId(null)}
           onRefresh={fetchUsers}
         />
       )}
 
       {showCreateModal && (
-        <CreateUserModal 
-          onClose={() => setShowCreateModal(false)} 
+        <CreateUserModal
+          onClose={() => setShowCreateModal(false)}
           onSuccess={fetchUsers}
         />
       )}
