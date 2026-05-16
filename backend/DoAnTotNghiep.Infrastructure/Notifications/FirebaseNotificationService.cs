@@ -100,7 +100,7 @@ public class FirebaseNotificationService : INotificationService
                 Notification = new Notification { Title = title, Body = body },
                 Android = new AndroidConfig 
                 { 
-                    Notification = new AndroidNotification { Icon = "notification_icon", Color = "#EE3F57" } 
+                    Notification = new AndroidNotification { Icon = "ic_launcher", Color = "#EE3F57" } 
                 },
                 Data = data
             });
@@ -164,7 +164,7 @@ public class FirebaseNotificationService : INotificationService
             Notification = new Notification { Title = title, Body = body },
             Android = new AndroidConfig 
             { 
-                Notification = new AndroidNotification { Icon = "notification_icon", Color = "#EE3F57" } 
+                Notification = new AndroidNotification { Icon = "ic_launcher", Color = "#EE3F57" } 
             },
             Data = data
         });

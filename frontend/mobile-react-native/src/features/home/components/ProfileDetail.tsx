@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Dimensions, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Dimensions, TouchableOpacity, ActivityIndicator, Animated } from 'react-native';
 import { Image } from 'expo-image';
 import { UserProfileDto } from '../../../services/api/swipeService';
 import { normalizeFont, radius, spacing } from '../../../shared/utils/responsive';
@@ -34,6 +34,7 @@ export const ProfileDetail = ({ profile, onClose, onLike, onDislike }: ProfileDe
   const navigation = useNavigation<NavigationProp>();
   const { t } = useTranslation();
   const [isMessaging, setIsMessaging] = React.useState(false);
+  const scrollY = React.useRef(new Animated.Value(0)).current;
 
   const handleMessage = async () => {
     if (isMessaging) return;
@@ -60,7 +61,66 @@ export const ProfileDetail = ({ profile, onClose, onLike, onDislike }: ProfileDe
 
   return (
     <View style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollView}>
+      {/* Sticky Header Background (appears on scroll) */}
+      <Animated.View 
+        style={[
+          styles.stickyHeader, 
+          { 
+            opacity: scrollY.interpolate({
+              inputRange: [height * 0.4, height * 0.5],
+              outputRange: [0, 1],
+              extrapolate: 'clamp'
+            }),
+            paddingTop: spacing(40)
+          }
+        ]}
+      >
+        <Text style={styles.headerTitleSticky}>{profile.displayName}</Text>
+      </Animated.View>
+
+      {/* Sticky Back Button */}
+      <TouchableOpacity style={styles.backButtonSticky} onPress={onClose}>
+        <Animated.View 
+          style={[
+            styles.backButtonInner,
+            {
+              backgroundColor: scrollY.interpolate({
+                inputRange: [0, height * 0.45],
+                outputRange: ['rgba(0,0,0,0.3)', 'rgba(255,255,255,0.9)'],
+                extrapolate: 'clamp'
+              })
+            }
+          ]}
+        >
+          <Ionicons 
+            name="chevron-back" 
+            size={28} 
+            color={profile.distanceKm > -1 ? '#fff' : '#111'} // Fallback color
+            style={{ marginLeft: -2 }} // Center the chevron better
+          />
+          {/* Use absolute positioning for the black icon that fades in */}
+          <Animated.View style={{
+            position: 'absolute',
+            opacity: scrollY.interpolate({
+              inputRange: [0, height * 0.45],
+              outputRange: [0, 1],
+              extrapolate: 'clamp'
+            })
+          }}>
+            <Ionicons name="chevron-back" size={28} color="#111" style={{ marginLeft: -2 }} />
+          </Animated.View>
+        </Animated.View>
+      </TouchableOpacity>
+
+      <Animated.ScrollView 
+        showsVerticalScrollIndicator={false} 
+        style={styles.scrollView}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: false }
+        )}
+        scrollEventThrottle={16}
+      >
         {/* Main Photo */}
         <View style={styles.imageContainer}>
           <Image 
@@ -68,11 +128,6 @@ export const ProfileDetail = ({ profile, onClose, onLike, onDislike }: ProfileDe
             style={styles.mainImage}
             contentFit="cover"
           />
-          <TouchableOpacity style={styles.backButton} onPress={onClose}>
-            <View style={styles.backButtonInner}>
-              <IconBack size={24} color="#fff" />
-            </View>
-          </TouchableOpacity>
           
           <LinearGradient
             colors={['transparent', 'rgba(255,255,255,1)']}
@@ -112,7 +167,9 @@ export const ProfileDetail = ({ profile, onClose, onLike, onDislike }: ProfileDe
           <View style={styles.locationRow}>
             <View style={styles.locationBadge}>
                <IconLocation size={14} color="#ff4d6d" />
-               <Text style={styles.locationBadgeText}>1 km</Text>
+               <Text style={styles.locationBadgeText}>
+                 {profile.distanceKm < 1 ? '< 1 km' : `${Math.round(profile.distanceKm)} km`}
+               </Text>
             </View>
             <Text style={styles.locationText}>{profile.locationName || t('common.unknown_location', 'Unknown Location')}</Text>
           </View>
@@ -164,7 +221,7 @@ export const ProfileDetail = ({ profile, onClose, onLike, onDislike }: ProfileDe
 
           <View style={{ height: spacing(100) }} />
         </View>
-      </ScrollView>
+      </Animated.ScrollView>
 
       {/* Floating Action Buttons */}
       <View style={styles.floatingActions}>
@@ -199,19 +256,42 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  backButton: {
+  stickyHeader: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: spacing(100),
+    backgroundColor: '#fff',
+    zIndex: 998,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f3f4f6',
+  },
+  headerTitleSticky: {
+    fontSize: normalizeFont(18),
+    fontWeight: '700',
+    color: '#111',
+  },
+  backButtonSticky: {
     position: 'absolute',
     top: spacing(50),
     left: spacing(20),
-    zIndex: 10,
+    zIndex: 999,
   },
   backButtonInner: {
     width: spacing(44),
     height: spacing(44),
     borderRadius: radius(22),
-    backgroundColor: 'rgba(255,255,255,0.3)',
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   backArrow: {
     color: '#fff',

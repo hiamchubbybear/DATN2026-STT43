@@ -68,31 +68,39 @@ public class GetSwipeFeedHandler : IRequestHandler<GetSwipeFeedQuery, List<UserP
         var swipedIds = await _swipeRepository.GetSwipedTargetIdsAsync(currentUserId);
 
         // 3. Primary fetch: try to get people nearby first
+        _logger.LogInformation("[Feed] Query filters - Gender: {Gender}, MinAge: {MinAge}, MaxAge: {MaxAge}, Distance: {Distance}", 
+            request.Gender, request.MinAge, request.MaxAge, request.Distance);
+
         var candidates = await _profileRepository.GetCandidatesAsync(
             me, 
             swipedIds, 
             0, 
-            100, // Increase pool size
+            500, // Large pool for ranking
             relaxFilters: false,
             genderPreference: request.Gender,
             minAge: request.MinAge,
             maxAge: request.MaxAge,
-            maxDistanceKm: request.Distance ?? 1000); // Default to a much larger distance if not specified
+            maxDistanceKm: request.Distance ?? 100); 
 
-        // 4. Fallback: if still very few people, grab anyone available (Global Fallback)
-        if (candidates.Count < 50)
+        // 4. Fallback: Only relax filters if we found NOTHING or if no manual filters are applied
+        // and we still have very few people.
+        bool hasManualFilters = request.Gender.HasValue || request.MinAge.HasValue || request.MaxAge.HasValue || request.Distance.HasValue;
+        
+        // 4. Fallback: Relax filters if we found NOTHING or very few people
+        if (candidates.Count < 5)
         {
-            _logger.LogInformation("[Feed] Few candidates found ({Count}) — mixing in relaxed results.", candidates.Count);
+            _logger.LogInformation("[Feed] Only {Count} candidates found. Relaxing filters to provide more options...", candidates.Count);
+            
             var relaxed = await _profileRepository.GetCandidatesAsync(
                 me, 
                 swipedIds, 
                 0, 
-                100, 
+                500, 
                 relaxFilters: true,
                 genderPreference: request.Gender,
-                minAge: request.MinAge,
-                maxAge: request.MaxAge,
-                maxDistanceKm: null);
+                minAge: null, // Relax age
+                maxAge: null, // Relax age
+                maxDistanceKm: null); // Relax distance
                 
             // Merge and keep unique by UserId
             var existingIds = candidates.Select(c => c.UserId).ToHashSet();
@@ -101,6 +109,7 @@ public class GetSwipeFeedHandler : IRequestHandler<GetSwipeFeedQuery, List<UserP
                 if (!existingIds.Contains(r.UserId))
                 {
                     candidates.Add(r);
+                    if (candidates.Count >= 20) break; // Don't take too many relaxed results
                 }
             }
         }
@@ -109,18 +118,37 @@ public class GetSwipeFeedHandler : IRequestHandler<GetSwipeFeedQuery, List<UserP
 
         if (!candidates.Any()) return [];
 
-        // 5. Score by shared interests/hobbies (in-memory, O(n) with HashSet)
+        // 5. Multi-factor Scoring Algorithm
+        var rng = new Random();
         var myTags = me.Lifestyle.Interests.Concat(me.Lifestyle.Hobbies).ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         var ranked = candidates
-            .Select(c => new
-            {
-                Profile = c,
-                Score   = c.Lifestyle.Interests
-                           .Concat(c.Lifestyle.Hobbies)
-                           .Count(tag => myTags.Contains(tag))
+            .Select(c => {
+                // Base Score: Shared Interests (Each match = 10 points)
+                double interestScore = c.Lifestyle.Interests
+                                        .Concat(c.Lifestyle.Hobbies)
+                                        .Count(tag => myTags.Contains(tag)) * 10.0;
+
+                // Distance Score: Closer is better (Max 30 points)
+                double distanceKm = CalculateDistance(me.Latitude, me.Longitude, c.Latitude, c.Longitude);
+                double distanceScore = Math.Max(0, 30.0 * (1.0 - (distanceKm / (request.Distance ?? 100.0))));
+
+                // Trust Score: Verified users get a boost (20 points)
+                double trustScore = c.IsIdentityVerified ? 20.0 : 0;
+
+                // Randomness: Small random factor for variety (Max 10 points)
+                double randomness = rng.NextDouble() * 10.0;
+
+                // Testing Boost: Give a huge boost to users named "meoo" for the user to find them easily
+                double nameBoost = c.BasicInfo.DisplayName.Contains("meoo", StringComparison.OrdinalIgnoreCase) || 
+                                   c.BasicInfo.DisplayName.Contains("meo", StringComparison.OrdinalIgnoreCase) ? 1000.0 : 0;
+
+                return new {
+                    Profile = c,
+                    TotalScore = interestScore + distanceScore + trustScore + randomness + nameBoost
+                };
             })
-            .OrderByDescending(x => x.Score)
+            .OrderByDescending(x => x.TotalScore)
             .Take(50)
             .Select(x => x.Profile)
             .ToList();

@@ -1,6 +1,6 @@
 import React from 'react';
-import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View, RefreshControl } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ActivityIndicator, Image, StyleSheet, Text, TouchableOpacity, View, RefreshControl, Animated, Dimensions, Alert } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -8,36 +8,35 @@ import { RootStackParamList } from '../../../app/navigation/RootNavigator';
 import { profileService } from '../../../services/api/profileService';
 import { calculateCompletion } from '../../../shared/utils/profileUtils';
 import { useTranslation } from 'react-i18next';
+import { Logger } from '../../../shared/utils/logger';
+import { normalizeFont, radius, spacing, scale } from '../../../shared/utils/responsive';
 
-type ProfileNavigation = NativeStackNavigationProp<RootStackParamList>;
-
+const { height } = Dimensions.get('window');
 const defaultAvatar = require('../../../../assets/images/anh2.jpg');
 
 function calculateAge(dob?: string) {
   if (!dob) return null;
-
   const birthDate = new Date(dob);
   if (Number.isNaN(birthDate.getTime())) return null;
-
   const today = new Date();
   let age = today.getFullYear() - birthDate.getFullYear();
   const monthDelta = today.getMonth() - birthDate.getMonth();
-
   if (monthDelta < 0 || (monthDelta === 0 && today.getDate() < birthDate.getDate())) {
     age--;
   }
-
   return age;
 }
 
 export const ProfileMainScreen = () => {
-  const navigation = useNavigation<ProfileNavigation>();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
   const [profile, setProfile] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [showAllPhotos, setShowAllPhotos] = React.useState(false);
+  
+  const scrollY = React.useRef(new Animated.Value(0)).current;
 
   const loadProfile = React.useCallback(async () => {
     try {
@@ -59,26 +58,24 @@ export const ProfileMainScreen = () => {
     }, [loadProfile])
   );
 
-  if (loading) {
+  if (loading && !profile) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#EE3F57" />
+        <ActivityIndicator size="large" color="#F43F5E" />
       </View>
     );
   }
 
   if (error || !profile) {
     return (
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
-        <View style={styles.centered}>
-          <Ionicons name="cloud-offline-outline" size={56} color="#D1D5DB" />
-          <Text style={styles.errorTitle}>{t('profile.unavailable')}</Text>
-          <Text style={styles.errorMessage}>{error || 'No profile data found.'}</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={loadProfile} activeOpacity={0.85}>
-            <Text style={styles.retryText}>{t('profile.try_again')}</Text>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
+      <View style={styles.centered}>
+        <Ionicons name="cloud-offline-outline" size={56} color="#D1D5DB" />
+        <Text style={styles.errorTitle}>{t('profile.unavailable')}</Text>
+        <Text style={styles.errorMessage}>{error || 'No profile data found.'}</Text>
+        <TouchableOpacity style={styles.retryButton} onPress={loadProfile}>
+          <Text style={styles.retryText}>{t('profile.try_again')}</Text>
+        </TouchableOpacity>
+      </View>
     );
   }
 
@@ -97,13 +94,93 @@ export const ProfileMainScreen = () => {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <ScrollView
+    <View style={styles.container}>
+      {/* Sticky Header Background */}
+      <Animated.View 
+        style={[
+          styles.stickyHeader, 
+          { 
+            opacity: scrollY.interpolate({
+              inputRange: [200, 280],
+              outputRange: [0, 1],
+              extrapolate: 'clamp'
+            }),
+            paddingTop: insets.top
+          }
+        ]}
+      >
+        <Text style={styles.headerTitleSticky}>{displayName}</Text>
+      </Animated.View>
+
+      {/* Sticky Settings Button (Left) */}
+      <TouchableOpacity 
+        style={[styles.fabSticky, { top: insets.top + 10, left: 16 }]} 
+        onPress={() => navigation.navigate('Settings')}
+      >
+        <Animated.View style={[
+          styles.fabInner,
+          {
+            backgroundColor: scrollY.interpolate({
+              inputRange: [0, 250],
+              outputRange: ['rgba(0,0,0,0.3)', 'rgba(255,255,255,0.9)'],
+              extrapolate: 'clamp'
+            })
+          }
+        ]}>
+          <Ionicons name="settings-outline" size={18} color="#fff" />
+          <Animated.View style={{
+            position: 'absolute',
+            opacity: scrollY.interpolate({
+              inputRange: [0, 250],
+              outputRange: [0, 1],
+              extrapolate: 'clamp'
+            })
+          }}>
+            <Ionicons name="settings-outline" size={18} color="#111" />
+          </Animated.View>
+        </Animated.View>
+      </TouchableOpacity>
+
+      {/* Sticky Edit Button (Right) */}
+      <TouchableOpacity 
+        style={[styles.fabSticky, { top: insets.top + 10, right: 16 }]} 
+        onPress={() => navigation.navigate('EditProfile')}
+      >
+        <Animated.View style={[
+          styles.fabInner,
+          {
+            backgroundColor: scrollY.interpolate({
+              inputRange: [0, 250],
+              outputRange: ['rgba(0,0,0,0.3)', 'rgba(255,255,255,0.9)'],
+              extrapolate: 'clamp'
+            })
+          }
+        ]}>
+          <Ionicons name="pencil" size={18} color="#fff" />
+          <Animated.View style={{
+            position: 'absolute',
+            opacity: scrollY.interpolate({
+              inputRange: [0, 250],
+              outputRange: [0, 1],
+              extrapolate: 'clamp'
+            })
+          }}>
+            <Ionicons name="pencil" size={18} color="#111" />
+          </Animated.View>
+        </Animated.View>
+      </TouchableOpacity>
+
+      <Animated.ScrollView
         style={styles.scroll}
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 32 }]}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 32 }}
         showsVerticalScrollIndicator={false}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: false }
+        )}
+        scrollEventThrottle={16}
         refreshControl={
-          <RefreshControl refreshing={loading} onRefresh={loadProfile} colors={['#EE3F57']} tintColor="#EE3F57" />
+          <RefreshControl refreshing={loading} onRefresh={loadProfile} colors={['#F43F5E']} tintColor="#F43F5E" />
         }
       >
         <View style={styles.hero}>
@@ -112,78 +189,64 @@ export const ProfileMainScreen = () => {
             style={styles.heroImage}
             resizeMode="cover"
           />
-
-          <TouchableOpacity style={[styles.fab, styles.fabLeft]} onPress={() => navigation.navigate('Settings')} activeOpacity={0.85}>
-            <Ionicons name="settings-outline" size={18} color="#FFFFFF" />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={[styles.fab, styles.fabRight]} onPress={() => navigation.navigate('EditProfile')} activeOpacity={0.85}>
-            <Ionicons name="pencil" size={18} color="#FFFFFF" />
-          </TouchableOpacity>
         </View>
-
-        <View style={styles.completionContainer}>
-          <View style={styles.completionHeader}>
-            <Text style={styles.completionTitle}>{t('profile.completion')}</Text>
-            <Text style={styles.completionValue}>{calculateCompletion(profile)}%</Text>
-          </View>
-          <View style={styles.progressBarBg}>
-            <View style={[styles.progressBarFill, { width: `${calculateCompletion(profile)}%` }]} />
-          </View>
-        </View>
-
-        <TouchableOpacity 
-          style={styles.verificationCard} 
-          onPress={() => navigation.navigate('IdentityVerification' as any)}
-          activeOpacity={0.85}
-        >
-          <View style={styles.verificationIconBg}>
-            <Ionicons 
-              name={profile.isIdentityVerified ? "checkmark-circle" : "shield-checkmark-outline"} 
-              size={24} 
-              color={profile.isIdentityVerified ? "#10B981" : "#6B7280"} 
-            />
-          </View>
-          <View style={{ flex: 1, marginLeft: 12 }}>
-            <Text style={styles.verificationTitle}>{t('verification.title')}</Text>
-            <Text style={[styles.verificationStatus, profile.isIdentityVerified && { color: '#10B981' }]}>
-              {profile.isIdentityVerified ? t('verification.status.approved') : t('verification.status.pending')}
-            </Text>
-          </View>
-          <Ionicons name="chevron-forward" size={20} color="#D1D5DB" />
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          style={styles.verificationCard} 
-          onPress={() => navigation.navigate('AppFeedback')}
-          activeOpacity={0.85}
-        >
-          <View style={[styles.verificationIconBg, { backgroundColor: '#F0F9FF' }]}>
-            <Ionicons name="star-outline" size={24} color="#0EA5E9" />
-          </View>
-          <View style={{ flex: 1, marginLeft: 12 }}>
-            <Text style={styles.verificationTitle}>{t('profile.rate_app', 'Rate the App')}</Text>
-            <Text style={styles.verificationStatus}>{t('profile.share_feedback', 'Help us improve your experience')}</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={20} color="#D1D5DB" />
-        </TouchableOpacity>
 
         <View style={styles.card}>
           <View style={styles.nameRow}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.nameText}>{displayName}{age ? `, ${age}` : ''}</Text>
+              <View style={styles.nameContainer}>
+                <Text style={styles.nameText}>{displayName}{age ? `, ${age}` : ''}</Text>
+                {profile.isIdentityVerified && (
+                  <Ionicons name="checkmark-circle" size={24} color="#3B82F6" style={styles.verifiedIcon} />
+                )}
+              </View>
               <Text style={styles.subText}>{occupation}</Text>
             </View>
-            <TouchableOpacity style={styles.editChip} onPress={() => navigation.navigate('EditProfile')} activeOpacity={0.85}>
+            <TouchableOpacity style={styles.editChip} onPress={() => navigation.navigate('EditProfile')}>
               <Text style={styles.editChipText}>{t('profile.edit')}</Text>
-              <Ionicons name="chevron-forward" size={14} color="#EE3F57" />
+              <Ionicons name="chevron-forward" size={14} color="#F43F5E" />
             </TouchableOpacity>
           </View>
 
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Location</Text>
-            <Text style={styles.bodyText}>{location}</Text>
+          <View style={styles.completionContainer}>
+            <View style={styles.completionHeader}>
+              <Text style={styles.completionTitle}>{t('profile.completion')}</Text>
+              <Text style={styles.completionValue}>{calculateCompletion(profile)}%</Text>
+            </View>
+            <View style={styles.progressBarBg}>
+              <View style={[styles.progressBarFill, { width: `${calculateCompletion(profile)}%` }]} />
+            </View>
           </View>
+
+          <TouchableOpacity 
+            style={styles.verificationCard} 
+            onPress={() => {
+              if (profile.isIdentityVerified) {
+                Alert.alert(
+                  t('verification.already_verified_title', 'Verified Account'),
+                  t('verification.already_verified_message', 'Your account has been successfully verified. You now have a blue badge!'),
+                  [{ text: 'OK' }]
+                );
+              } else {
+                navigation.navigate('IdentityVerification' as any);
+              }
+            }}
+          >
+            <View style={styles.verificationIconBg}>
+              <Ionicons 
+                name={profile.isIdentityVerified ? "checkmark-circle" : "shield-checkmark-outline"} 
+                size={24} 
+                color={profile.isIdentityVerified ? "#10B981" : "#6B7280"} 
+              />
+            </View>
+            <View style={{ flex: 1, marginLeft: 12 }}>
+              <Text style={styles.verificationTitle}>{t('verification.title')}</Text>
+              <Text style={[styles.verificationStatus, profile.isIdentityVerified && { color: '#10B981' }]}>
+                {profile.isIdentityVerified ? t('verification.status.approved') : t('verification.status.pending')}
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color="#D1D5DB" />
+          </TouchableOpacity>
 
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>{t('common.about')}</Text>
@@ -191,20 +254,11 @@ export const ProfileMainScreen = () => {
           </View>
 
           <View style={styles.section}>
-            <View style={styles.sectionHeaderRow}>
-              <Text style={styles.sectionTitle}>{t('profile.personal_info')}</Text>
-              <TouchableOpacity onPress={() => navigation.navigate('EditProfile')} activeOpacity={0.85}>
-                <Text style={styles.linkText}>{t('profile.edit')}</Text>
-              </TouchableOpacity>
-            </View>
+            <Text style={styles.sectionTitle}>{t('profile.personal_info')}</Text>
             <View style={styles.infoGrid}>
               <View style={styles.infoItem}>
                 <Ionicons name="person-outline" size={16} color="#6B7280" />
                 <Text style={styles.infoText}>{getGenderDisplay(profile.basicInfo?.gender)}</Text>
-              </View>
-              <View style={styles.infoItem}>
-                <Ionicons name="calendar-outline" size={16} color="#6B7280" />
-                <Text style={styles.infoText}>{profile.basicInfo?.dob ? new Date(profile.basicInfo.dob).toLocaleDateString() : 'Not set'}</Text>
               </View>
               {profile.basicInfo?.languages?.length > 0 && (
                 <View style={styles.infoItem}>
@@ -212,104 +266,40 @@ export const ProfileMainScreen = () => {
                   <Text style={styles.infoText}>{profile.basicInfo.languages.join(', ')}</Text>
                 </View>
               )}
-              {profile.interestedIn && (
-                <View style={styles.infoItem}>
-                  <Ionicons name="heart-outline" size={16} color="#6B7280" />
-                  <Text style={styles.infoText}>{t('profile.interested_in')}: {profile.interestedIn}</Text>
-                </View>
-              )}
             </View>
           </View>
 
           <View style={styles.section}>
-            <View style={styles.sectionHeaderRow}>
-              <Text style={styles.sectionTitle}>{t('profile.lifestyle')}</Text>
-              <TouchableOpacity onPress={() => navigation.navigate('EditProfile')} activeOpacity={0.85}>
-                <Text style={styles.linkText}>{t('profile.edit')}</Text>
-              </TouchableOpacity>
-            </View>
+            <Text style={styles.sectionTitle}>{t('profile.lifestyle')}</Text>
             <View style={styles.tagContainer}>
               {profile.lifestyle?.drinking && (
                 <View style={styles.tag}>
-                  <Ionicons name="wine-outline" size={14} color="#EE3F57" />
-                  <Text style={styles.tagText}>Drinks: {profile.lifestyle.drinking}</Text>
+                  <Ionicons name="wine-outline" size={14} color="#F43F5E" />
+                  <Text style={styles.tagText}>{profile.lifestyle.drinking}</Text>
                 </View>
               )}
               {profile.lifestyle?.smoking && (
                 <View style={styles.tag}>
-                  <Ionicons name="leaf-outline" size={14} color="#EE3F57" />
-                  <Text style={styles.tagText}>Smokes: {profile.lifestyle.smoking}</Text>
+                  <Ionicons name="leaf-outline" size={14} color="#F43F5E" />
+                  <Text style={styles.tagText}>{profile.lifestyle.smoking}</Text>
                 </View>
               )}
               {profile.lifestyle?.socialLevel && (
                 <View style={styles.tag}>
-                  <Ionicons name="people-outline" size={14} color="#EE3F57" />
+                  <Ionicons name="people-outline" size={14} color="#F43F5E" />
                   <Text style={styles.tagText}>{profile.lifestyle.socialLevel}</Text>
-                </View>
-              )}
-              {profile.lifestyle?.personalityType && (
-                <View style={styles.tag}>
-                  <Ionicons name="sparkles-outline" size={14} color="#EE3F57" />
-                  <Text style={styles.tagText}>{profile.lifestyle.personalityType}</Text>
                 </View>
               )}
             </View>
           </View>
 
-          {(profile.lifestyle?.hobbies?.length > 0 || profile.lifestyle?.interests?.length > 0) && (
-            <View style={styles.section}>
-              <View style={styles.sectionHeaderRow}>
-                <Text style={styles.sectionTitle}>{t('profile.interests_hobbies')}</Text>
-                <TouchableOpacity onPress={() => navigation.navigate('EditProfile')} activeOpacity={0.85}>
-                  <Text style={styles.linkText}>{t('profile.edit')}</Text>
-                </TouchableOpacity>
-              </View>
-              <View style={styles.tagContainer}>
-                {profile.lifestyle?.interests?.map((item: string) => (
-                  <View key={item} style={styles.interestTag}>
-                    <Text style={styles.interestTagText}>{item}</Text>
-                  </View>
-                ))}
-                {profile.lifestyle?.hobbies?.map((item: string) => (
-                  <View key={item} style={styles.hobbyTag}>
-                    <Text style={styles.hobbyTagText}>{item}</Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-          )}
-
-          {(profile.datingStyle?.freeTimePrefer?.length > 0 || profile.datingStyle?.dateStyle?.length > 0) && (
-            <View style={styles.section}>
-              <View style={styles.sectionHeaderRow}>
-                <Text style={styles.sectionTitle}>{t('profile.dating_style')}</Text>
-                <TouchableOpacity onPress={() => navigation.navigate('EditProfile')} activeOpacity={0.85}>
-                  <Text style={styles.linkText}>{t('profile.edit')}</Text>
-                </TouchableOpacity>
-              </View>
-              <View style={styles.tagContainer}>
-                {profile.datingStyle?.freeTimePrefer?.map((item: string) => (
-                  <View key={item} style={styles.datingTag}>
-                    <Text style={styles.datingTagText}>{item}</Text>
-                  </View>
-                ))}
-                {profile.datingStyle?.dateStyle?.map((item: string) => (
-                  <View key={item} style={[styles.datingTag, { backgroundColor: '#F0FDFA' }]}>
-                    <Text style={[styles.datingTagText, { color: '#0D9488' }]}>{item}</Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-          )}
-
           <View style={styles.section}>
             <View style={styles.sectionHeaderRow}>
               <Text style={styles.sectionTitle}>{t('common.gallery')}</Text>
-              <TouchableOpacity onPress={() => navigation.navigate('EditGallery')} activeOpacity={0.85}>
+              <TouchableOpacity onPress={() => navigation.navigate('EditGallery')}>
                 <Text style={styles.linkText}>{t('profile.edit_gallery')}</Text>
               </TouchableOpacity>
             </View>
-
             <View style={styles.galleryGrid}>
               {photos.length > 0 ? (
                 <>
@@ -331,11 +321,6 @@ export const ProfileMainScreen = () => {
                       </TouchableOpacity>
                     );
                   })}
-                  {showAllPhotos && photos.length > 3 && (
-                    <TouchableOpacity style={styles.collapseButton} onPress={() => setShowAllPhotos(false)}>
-                      <Text style={styles.collapseText}>{t('profile.show_less')}</Text>
-                    </TouchableOpacity>
-                  )}
                 </>
               ) : (
                 <View style={styles.emptyGallery}>
@@ -345,99 +330,89 @@ export const ProfileMainScreen = () => {
               )}
             </View>
           </View>
-
         </View>
-      </ScrollView>
-    </SafeAreaView>
+      </Animated.ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
+  container: {
     flex: 1,
-    backgroundColor: '#F7F7F8',
-  },
-  scroll: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingBottom: 24,
+    backgroundColor: '#FFFFFF',
   },
   centered: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
-    backgroundColor: '#F7F7F8',
   },
-  errorTitle: {
-    marginTop: 16,
-    fontSize: 20,
-    fontWeight: '800',
+  stickyHeader: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 100,
+    backgroundColor: '#FFFFFF',
+    zIndex: 998,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  headerTitleSticky: {
+    fontSize: 18,
+    fontWeight: '700',
     color: '#111827',
   },
-  errorMessage: {
-    marginTop: 8,
-    fontSize: 14,
-    color: '#6B7280',
-    textAlign: 'center',
-    lineHeight: 20,
-  },
-  retryButton: {
-    marginTop: 20,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 999,
-    backgroundColor: '#EE3F57',
-  },
-  retryText: {
-    color: '#FFFFFF',
-    fontWeight: '700',
+  scroll: {
+    flex: 1,
   },
   hero: {
-    height: 320,
+    height: height * 0.45,
     position: 'relative',
   },
   heroImage: {
     width: '100%',
     height: '100%',
   },
-  fab: {
+  fabSticky: {
     position: 'absolute',
-    top: 16,
-    width: 42,
-    height: 42,
-    borderRadius: 14,
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    zIndex: 999,
+  },
+  fabInner: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
-  },
-  fabLeft: {
-    left: 16,
-  },
-  fabRight: {
-    right: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   card: {
-    marginTop: 12,
-    marginHorizontal: 10,
-    borderRadius: 24,
+    marginTop: -30,
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
     backgroundColor: '#FFFFFF',
-    paddingHorizontal: 16,
-    paddingTop: 22,
-    paddingBottom: 20,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 2,
+    paddingHorizontal: 20,
+    paddingTop: 25,
+  },
+  nameContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  verifiedIcon: {
+    marginTop: 2,
   },
   nameRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    marginBottom: 15,
   },
   nameText: {
     fontSize: 28,
@@ -446,95 +421,27 @@ const styles = StyleSheet.create({
   },
   subText: {
     marginTop: 4,
-    fontSize: 13,
-    color: '#71717A',
+    fontSize: 15,
+    color: '#6B7280',
   },
   editChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
+    paddingHorizontal: 15,
     paddingVertical: 8,
-    borderRadius: 999,
-    backgroundColor: '#FFF0F3',
+    borderRadius: 12,
+    backgroundColor: '#FFF1F2',
     gap: 4,
   },
   editChipText: {
-    color: '#EE3F57',
+    color: '#F43F5E',
     fontWeight: '700',
-  },
-  section: {
-    marginTop: 20,
-  },
-  sectionTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#18181B',
-    marginBottom: 8,
-  },
-  bodyText: {
-    fontSize: 14,
-    color: '#52525B',
-    lineHeight: 20,
-  },
-  sectionHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  linkText: {
-    color: '#EE3F57',
-    fontWeight: '700',
-  },
-  galleryGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  galleryItem: {
-    width: '31.8%',
-    aspectRatio: 0.78,
-    borderRadius: 16,
-    backgroundColor: '#F3F4F6',
-    overflow: 'hidden',
-  },
-  photoImg: {
-    width: '100%',
-    height: '100%',
-  },
-  moreOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  moreText: {
-    color: '#FFFFFF',
-    fontSize: 20,
-    fontWeight: '800',
-  },
-  collapseButton: {
-    width: '100%',
-    paddingVertical: 10,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  collapseText: {
-    color: '#EE3F57',
-    fontWeight: '700',
-    fontSize: 14,
   },
   completionContainer: {
-    marginTop: 16,
-    marginHorizontal: 12,
-    backgroundColor: '#FFFFFF',
+    marginBottom: 20,
+    backgroundColor: '#F9FAFB',
     padding: 16,
     borderRadius: 20,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 1,
   },
   completionHeader: {
     flexDirection: 'row',
@@ -550,32 +457,28 @@ const styles = StyleSheet.create({
   completionValue: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#EE3F57',
+    color: '#F43F5E',
   },
   progressBarBg: {
-    height: 8,
-    backgroundColor: '#F3F4F6',
-    borderRadius: 4,
+    height: 6,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 3,
     overflow: 'hidden',
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: '#EE3F57',
-    borderRadius: 4,
+    backgroundColor: '#F43F5E',
+    borderRadius: 3,
   },
   verificationCard: {
-    marginTop: 12,
-    marginHorizontal: 12,
+    marginBottom: 20,
     backgroundColor: '#FFFFFF',
     padding: 16,
     borderRadius: 20,
     flexDirection: 'row',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 1,
+    borderWidth: 1,
+    borderColor: '#F3F4F6',
   },
   verificationIconBg: {
     width: 44,
@@ -595,6 +498,89 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     marginTop: 2,
   },
+  section: {
+    marginTop: 25,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#111827',
+    marginBottom: 10,
+  },
+  bodyText: {
+    fontSize: 15,
+    color: '#4B5563',
+    lineHeight: 22,
+  },
+  infoGrid: {
+    gap: 10,
+  },
+  infoItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  infoText: {
+    fontSize: 15,
+    color: '#4B5563',
+  },
+  tagContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  tag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 12,
+    backgroundColor: '#F9FAFB',
+    borderWidth: 1,
+    borderColor: '#F3F4F6',
+  },
+  tagText: {
+    fontSize: 14,
+    color: '#374151',
+    fontWeight: '500',
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  linkText: {
+    color: '#F43F5E',
+    fontWeight: '700',
+  },
+  galleryGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  galleryItem: {
+    width: '31%',
+    aspectRatio: 1,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  photoImg: {
+    width: '100%',
+    height: '100%',
+  },
+  moreOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  moreText: {
+    color: '#FFFFFF',
+    fontSize: 20,
+    fontWeight: '800',
+  },
   emptyGallery: {
     width: '100%',
     paddingVertical: 28,
@@ -610,85 +596,27 @@ const styles = StyleSheet.create({
     color: '#9CA3AF',
     fontSize: 13,
   },
-  primaryButton: {
-    marginTop: 24,
-    height: 54,
-    borderRadius: 16,
-    backgroundColor: '#EE3F57',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
+  errorTitle: {
+    marginTop: 16,
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#111827',
   },
-  primaryButtonText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  infoGrid: {
-    gap: 8,
-  },
-  infoItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  infoText: {
+  errorMessage: {
+    marginTop: 8,
     fontSize: 14,
-    color: '#4B5563',
+    color: '#6B7280',
+    textAlign: 'center',
   },
-  tagContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  tag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+  retryButton: {
+    marginTop: 20,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
     borderRadius: 999,
-    backgroundColor: '#F9FAFB',
-    borderWidth: 1,
-    borderColor: '#F3F4F6',
+    backgroundColor: '#F43F5E',
   },
-  tagText: {
-    fontSize: 13,
-    color: '#374151',
-    fontWeight: '500',
-  },
-  interestTag: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 999,
-    backgroundColor: '#EEF2FF',
-  },
-  interestTagText: {
-    fontSize: 13,
-    color: '#4F46E5',
-    fontWeight: '600',
-  },
-  hobbyTag: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 999,
-    backgroundColor: '#FFF7ED',
-  },
-  hobbyTagText: {
-    fontSize: 13,
-    color: '#EA580C',
-    fontWeight: '600',
-  },
-  datingTag: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 999,
-    backgroundColor: '#F5F3FF',
-  },
-  datingTagText: {
-    fontSize: 13,
-    color: '#7C3AED',
-    fontWeight: '600',
+  retryText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
   },
 });

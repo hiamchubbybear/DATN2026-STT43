@@ -19,7 +19,8 @@ public interface IUserProfileRepository
         DoAnTotNghiep.Domain.Enum.GenderPreference? genderPreference = null,
         int? minAge = null,
         int? maxAge = null,
-        int? maxDistanceKm = null);
+        int? maxDistanceKm = null,
+        bool requirePhotos = true);
     Task<List<UserProfile>> GetByUserIdsAsync(List<Guid> userIds);
     Task<List<UserProfile>> SearchAsync(UserSearchFilter filter);
 }

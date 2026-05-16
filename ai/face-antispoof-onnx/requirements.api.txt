@@ -1,0 +1,12 @@
+# Minimal production dependencies for AI API service
+# (no training libs like torch, tensorboard, etc.)
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+python-multipart>=0.0.6
+pydantic>=2.0.0
+
+# Inference
+onnxruntime>=1.16.0
+opencv-python-headless>=4.8.0
+numpy>=1.24.0
+Pillow>=10.0.0

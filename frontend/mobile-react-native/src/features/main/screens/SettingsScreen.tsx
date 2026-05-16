@@ -1,10 +1,13 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Switch, Modal, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthStore } from '../../../store/authStore';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { normalizeFont, radius, spacing } from '../../../shared/utils/responsive';
+import { AppRatingModal } from '../../../shared/components/AppRatingModal';
+import { useTranslation } from 'react-i18next';
+import { userService } from '../../../services/api/userService';
 
 const SettingsItem = ({ icon, label, color = '#111827', onPress, showArrow = true }: { 
   icon: keyof typeof Ionicons.glyphMap, 
@@ -24,13 +27,6 @@ const SettingsItem = ({ icon, label, color = '#111827', onPress, showArrow = tru
   </TouchableOpacity>
 );
 
-import { AppRatingModal } from '../../../shared/components/AppRatingModal';
-
-import { useTranslation } from 'react-i18next';
-
-import { userService } from '../../../services/api/userService';
-import { Switch } from 'react-native';
-
 export const SettingsScreen = () => {
   const { logout, user } = useAuthStore();
   const navigation = useNavigation();
@@ -38,6 +34,7 @@ export const SettingsScreen = () => {
   const [ratingVisible, setRatingVisible] = React.useState(false);
   const [isIncognito, setIsIncognito] = React.useState(user?.isIncognito || false);
   const [loadingIncognito, setLoadingIncognito] = React.useState(false);
+  const [isChangingLanguage, setIsChangingLanguage] = React.useState(false);
 
   React.useEffect(() => {
     if (user) {
@@ -65,28 +62,42 @@ export const SettingsScreen = () => {
   };
 
   const toggleLanguage = async () => {
-    try {
-      const currentLang = i18n.language || 'vi';
-      const newLang = currentLang.startsWith('vi') ? 'en' : 'vi';
-      await i18n.changeLanguage(newLang);
-    } catch (error) {
-      console.error('Failed to change language:', error);
-    }
-  };
-
-  const handleDeleteAccount = () => {
-    Alert.alert(
-      t('settings.deleteAccount'), 
-      t('settings.delete_account_confirm'), 
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        { text: t('settings.deleteAccount'), style: 'destructive', onPress: () => console.log('Delete account requested') },
-      ]
-    );
+    setIsChangingLanguage(true);
+    
+    // Simulate system update delay (1.5 seconds)
+    setTimeout(async () => {
+      try {
+        const currentLang = i18n.language || 'vi';
+        const newLang = currentLang.startsWith('vi') ? 'en' : 'vi';
+        await i18n.changeLanguage(newLang);
+      } catch (error) {
+        console.error('Failed to change language:', error);
+      } finally {
+        // Keep loading for a tiny bit more to ensure smooth transition
+        setTimeout(() => {
+          setIsChangingLanguage(false);
+        }, 500);
+      }
+    }, 1000);
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      {/* Language Loading Overlay */}
+      <Modal transparent visible={isChangingLanguage} animationType="fade">
+        <View style={styles.loadingOverlay}>
+          <View style={styles.loadingContent}>
+            <ActivityIndicator size="large" color="#EE3F57" />
+            <Text style={styles.loadingText}>
+              {i18n.language.startsWith('vi') ? 'Updating language...' : 'Đang cập nhật ngôn ngữ...'}
+            </Text>
+            <Text style={styles.loadingSubText}>
+              {i18n.language.startsWith('vi') ? 'Please wait a moment' : 'Vui lòng chờ trong giây lát'}
+            </Text>
+          </View>
+        </View>
+      </Modal>
+
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Ionicons name="chevron-back" size={24} color="#111827" />
@@ -94,7 +105,8 @@ export const SettingsScreen = () => {
         <Text style={styles.headerTitle}>{t('settings.title')}</Text>
         <View style={{ width: 40 }} />
       </View>
-      <ScrollView style={styles.container}>
+      
+      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t('settings.account')}</Text>
           <SettingsItem icon="person-outline" label={t('settings.personalInfo')} color="#6366F1" onPress={() => navigation.navigate('EditProfile')} />
@@ -106,7 +118,12 @@ export const SettingsScreen = () => {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t('settings.privacy')}</Text>
-          <SettingsItem icon="shield-checkmark-outline" label={t('settings.privacy')} color="#10B981" />
+          <SettingsItem 
+            icon="shield-checkmark-outline" 
+            label={t('settings.privacyPolicy')} 
+            color="#10B981" 
+            onPress={() => navigation.navigate('PrivacyPolicy' as any)}
+          />
           <View style={styles.row}>
             <View style={styles.rowLeft}>
               <View style={[styles.iconWrap, { backgroundColor: '#6B728010' }]}>
@@ -231,22 +248,38 @@ const styles = StyleSheet.create({
     fontSize: normalizeFont(16),
     color: '#111827',
   },
-  logoutButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: spacing(20),
-    marginHorizontal: spacing(20),
-    paddingVertical: spacing(16),
-    backgroundColor: '#FEF2F2',
-    borderRadius: radius(16),
-    borderWidth: 1,
-    borderColor: '#FCA5A5',
+  versionText: {
+    textAlign: 'center',
+    color: '#9CA3AF',
+    fontSize: normalizeFont(12),
+    marginVertical: spacing(32),
   },
-  logoutText: {
-    fontSize: normalizeFont(16),
+  loadingOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingContent: {
+    backgroundColor: '#FFFFFF',
+    padding: 30,
+    borderRadius: 20,
+    alignItems: 'center',
+    width: '80%',
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+  loadingText: {
+    marginTop: 20,
+    fontSize: 16,
     fontWeight: '700',
-    color: '#EF4444',
-    marginLeft: spacing(8),
+    color: '#111827',
+  },
+  loadingSubText: {
+    marginTop: 8,
+    fontSize: 13,
+    color: '#6B7280',
   },
 });

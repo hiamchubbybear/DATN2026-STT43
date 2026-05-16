@@ -163,28 +163,55 @@ public class SwipeActionHandler : IRequestHandler<SwipeActionCommand, SwipeActio
                 await _swipeRepository.AddMatchAsync(match);
                 _metrics.RecordMatchCreated();
 
-                // Send Push Notifications
-                var me = await _userProfileRepository.GetByUserIdAsync(currentUserId);
-                var other = await _userProfileRepository.GetByUserIdAsync(request.TargetId);
+                // Send Push Notifications in background to avoid blocking the response
+                _ = Task.Run(async () => {
+                    try {
+                        var me = await _userProfileRepository.GetByUserIdAsync(currentUserId);
+                        var other = await _userProfileRepository.GetByUserIdAsync(request.TargetId);
 
-                if (me != null && other != null)
-                {
-                    await _notificationService.SendPushToUserAsync(
-                        request.TargetId, 
-                        "🎉 Bạn có một tương hợp mới!", 
-                        $"{me.BasicInfo.DisplayName} cũng đã thích bạn. Hãy bắt đầu trò chuyện ngay!",
-                        new Dictionary<string, string> { { "type", "match" }, { "matchId", match.Id.ToString() } }
-                    );
+                        if (me != null && other != null)
+                        {
+                            await _notificationService.SendPushToUserAsync(
+                                request.TargetId, 
+                                "🎉 Bạn có một tương hợp mới!", 
+                                $"{me.BasicInfo.DisplayName} cũng đã thích bạn. Hãy bắt đầu trò chuyện ngay!",
+                                new Dictionary<string, string> { { "type", "match" }, { "matchId", match.Id.ToString() } }
+                            );
 
-                    await _notificationService.SendPushToUserAsync(
-                        currentUserId, 
-                        "🎉 Bạn có một tương hợp mới!", 
-                        $"{other.BasicInfo.DisplayName} cũng đã thích bạn. Hãy bắt đầu trò chuyện ngay!",
-                        new Dictionary<string, string> { { "type", "match" }, { "matchId", match.Id.ToString() } }
-                    );
-                }
+                            await _notificationService.SendPushToUserAsync(
+                                currentUserId, 
+                                "🎉 Bạn có một tương hợp mới!", 
+                                $"{other.BasicInfo.DisplayName} cũng đã thích bạn. Hãy bắt đầu trò chuyện ngay!",
+                                new Dictionary<string, string> { { "type", "match" }, { "matchId", match.Id.ToString() } }
+                            );
+                        }
+                    } catch (System.Exception ex) {
+                        // Log error but don't crash the request
+                        _logger.LogError(ex, "Error sending match notifications in background");
+                    }
+                });
                 
                 return new SwipeActionResponse(true, match.Id);
+            }
+            else
+            {
+                // Not mutual yet - Send "New Like" notification in background
+                _ = Task.Run(async () => {
+                    try {
+                        var me = await _userProfileRepository.GetByUserIdAsync(currentUserId);
+                        if (me != null)
+                        {
+                            await _notificationService.SendPushToUserAsync(
+                                request.TargetId,
+                                "✨ Mixer: Ai đó vừa thích bạn!",
+                                "Một người dùng vừa mới thích bạn. Hãy quẹt thẻ để tìm xem đó là ai nhé!",
+                                new Dictionary<string, string> { { "type", "new_like" } }
+                            );
+                        }
+                    } catch (System.Exception ex) {
+                        _logger.LogError(ex, "Error sending like notification in background");
+                    }
+                });
             }
         }
 

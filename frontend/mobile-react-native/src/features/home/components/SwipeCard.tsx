@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { normalizeFont, radius, spacing } from '../../../shared/utils/responsive';
@@ -7,20 +7,18 @@ import { UserProfileDto } from '../../../services/api/swipeService';
 import { IconLocation } from '../../../shared/components/icons/IconLocation';
 import { Ionicons } from '@expo/vector-icons';
 
-const { width, height } = Dimensions.get('window');
-const CARD_HEIGHT = height * 0.7;
+const { height } = Dimensions.get('window');
 
 interface Props {
   profile: UserProfileDto;
-  onPressInfo?: () => void;
+  photoIndex: number;
 }
 
-export const SwipeCard: React.FC<Props> = ({ profile, onPressInfo }) => {
-  const [photoIndex, setPhotoIndex] = React.useState(0);
+export const SwipeCard: React.FC<Props> = ({ profile, photoIndex }) => {
   const photos = profile.photos && profile.photos.length > 0 
     ? profile.photos 
     : ['https://via.placeholder.com/400x600'];
-  const currentPhoto = photos[photoIndex];
+  const currentPhoto = photos[photoIndex % photos.length];
 
   return (
     <View style={styles.card}>
@@ -47,34 +45,6 @@ export const SwipeCard: React.FC<Props> = ({ profile, onPressInfo }) => {
             </Text>
           </View>
         </View>
-        
-        {/* Photo switching overlay */}
-        <View style={StyleSheet.absoluteFill}>
-           <View style={{ flexDirection: 'row', flex: 1 }}>
-              <TouchableOpacity 
-                style={{ flex: 1 }} 
-                onPress={() => setPhotoIndex(prev => Math.max(0, prev - 1))}
-              />
-              <TouchableOpacity 
-                style={{ flex: 1 }} 
-                onPress={() => setPhotoIndex(prev => Math.min(photos.length - 1, prev + 1))}
-              />
-           </View>
-        </View>
-
-        {photos.length > 1 && (
-            <View style={styles.indicators}>
-                {photos.map((_, i) => (
-                    <View 
-                        key={i} 
-                        style={[
-                            styles.indicator, 
-                            { backgroundColor: i === photoIndex ? '#fff' : 'rgba(255,255,255,0.4)' }
-                        ]} 
-                    />
-                ))}
-            </View>
-        )}
       </View>
 
       <LinearGradient
@@ -82,11 +52,7 @@ export const SwipeCard: React.FC<Props> = ({ profile, onPressInfo }) => {
         style={styles.gradient}
       />
       
-      <TouchableOpacity 
-        style={styles.info} 
-        activeOpacity={0.9}
-        onPress={onPressInfo}
-      >
+      <View style={styles.info}>
         <View style={styles.nameContainer}>
           <Text style={styles.name}>
             {profile?.displayName || 'Unknown'}, {profile?.age || ''}
@@ -98,7 +64,7 @@ export const SwipeCard: React.FC<Props> = ({ profile, onPressInfo }) => {
           )}
         </View>
         {profile?.occupation ? <Text style={styles.occupation}>{profile.occupation}</Text> : null}
-      </TouchableOpacity>
+      </View>
     </View>
   );
 };
@@ -146,21 +112,6 @@ const styles = StyleSheet.create({
     fontSize: normalizeFont(12),
     fontWeight: 'bold',
     marginLeft: spacing(4),
-  },
-  indicators: {
-    position: 'absolute',
-    top: '25%',
-    right: spacing(12),
-    bottom: '25%',
-    width: 6,
-    flexDirection: 'column',
-    justifyContent: 'center',
-    gap: spacing(8),
-  },
-  indicator: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
   },
   gradient: {
     position: 'absolute',

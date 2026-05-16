@@ -163,8 +163,12 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             <View style={styles.contentRow}>
               <ToastIcon type={toast.type} />
               <View style={styles.textContainer}>
-                <Text style={styles.title} numberOfLines={1}>{toast.title}</Text>
-                <Text style={styles.message} numberOfLines={2}>{toast.message}</Text>
+                <Text style={styles.title}>
+                  {toast.title || (toast as any).text1 || t('common.notification') || 'Thông báo'}
+                </Text>
+                <Text style={styles.message}>
+                  {toast.message || (toast as any).text2 || t('common.error_occurred') || 'Đã có lỗi xảy ra'}
+                </Text>
               </View>
             </View>
           </View>
@@ -183,57 +187,59 @@ export const useToast = () => {
 const styles = StyleSheet.create({
   toastWrapper: {
     position: 'absolute',
-    top: Platform.OS === 'ios' ? 54 : 34,
-    left: 16,
-    right: 16,
-    zIndex: 99999,
+    top: Platform.OS === 'ios' ? 60 : 40, // Higher top margin for Notch/Dynamic Island
+    left: 20,
+    right: 20,
+    zIndex: 999999,
   },
   toastContainer: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 24,
+    borderRadius: 20,
     flexDirection: 'row',
-    overflow: 'hidden',
-    minHeight: 84,
-    borderWidth: 1,
-    borderColor: '#E4E4E7',
+    overflow: 'visible', // Changed from hidden to avoid clipping shadows
+    minHeight: 70,
+    borderWidth: 1.5,
+    borderColor: '#F3F4F6',
     ...Platform.select({
       ios: {
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 12 },
-        shadowOpacity: 0.15,
-        shadowRadius: 24,
+        shadowOffset: { width: 0, height: 15 },
+        shadowOpacity: 0.2,
+        shadowRadius: 20,
       },
       android: {
-        elevation: 12,
+        elevation: 15,
       },
     }),
   },
   accentBar: {
     width: 6,
     height: '100%',
+    borderTopLeftRadius: 20,
+    borderBottomLeftRadius: 20,
   },
   contentRow: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
   textContainer: {
     flex: 1,
-    marginLeft: 16,
+    marginLeft: 12,
+    justifyContent: 'center',
   },
   title: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: '#000000', // Pure black
-    marginBottom: 2,
-    letterSpacing: -0.3,
+    fontSize: 17,
+    fontWeight: 'bold',
+    color: '#111827',
+    marginBottom: 1,
   },
   message: {
     fontSize: 14,
-    color: '#18181B', // Very dark gray/black
+    color: '#4B5563',
     lineHeight: 18,
-    fontWeight: '600',
+    fontWeight: '500',
   },
 });

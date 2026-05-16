@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, StyleSheet, ActivityIndicator, Text, TouchableOpacity, Dimensions } from 'react-native';
+import { View, StyleSheet, ActivityIndicator, Text, TouchableOpacity, Dimensions, Alert } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSwipeFeed, useSwipeAction } from '../../../services/api/useSwipe';
 import { SwipeableCard, SwipeableCardRef } from '../components/SwipeableCard';
@@ -31,12 +32,16 @@ export const HomeScreen = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { t } = useTranslation();
+  
+  const { data: myProfile } = useMyProfile();
+  
   const [filters, setFilters] = useState({
-    gender: 'Everyone',
+    gender: 3, 
     minAge: 18,
     maxAge: 35,
     distance: 50,
   });
+
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [matchData, setMatchData] = useState<{ isVisible: boolean; user: UserProfileDto | null }>({
     isVisible: false,
@@ -44,7 +49,18 @@ export const HomeScreen = () => {
   });
 
   const { data: feedData, isLoading, refetch, isFetching } = useSwipeFeed(filters);
-  const { data: myProfile } = useMyProfile();
+
+  // Sync filters with user profile on mount or when profile loads
+  useEffect(() => {
+    if (myProfile) {
+      setFilters({
+        gender: myProfile.lookingFor || 3,
+        minAge: myProfile.minAgePreference || 18,
+        maxAge: myProfile.maxAgePreference || 35,
+        distance: myProfile.maxDistanceKm || 50,
+      });
+    }
+  }, [myProfile]);
   
   const swipeAction = useSwipeAction();
 
@@ -54,21 +70,31 @@ export const HomeScreen = () => {
   const fetchingMore = useRef(false);
   const cardRefs = useRef<{[key: string]: SwipeableCardRef}>({});
 
-  // Update location on mount
+  // 1. Update location on mount
   useEffect(() => {
     const updateLocation = async () => {
       try {
-        const { status } = await Location.getForegroundPermissionsAsync();
+        const { status } = await Location.requestForegroundPermissionsAsync();
         if (status === 'granted') {
-          const location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+          const location = await Location.getCurrentPositionAsync({ 
+            accuracy: Location.Accuracy.Balanced 
+          });
           const { latitude, longitude } = location.coords;
           
-          // Get reverse geocode for a readable name
           const [address] = await Location.reverseGeocodeAsync({ latitude, longitude });
           const locationName = address ? `${address.district || address.city || address.region}` : 'Nearby';
 
           console.log(`[Home] Updating location: ${locationName} (${latitude}, ${longitude})`);
           await profileService.updateLocation({ latitude, longitude, locationName });
+          
+          // Refetch feed to get correct distances
+          refetch();
+        } else {
+          Alert.alert(
+            t('common.location_required', 'Location Required'),
+            t('common.location_permission_desc', 'We need your location to show people nearby. Please enable it in Settings.'),
+            [{ text: 'OK' }]
+          );
         }
       } catch (error) {
         console.error('[Home] Failed to update location:', error);
@@ -76,22 +102,20 @@ export const HomeScreen = () => {
     };
 
     updateLocation();
-  }, []);
+  }, [refetch, t]);
 
-  // Reset profiles when filters change to trigger fresh data load
+  // 2. Reset profiles when filters change
   useEffect(() => {
     setProfiles([]);
     setCurrentIndex(0);
   }, [filters]);
 
-  // Initialize profiles when feedData is loaded
+  // 3. Initialize profiles when feedData is loaded
   useEffect(() => {
     if (feedData && feedData.length > 0) {
-      // If we are resetting (e.g. filter change), replace entirely
       if (currentIndex === 0 && profiles.length === 0) {
         setProfiles(feedData);
       } else {
-        // Otherwise, append only new profiles
         const newProfiles = feedData.filter(
           newP => !profiles.find(p => p.userId === newP.userId)
         );
@@ -101,31 +125,17 @@ export const HomeScreen = () => {
       }
       fetchingMore.current = false;
     }
-  }, [feedData, currentIndex]);
+  }, [feedData, currentIndex, profiles]);
 
-  // Pre-fetch logic & Image preloading
+  // 4. Pre-fetch logic & Image preloading
   useEffect(() => {
-    console.log(`[HomeScreen] useEffect triggered: currentIndex=${currentIndex}, profiles=${profiles.length}, isFetching=${isFetching}`);
     const checkAndLoop = async () => {
       if (profiles.length > 0) {
-        // Preload images for the next 10 profiles for zero-delay experience
         const nextProfiles = profiles.slice(currentIndex, currentIndex + 10);
         const urlsToPreload = nextProfiles.flatMap(p => p.photos);
         Image.prefetch(urlsToPreload);
 
-        if (currentIndex > 0 && currentIndex === profiles.length) {
-          console.log('--- FEED EXHAUSTED ---');
-          console.log('Triggering automatic loop reset...');
-          try {
-            const success = await swipeService.resetSwipes();
-            console.log('Reset API Response:', success);
-            setProfiles([]);
-            setCurrentIndex(0);
-            refetch();
-          } catch (err) {
-            console.error('Failed to auto-reset swipes:', err);
-          }
-        } else if (currentIndex >= profiles.length - 8 && !fetchingMore.current && !isFetching && profiles.length > 0) {
+        if (currentIndex > 0 && currentIndex >= profiles.length - 2 && !fetchingMore.current && !isFetching) {
           fetchingMore.current = true;
           refetch();
         }
@@ -133,17 +143,12 @@ export const HomeScreen = () => {
     };
 
     checkAndLoop();
-  }, [currentIndex, profiles, isFetching]);
+  }, [currentIndex, profiles, isFetching, refetch]);
 
   const handleSwipe = useCallback((type: SwipeType) => {
-    // Safety check: ensure we have a valid profile at the current index
     const swipedProfile = profiles[currentIndex];
-    if (!swipedProfile) {
-      console.warn('[HomeScreen] Attempted to swipe but profile is undefined at index:', currentIndex);
-      return;
-    }
+    if (!swipedProfile) return;
 
-    // Trigger API call
     swipeAction.mutate(
       { targetId: swipedProfile.userId, type },
       {
@@ -156,7 +161,6 @@ export const HomeScreen = () => {
       }
     );
 
-    // Move to next card
     setCurrentIndex(prev => prev + 1);
   }, [currentIndex, profiles, swipeAction]);
 
@@ -192,12 +196,29 @@ export const HomeScreen = () => {
           <Text style={styles.headerTitle}>{t('discover.title')}</Text>
           <Text style={styles.headerSubtitle}>{t('discover.subtitle')}</Text>
         </View>
-        <TouchableOpacity 
-          style={styles.iconButton}
-          onPress={() => setShowFilterModal(true)}
-        >
-          <IconFilter size={24} color="#111827" />
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity 
+            style={[styles.iconButton, { marginRight: spacing(8) }]}
+            onPress={() => {
+              setProfiles([]);
+              setCurrentIndex(0);
+              refetch();
+            }}
+            disabled={isFetching}
+          >
+            {isFetching ? (
+              <ActivityIndicator size="small" color="#F43F5E" />
+            ) : (
+              <Ionicons name="refresh-outline" size={22} color="#111827" />
+            )}
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.iconButton}
+            onPress={() => setShowFilterModal(true)}
+          >
+            <IconFilter size={24} color="#111827" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Swipe Stack */}
@@ -237,13 +258,12 @@ export const HomeScreen = () => {
                     if (el) {
                       cardRefs.current[profile.userId] = el;
                     } else {
-                      // Cleanup when card is unmounted
                       delete cardRefs.current[profile.userId];
                     }
                   }}
                   profile={profile}
                   onSwipe={handleSwipe}
-                  onPress={() => profile && setSelectedProfile(profile)}
+                  onPress={() => setSelectedProfile(profile)}
                   isFirst={isFirst}
                 />
               );
@@ -364,13 +384,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing(24),
     paddingBottom: spacing(10),
   },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   headerLogo: {
     width: scale(32),
     height: scale(32),
     borderRadius: radius(8),
-  },
-  placeholder: {
-    width: 48,
   },
   titleContainer: {
     alignItems: 'center',
@@ -410,6 +431,13 @@ const styles = StyleSheet.create({
     fontSize: normalizeFont(18),
     color: '#6B7280',
     marginBottom: spacing(20),
+  },
+  noProfilesDesc: {
+    fontSize: normalizeFont(14),
+    color: '#9CA3AF',
+    textAlign: 'center',
+    marginBottom: spacing(24),
+    paddingHorizontal: spacing(40),
   },
   retryButton: {
     backgroundColor: '#F43F5E',

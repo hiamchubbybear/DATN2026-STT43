@@ -47,6 +47,7 @@ export const EditProfileScreen = () => {
   const [personalityType, setPersonalityType] = React.useState('');
   const [hobbies, setHobbies] = React.useState<string[]>([]);
   const [interests, setInterests] = React.useState<string[]>([]);
+  const [loveLanguage, setLoveLanguage] = React.useState<string[]>([]);
   const [freeTimePrefer, setFreeTimePrefer] = React.useState<string[]>([]);
   const [dateStyle, setDateStyle] = React.useState<string[]>([]);
   const [locationName, setLocationName] = React.useState('');
@@ -88,6 +89,7 @@ export const EditProfileScreen = () => {
       setPersonalityType(profile?.lifestyle?.personalityType || '');
       setHobbies(profile?.lifestyle?.hobbies || []);
       setInterests(profile?.lifestyle?.interests || []);
+      setLoveLanguage(profile?.lifestyle?.loveLanguage || []);
       setFreeTimePrefer(profile?.datingStyle?.freeTimePrefer || []);
       setDateStyle(profile?.datingStyle?.dateStyle || []);
     } catch (error) {
@@ -124,7 +126,7 @@ export const EditProfileScreen = () => {
           await profileService.updateBackground({ education, occupation });
           break;
         case 'lifestyle':
-          await profileService.updateLifestyle({ drinking, smoking, socialLevel, personalityType, hobbies, interests });
+          await profileService.updateLifestyle({ drinking, smoking, socialLevel, personalityType, hobbies, interests, loveLanguage });
           break;
         case 'datingStyle':
           await profileService.updateDatingStyle({ freeTimePrefer, dateStyle });

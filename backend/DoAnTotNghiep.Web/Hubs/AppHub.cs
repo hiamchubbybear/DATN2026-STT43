@@ -84,6 +84,11 @@ public class AppHub : Hub
         {
             _logger.LogWarning("Fraud detected for User {UserId}: {Reason}", senderId, reason);
             await Clients.Caller.SendAsync("Ack", new { reqId = reqId, status = "FAILED", reason = reason });
+            
+            // Push Notification to warn the sender about the "scan" result
+            await _notificationService.SendPushToUserAsync(senderId, "⚠️ Cảnh báo hệ thống", 
+                "Tin nhắn của bạn bị chặn do nghi ngờ spam. Vui lòng tuân thủ quy tắc cộng đồng.",
+                new Dictionary<string, string> { { "type", "warning" } });
             return;
         }
 
@@ -93,6 +98,11 @@ public class AppHub : Hub
         {
             _logger.LogWarning("Inappropriate content blocked from User {UserId}: {Reason}", senderId, modReason);
             await Clients.Caller.SendAsync("Ack", new { reqId = reqId, status = "FAILED", reason = modReason });
+
+            // Push Notification to warn about inappropriate content
+            await _notificationService.SendPushToUserAsync(senderId, "⚠️ Cảnh báo nội dung", 
+                "Nội dung tin nhắn không phù hợp và đã bị hệ thống chặn.",
+                new Dictionary<string, string> { { "type", "warning" } });
             return;
         }
 

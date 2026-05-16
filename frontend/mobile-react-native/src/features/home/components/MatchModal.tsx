@@ -55,34 +55,29 @@ export const MatchModal: React.FC<MatchModalProps> = ({
           duration: 400,
           useNativeDriver: true,
         }),
-        Animated.sequence([
-          Animated.delay(300),
-          Animated.parallel([
-            Animated.spring(card1TranslateX, {
-              toValue: 0,
-              friction: 8,
-              tension: 40,
-              useNativeDriver: true,
-            }),
-            Animated.spring(card2TranslateX, {
-              toValue: 0,
-              friction: 8,
-              tension: 40,
-              useNativeDriver: true,
-            }),
-          ]),
-          Animated.parallel([
-            Animated.spring(contentScale, {
-              toValue: 1,
-              friction: 8,
-              useNativeDriver: true,
-            }),
-            Animated.timing(contentOpacity, {
-              toValue: 1,
-              duration: 400,
-              useNativeDriver: true,
-            }),
-          ]),
+        Animated.parallel([
+          Animated.spring(card1TranslateX, {
+            toValue: 0,
+            friction: 8,
+            tension: 40,
+            useNativeDriver: true,
+          }),
+          Animated.spring(card2TranslateX, {
+            toValue: 0,
+            friction: 8,
+            tension: 40,
+            useNativeDriver: true,
+          }),
+          Animated.spring(contentScale, {
+            toValue: 1,
+            friction: 8,
+            useNativeDriver: true,
+          }),
+          Animated.timing(contentOpacity, {
+            toValue: 1,
+            duration: 400,
+            useNativeDriver: true,
+          }),
         ]),
       ]).start();
     } else {

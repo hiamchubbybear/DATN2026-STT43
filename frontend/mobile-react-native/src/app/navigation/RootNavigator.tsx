@@ -28,6 +28,7 @@ import { NotificationManager } from '../../shared/components/NotificationManager
 import { ChangePasswordScreen } from '../../features/main/screens/ChangePasswordScreen';
 import { DeleteAccountScreen } from '../../features/main/screens/DeleteAccountScreen';
 import { NotificationSettingsScreen } from '../../features/main/screens/NotificationSettingsScreen';
+import { PrivacyPolicyScreen } from '../../features/main/screens/legal/PrivacyPolicyScreen';
 
 export type RootStackParamList = {
   Onboarding: undefined;
@@ -145,6 +146,11 @@ export const RootNavigator = () => {
             <Stack.Screen 
               name="DeleteAccount" 
               component={DeleteAccountScreen} 
+            />
+            <Stack.Screen 
+              name="PrivacyPolicy" 
+              component={PrivacyPolicyScreen} 
+              options={{ presentation: 'modal' }}
             />
           </>
         )}

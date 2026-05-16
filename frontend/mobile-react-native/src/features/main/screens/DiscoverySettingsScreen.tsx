@@ -27,6 +27,7 @@ export const DiscoverySettingsScreen = () => {
   
   const [ageRange, setAgeRange] = useState([18, 100]);
   const [maxDistance, setMaxDistance] = useState(50);
+  const [lookingFor, setLookingFor] = useState(3); // Everyone
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -40,6 +41,7 @@ export const DiscoverySettingsScreen = () => {
       const data = await profileService.getMyProfile();
       setAgeRange([data.minAgePreference || 18, data.maxAgePreference || 100]);
       setMaxDistance(data.maxDistanceKm || 50);
+      setLookingFor(data.lookingFor || 3);
     } catch (error) {
       Logger.error('Failed to fetch discovery settings', error);
     } finally {
@@ -57,6 +59,7 @@ export const DiscoverySettingsScreen = () => {
         minAgePreference: ageRange[0],
         maxAgePreference: ageRange[1],
         maxDistanceKm: maxDistance,
+        lookingFor: lookingFor,
       });
       
       showToast({
@@ -123,6 +126,33 @@ export const DiscoverySettingsScreen = () => {
               markerStyle={styles.marker}
               pressedMarkerStyle={styles.markerPressed}
             />
+          </View>
+        </View>
+
+        <View style={[styles.section, { marginTop: 24 }]}>
+          <Text style={styles.label}>{t('discover_settings.looking_for')}</Text>
+          <View style={styles.genderContainer}>
+            {[
+              { id: 1, label: t('common.men') },
+              { id: 2, label: t('common.women') },
+              { id: 3, label: t('common.everyone') }
+            ].map((item) => (
+              <TouchableOpacity
+                key={item.id}
+                style={[
+                  styles.genderOption,
+                  lookingFor === item.id && styles.genderOptionSelected
+                ]}
+                onPress={() => setLookingFor(item.id)}
+              >
+                <Text style={[
+                  styles.genderOptionText,
+                  lookingFor === item.id && styles.genderOptionTextSelected
+                ]}>
+                  {item.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
           </View>
         </View>
 
@@ -260,5 +290,32 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#6B7280',
     lineHeight: 18,
+  },
+  genderContainer: {
+    flexDirection: 'row',
+    marginTop: 16,
+    gap: 10,
+  },
+  genderOption: {
+    flex: 1,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: '#F3F4F6',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  genderOptionSelected: {
+    backgroundColor: '#F43F5E',
+    borderColor: '#F43F5E',
+  },
+  genderOptionText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#6B7280',
+  },
+  genderOptionTextSelected: {
+    color: '#FFFFFF',
   }
 });

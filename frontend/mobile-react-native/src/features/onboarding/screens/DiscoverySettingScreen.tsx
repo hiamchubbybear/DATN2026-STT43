@@ -11,6 +11,7 @@ import Slider from '@react-native-community/slider';
 import { spacing, radius, normalizeFont, scale } from '../../../shared/utils/responsive';
 import { useAuthStore } from '../../../store/authStore';
 import { useTranslation } from 'react-i18next';
+import { Ionicons } from '@expo/vector-icons';
 
 export const DiscoverySettingScreen = ({ navigation }: any) => {
   const { setProfileStatus } = useAuthStore();

@@ -141,12 +141,12 @@ public class SubmitVerificationCommandHandler : IRequestHandler<SubmitVerificati
         // --- Post-verification Notification ---
         try
         {
-            var title = "Identity Verification";
+            var title = "Mixer Verification";
             var body = verification.Status switch
             {
-                VerificationStatus.Approved => "Your identity has been verified successfully! 🎉",
-                VerificationStatus.Rejected => $"Verification failed: {verification.RejectReason} ❌",
-                _ => "Your verification is being reviewed by our team. ⏳"
+                VerificationStatus.Approved => "Danh tính của bạn đã được xác thực thành công! Tận hưởng Mixer ngay thôi! 🎉",
+                VerificationStatus.Rejected => $"Xác thực không thành công: {verification.RejectReason} ❌",
+                _ => "Hồ sơ của bạn đang được hệ thống kiểm tra. Vui lòng chờ trong giây lát. ⏳"
             };
 
             _logger.LogInformation("Attempting to send push notification to User {UserId}. Status: {Status}", request.UserId, verification.Status);

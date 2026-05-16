@@ -8,6 +8,8 @@ import { LogBox } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useAppPermissions } from './src/shared/hooks/useAppPermissions';
 
+import { useTranslation } from 'react-i18next';
+
 // Disable debug logs on screen
 LogBox.ignoreAllLogs();
 
@@ -15,6 +17,7 @@ LogBox.ignoreAllLogs();
 const queryClient = new QueryClient();
 
 export default function App() {
+  const { i18n } = useTranslation();
   // Request permissions on startup
   useAppPermissions();
   
@@ -23,7 +26,7 @@ export default function App() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>
         <ToastProvider>
-          <RootNavigator />
+          <RootNavigator key={i18n.language} />
         </ToastProvider>
       </QueryClientProvider>
     </GestureHandlerRootView>

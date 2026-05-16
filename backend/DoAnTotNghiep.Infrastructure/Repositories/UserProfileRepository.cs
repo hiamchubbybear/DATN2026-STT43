@@ -58,7 +58,8 @@ public class UserProfileRepository : IUserProfileRepository
         GenderPreference? genderPreference = null,
         int? minAge = null,
         int? maxAge = null,
-        int? maxDistanceKm = null)
+        int? maxDistanceKm = null,
+        bool requirePhotos = true)
     {
         var builder = Builders<UserProfile>.Filter;
         var filters = new List<FilterDefinition<UserProfile>>();
@@ -69,13 +70,13 @@ public class UserProfileRepository : IUserProfileRepository
             excluded.AddRange(excludeUserIds);
 
         filters.Add(builder.Nin(x => x.UserId, excluded));
-        filters.Add(builder.Eq(x => x.Status, UserStatus.Active));
-        filters.Add(builder.Eq(x => x.IsIncognito, false));
+        filters.Add(builder.In(x => x.Status, new[] { UserStatus.Active, UserStatus.ShadowBanned }));
+        // Use Ne (Not Equal) true to include users where IsIncognito field might be missing (null)
+        filters.Add(builder.Ne(x => x.IsIncognito, true));
 
-        // 2. Gender preference filter
+        // 2. Gender preference filter (ALWAYS apply this, never relax gender)
         var effectiveGenderPref = genderPreference ?? me.LookingFor;
-        if (!relaxFilters && effectiveGenderPref != GenderPreference.Everyone
-            && effectiveGenderPref != GenderPreference.None)
+        if (effectiveGenderPref != GenderPreference.Everyone && effectiveGenderPref != GenderPreference.None)
         {
             var targetGender = effectiveGenderPref == GenderPreference.Male ? Gender.Male : Gender.Female;
             filters.Add(builder.Eq(x => x.BasicInfo.Gender, targetGender));
@@ -93,6 +94,12 @@ public class UserProfileRepository : IUserProfileRepository
             filters.Add(builder.Lte(x => x.BasicInfo.Dob, maxDob));
         }
 
+        if (!relaxFilters && requirePhotos)
+        {
+            filters.Add(builder.Exists(x => x.Photos, true));
+            filters.Add(builder.Not(builder.Size(x => x.Photos, 0)));
+        }
+
         // 4. Distance filter
         var effectiveDistance = maxDistanceKm ?? me.MaxDistanceKm;
         if (!relaxFilters && effectiveDistance > 0 && me.Location != null)
@@ -108,7 +115,8 @@ public class UserProfileRepository : IUserProfileRepository
         var query = _profiles.Find(finalFilter);
         
         // Note: GeoWithinCenterSphere allows combining with other sorts, unlike $near.
-        query = query.SortByDescending(x => x.CreatedAt);
+        // Remove strict CreatedAt sort to allow older users to appear
+        // query = query.SortByDescending(x => x.CreatedAt);
 
         return await query
             .Skip(skip)

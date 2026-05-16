@@ -463,7 +463,8 @@
     "account_warnings_desc": "Safety alerts and account restriction notices",
     "marketing": "Marketing",
     "promotions": "Promotions & Tips",
-    "promotions_desc": "Receive offers and tips on how to find better matches"
+    "promotions_desc": "Receive offers and tips on how to find better matches",
+    "privacyPolicy": "Privacy Policy"
   },
   "rating": {
     "title": "Enjoying Mixer?",

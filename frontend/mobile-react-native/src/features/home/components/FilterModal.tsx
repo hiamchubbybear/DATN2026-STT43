@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   View,
@@ -55,17 +55,21 @@ interface FilterModalProps {
 export const FilterModal = ({ visible, onClose, onApply, initialFilters }: FilterModalProps) => {
   const { t } = useTranslation();
   // Convert initial gender to numeric if it's a string
-  // Convert initial gender to numeric if it's a string
-  const initialGenderValue = typeof initialFilters.gender === 'string' 
-    ? GENDER_MAP[initialFilters.gender] || 3 
-    : initialFilters.gender || 3;
+  const [gender, setGender] = useState(3);
+  const [distance, setDistance] = useState(50);
+  const [ageRange, setAgeRange] = useState([18, 35]);
 
-  const [gender, setGender] = useState(initialGenderValue);
-  const [distance, setDistance] = useState(initialFilters.distance || 50);
-  const [ageRange, setAgeRange] = useState([
-    initialFilters.minAge || 18, 
-    initialFilters.maxAge || 35
-  ]);
+  // Sync state when modal becomes visible or initialFilters change
+  useEffect(() => {
+    if (visible) {
+      const gValue = typeof initialFilters.gender === 'string' 
+        ? GENDER_MAP[initialFilters.gender] || 3 
+        : initialFilters.gender || 3;
+      setGender(gValue);
+      setDistance(initialFilters.distance || 50);
+      setAgeRange([initialFilters.minAge || 18, initialFilters.maxAge || 35]);
+    }
+  }, [visible, initialFilters]);
 
   const handleApply = () => {
     onApply({

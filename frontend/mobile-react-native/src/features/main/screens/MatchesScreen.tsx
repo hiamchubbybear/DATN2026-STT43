@@ -40,7 +40,8 @@ export const MatchesScreen = () => {
   useFocusEffect(
     React.useCallback(() => {
       setHasUnreadMatches(false);
-    }, [setHasUnreadMatches])
+      fetchData(false); // Refetch data silently when focused
+    }, [setHasUnreadMatches, fetchData])
   );
 
   React.useEffect(() => {
@@ -192,18 +193,20 @@ export const MatchesScreen = () => {
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#F7F7F8' },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  container: { flex: 1, paddingHorizontal: spacing(20), paddingTop: spacing(4) },
+  container: { flex: 1, paddingHorizontal: spacing(20) },
   scrollContent: {
-    paddingBottom: spacing(16),
+    paddingTop: verticalScale(40),
+    paddingBottom: spacing(100),
   },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     gap: 12,
     alignItems: 'flex-start',
+    marginBottom: spacing(24),
   },
-  title: { fontSize: normalizeFont(34), fontWeight: '800', color: '#111111' },
-  subtitle: { marginTop: spacing(6), fontSize: normalizeFont(13), color: '#71717A', maxWidth: scale(248), lineHeight: verticalScale(18) },
+  title: { fontSize: normalizeFont(32), fontWeight: '800', color: '#111111' },
+  subtitle: { marginTop: spacing(8), fontSize: normalizeFont(14), color: '#71717A', maxWidth: scale(260), lineHeight: verticalScale(20) },
   filterBtn: {
     marginTop: spacing(8),
     width: scale(34),

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard, Alert, ActivityIndicator, Image } from 'react-native';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard, Alert, ActivityIndicator, Image, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -71,18 +71,23 @@ export default function EmailSignUpDetailsScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <KeyboardAvoidingView 
-          style={styles.container} 
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      <KeyboardAvoidingView 
+        style={styles.container} 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+      >
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color="#F43F5E" />
+          </TouchableOpacity>
+        </View>
+
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
-          <View style={styles.header}>
-            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-              <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <Path d="M15 18l-6-6 6-6" stroke="#F43F5E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </Svg>
-            </TouchableOpacity>
-          </View>
           
           <View style={styles.content}>
             <Image 
@@ -148,18 +153,17 @@ export default function EmailSignUpDetailsScreen() {
                 <Ionicons name={showConfirmPassword ? "eye-off-outline" : "eye-outline"} size={20} color="#6B7280" />
               </TouchableOpacity>
             </View>
+            <TouchableOpacity 
+              style={[styles.button, (!email || !password || !confirmPassword || loading) && styles.buttonDisabled]} 
+              onPress={handleSignUp}
+              activeOpacity={0.8}
+              disabled={!email || !password || !confirmPassword || loading}
+            >
+              {loading ? <ActivityIndicator color="#FFF" /> : <Text style={styles.buttonText}>{t('auth.signUp_btn')}</Text>}
+            </TouchableOpacity>
           </View>
-
-          <TouchableOpacity 
-            style={[styles.button, (!email || !password || !confirmPassword || loading) && styles.buttonDisabled]} 
-            onPress={handleSignUp}
-            activeOpacity={0.8}
-            disabled={!email || !password || !confirmPassword || loading}
-          >
-            {loading ? <ActivityIndicator color="#FFF" /> : <Text style={styles.buttonText}>{t('auth.signUp_btn')}</Text>}
-          </TouchableOpacity>
-        </KeyboardAvoidingView>
-      </TouchableWithoutFeedback>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -172,8 +176,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: spacing(24),
-    justifyContent: 'space-between',
-    paddingBottom: spacing(20),
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: spacing(40),
   },
   header: {
     paddingTop: spacing(10),

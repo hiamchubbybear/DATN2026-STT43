@@ -1,5 +1,5 @@
-import React, { useImperativeHandle, forwardRef } from 'react';
-import { StyleSheet, View, Dimensions, Text } from 'react-native';
+import React, { useImperativeHandle, forwardRef, useState } from 'react';
+import { StyleSheet, View, Dimensions } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { 
   useAnimatedStyle, 
@@ -12,12 +12,12 @@ import Animated, {
 } from 'react-native-reanimated';
 import { UserProfileDto, SwipeType } from '../../../services/api/swipeService';
 import { SwipeCard } from './SwipeCard';
-import { spacing, radius, normalizeFont } from '../../../shared/utils/responsive';
+import { spacing, radius } from '../../../shared/utils/responsive';
 import { IconHeart } from '../../../shared/components/icons/IconHeart';
 import { IconClose } from '../../../shared/components/icons/IconClose';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
-const SWIPE_UP_THRESHOLD = -SCREEN_HEIGHT * 0.1; // Reduced from 0.15 to 0.1 for easier swipe
+const SWIPE_UP_THRESHOLD = -SCREEN_HEIGHT * 0.1; 
 const SWIPE_DOWN_THRESHOLD = SCREEN_HEIGHT * 0.1;
 
 export interface SwipeableCardRef {
@@ -37,16 +37,15 @@ export const SwipeableCard = React.memo(forwardRef<SwipeableCardRef, SwipeableCa
     const translateX = useSharedValue(0);
     const rotate = useSharedValue(0);
     const opacity = useSharedValue(1);
+    
+    // Manage photo index locally for the card
+    const [photoIndex, setPhotoIndex] = useState(0);
+    const photoCount = profile.photos?.length || 1;
 
     const swipeOut = (type: SwipeType) => {
       'worklet';
-      // Trigger the next card immediatey to remove delay
       runOnJS(onSwipe)(type);
-
-      // Like is DOWN (+), Dislike is UP (-)
       const destY = type === SwipeType.Like ? SCREEN_HEIGHT : -SCREEN_HEIGHT;
-      
-      // Snappier transition out
       translateY.value = withSpring(destY, { 
         damping: 25, 
         stiffness: 250, 
@@ -63,16 +62,14 @@ export const SwipeableCard = React.memo(forwardRef<SwipeableCardRef, SwipeableCa
     }));
 
     const panGesture = Gesture.Pan()
-      .minDistance(10) // Slightly increased to avoid accidental pans
-      .activeOffsetY([-10, 10]) // Increased sensitivity area
+      .minDistance(10)
+      .activeOffsetY([-10, 10])
       .onUpdate((event) => {
         translateY.value = event.translationY;
-        // Reduce horizontal effect to keep it "straight"
         translateX.value = event.translationX * 0.1;
         rotate.value = event.translationX * 0.05;
       })
       .onEnd((event) => {
-        // Enforce vertical priority
         if (event.translationY > SWIPE_DOWN_THRESHOLD) {
           swipeOut(SwipeType.Like);
         } else if (event.translationY < SWIPE_UP_THRESHOLD) {
@@ -84,23 +81,25 @@ export const SwipeableCard = React.memo(forwardRef<SwipeableCardRef, SwipeableCa
         }
       });
 
-    const tapGesture = Gesture.Tap()
+    // Handle Single Tap -> Next Photo
+    const singleTap = Gesture.Tap()
+      .numberOfTaps(1)
       .onEnd(() => {
-        // Block tap if card is moving (swiping)
-        if (Math.abs(translateY.value) < 10 && Math.abs(translateX.value) < 10) {
-          if (onPress) runOnJS(onPress)();
+        if (Math.abs(translateY.value) < 5) {
+          runOnJS(setPhotoIndex)((photoIndex + 1) % photoCount);
         }
       });
 
-    const longPressGesture = Gesture.LongPress()
-      .minDuration(300)
-      .onEnd((event, success) => {
-        if (success && onPress) {
-          runOnJS(onPress)();
-        }
+    // Handle Double Tap -> Open Profile
+    const doubleTap = Gesture.Tap()
+      .numberOfTaps(2)
+      .onEnd(() => {
+        if (onPress) runOnJS(onPress)();
       });
 
-    const gestures = Gesture.Simultaneous(panGesture, Gesture.Exclusive(longPressGesture, tapGesture));
+    // Prioritize double tap over single tap
+    const tapGestures = Gesture.Exclusive(doubleTap, singleTap);
+    const gestures = Gesture.Simultaneous(panGesture, tapGestures);
 
     const rStyle = useAnimatedStyle(() => {
       return {
@@ -114,13 +113,11 @@ export const SwipeableCard = React.memo(forwardRef<SwipeableCardRef, SwipeableCa
     });
 
     const likeOpacity = useAnimatedStyle(() => {
-      // Like is DOWN (positive Y)
       const op = interpolate(translateY.value, [30, 120], [0, 1], Extrapolation.CLAMP);
       return { opacity: op };
     });
 
     const nopeOpacity = useAnimatedStyle(() => {
-      // Nope is UP (negative Y)
       const op = interpolate(translateY.value, [-120, -30], [1, 0], Extrapolation.CLAMP);
       return { opacity: op };
     });
@@ -129,7 +126,7 @@ export const SwipeableCard = React.memo(forwardRef<SwipeableCardRef, SwipeableCa
       <View style={[styles.container, { zIndex: isFirst ? 100 : 1 }]} pointerEvents={isFirst ? 'auto' : 'none'}>
         <GestureDetector gesture={gestures}>
           <Animated.View style={[styles.card, rStyle]}>
-            <SwipeCard profile={profile} onPressInfo={onPress} />
+            <SwipeCard profile={profile} photoIndex={photoIndex} />
             
             <Animated.View style={[styles.overlay, likeOpacity]}>
                <View style={styles.iconCircle}>
@@ -177,13 +174,5 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 10,
     elevation: 10,
-  },
-  iconText: {
-    fontSize: normalizeFont(50),
-    color: '#ff4d6d',
-  },
-  iconTextX: {
-    fontSize: normalizeFont(50),
-    color: '#ccc',
   },
 });

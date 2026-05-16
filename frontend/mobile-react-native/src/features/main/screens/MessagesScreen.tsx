@@ -43,6 +43,7 @@ export const MessagesScreen = () => {
   useFocusEffect(
     React.useCallback(() => {
       setHasUnreadMessages(false);
+      fetchData(false); // Refetch messages silently when focused
     }, [setHasUnreadMessages])
   );
 

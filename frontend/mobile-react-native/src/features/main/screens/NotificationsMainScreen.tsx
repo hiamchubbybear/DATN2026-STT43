@@ -50,7 +50,8 @@ export const NotificationsMainScreen = () => {
   useFocusEffect(
     React.useCallback(() => {
       setHasUnreadNotifications(false);
-    }, [setHasUnreadNotifications])
+      refetch(); // Refetch data when focused
+    }, [setHasUnreadNotifications, refetch])
   );
 
   const del = useMutation({

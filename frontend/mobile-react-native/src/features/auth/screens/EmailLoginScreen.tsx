@@ -11,6 +11,7 @@ import {
   Keyboard,
   ActivityIndicator,
   Image,
+  ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -71,19 +72,23 @@ export default function EmailLoginScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <KeyboardAvoidingView
-          style={styles.container}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        >
-          <View style={styles.header}>
-            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-              <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <Path d="M15 18l-6-6 6-6" stroke="#F43F5E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </Svg>
-            </TouchableOpacity>
-          </View>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+      >
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color="#F43F5E" />
+          </TouchableOpacity>
+        </View>
 
+        <ScrollView 
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
           <View style={styles.content}>
             <Image 
               source={require('../../../../assets/images/logo_v2.png')} 
@@ -149,18 +154,18 @@ export default function EmailLoginScreen() {
             >
               <Text style={styles.forgotPasswordText}>{t('auth.forgot_password_link')}</Text>
             </TouchableOpacity>
-          </View>
 
-          <TouchableOpacity
-            style={[styles.button, (!email || !password || loading) && styles.buttonDisabled]}
-            onPress={handleLogin}
-            activeOpacity={0.8}
-            disabled={!email || !password || loading}
-          >
-            {loading ? <ActivityIndicator color="#FFF" /> : <Text style={styles.buttonText}>{t('auth.login_btn')}</Text>}
-          </TouchableOpacity>
-        </KeyboardAvoidingView>
-      </TouchableWithoutFeedback>
+            <TouchableOpacity
+              style={[styles.button, (!email || !password || loading) && styles.buttonDisabled]}
+              onPress={handleLogin}
+              activeOpacity={0.8}
+              disabled={!email || !password || loading}
+            >
+              {loading ? <ActivityIndicator color="#FFF" /> : <Text style={styles.buttonText}>{t('auth.login_btn')}</Text>}
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -173,8 +178,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: spacing(24),
-    justifyContent: 'space-between',
-    paddingBottom: spacing(20),
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: spacing(40),
   },
   header: {
     paddingTop: spacing(10),

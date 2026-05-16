@@ -94,10 +94,37 @@ export const MainBottomTabs = () => {
         tabBarShowLabel: false,
       })}
     >
-      <Tab.Screen name="Main" component={HomeScreen} />
-      <Tab.Screen name="Matches" component={MatchesScreen} />
-      <Tab.Screen name="Messages" component={MessagesScreen} />
-      <Tab.Screen name="Notifications" component={NotificationsMainScreen} />
+      <Tab.Screen 
+        name="Main" 
+        component={HomeScreen} 
+      />
+      <Tab.Screen 
+        name="Matches" 
+        component={MatchesScreen} 
+        listeners={{
+          tabPress: () => {
+            useNotificationStore.getState().setHasUnreadMatches(false);
+          },
+        }}
+      />
+      <Tab.Screen 
+        name="Messages" 
+        component={MessagesScreen} 
+        listeners={{
+          tabPress: () => {
+            useNotificationStore.getState().setHasUnreadMessages(false);
+          },
+        }}
+      />
+      <Tab.Screen 
+        name="Notifications" 
+        component={NotificationsMainScreen} 
+        listeners={{
+          tabPress: () => {
+            useNotificationStore.getState().setHasUnreadNotifications(false);
+          },
+        }}
+      />
       <Tab.Screen name="Profile" component={ProfileMainScreen} />
     </Tab.Navigator>
   );
@@ -128,14 +155,11 @@ const styles = StyleSheet.create({
   },
   activeDot: {
     position: "absolute",
-    top: spacing(2),
-    right: 0,
-    width: scale(8),
-    height: scale(8),
-    borderRadius: radius(999),
+    bottom: -spacing(6), // Move below the icon
+    width: scale(16),
+    height: scale(3),
+    borderRadius: radius(2),
     backgroundColor: "#EE3F57",
-    borderWidth: scale(1.5),
-    borderColor: "#ECEFF3",
   },
   badge: {
     position: "absolute",

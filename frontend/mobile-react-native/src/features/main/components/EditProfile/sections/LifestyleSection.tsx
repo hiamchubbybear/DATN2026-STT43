@@ -11,6 +11,7 @@ interface LifestyleSectionProps {
   personalityType: string;
   hobbies: string[];
   interests: string[];
+  loveLanguage: string[];
   onOpenModal: (type: string, title: string, options: (string | { label: string; value: string })[]) => void;
   onSave: () => void;
   isSaving: boolean;
@@ -23,6 +24,7 @@ export const LifestyleSection = ({
   personalityType,
   hobbies,
   interests,
+  loveLanguage,
   onOpenModal,
   onSave,
   isSaving
@@ -81,6 +83,23 @@ export const LifestyleSection = ({
         onPress={() => onOpenModal('personalityType', t('profile_edit.select_type'), ['INTJ', 'INTP', 'ENTJ', 'ENTP', 'INFJ', 'INFP', 'ENFJ', 'ENFP', 'ISTJ', 'ISFJ', 'ESTJ', 'ESFJ', 'ISTP', 'ISFP', 'ESTP', 'ESFP'])}
       >
         <Text style={personalityType ? styles.selectorText : styles.placeholderText}>{personalityType || t('profile_edit.select_type')}</Text>
+        <Ionicons name="chevron-down" size={20} color="#9CA3AF" />
+      </TouchableOpacity>
+
+      <Text style={styles.label}>{t('profile_edit.love_language_label', 'Ngôn ngữ tình yêu')}</Text>
+      <TouchableOpacity 
+        style={styles.selector} 
+        onPress={() => onOpenModal('loveLanguage', t('profile_edit.select_love_language', 'Chọn ngôn ngữ tình yêu'), [
+          { label: 'Words of Affirmation', value: 'Words of Affirmation' },
+          { label: 'Acts of Service', value: 'Acts of Service' },
+          { label: 'Receiving Gifts', value: 'Receiving Gifts' },
+          { label: 'Quality Time', value: 'Quality Time' },
+          { label: 'Physical Touch', value: 'Physical Touch' }
+        ])}
+      >
+        <Text style={loveLanguage?.length > 0 ? styles.selectorText : styles.placeholderText}>
+          {loveLanguage?.length > 0 ? loveLanguage.join(', ') : t('profile_edit.select_love_language', 'Chọn ngôn ngữ tình yêu')}
+        </Text>
         <Ionicons name="chevron-down" size={20} color="#9CA3AF" />
       </TouchableOpacity>
 
