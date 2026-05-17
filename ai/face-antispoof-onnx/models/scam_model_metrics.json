@@ -1,0 +1,21 @@
+{
+  "roc_auc": 0.8444,
+  "average_precision": 0.7726,
+  "accuracy": 0.8037,
+  "precision_scam": 0.6984,
+  "recall_scam": 0.7238,
+  "f1_scam": 0.7109,
+  "cv_auc_mean": 0.8402,
+  "cv_auc_std": 0.005,
+  "train_samples": 9600,
+  "test_samples": 2400,
+  "feature_importances": {
+    "swipesPerHour": 0.0977947786450386,
+    "spamLinkCount": 0.23872974514961243,
+    "reportCount": 0.16881106793880463,
+    "profileCompleteness": 0.06605678796768188,
+    "hasProfilePhoto": 0.057672373950481415,
+    "isFaceVerified": 0.14460301399230957,
+    "bioHasContact": 0.2263321727514267
+  }
+}

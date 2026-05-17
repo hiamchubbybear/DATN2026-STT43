@@ -29,6 +29,8 @@ from api.schemas import (
     HealthResponse,
     ErrorResponse,
     DocumentVerifyResponse,
+    ScamDetectionRequest,
+    ScamDetectionResponse,
 )
 from api.dependencies import (
     ModelManager,
@@ -40,6 +42,8 @@ from api.dependencies import (
 )
 from src.inference import infer, process_with_logits, crop
 from src.detection import detect
+from ml.scam_model import get_detector
+from ml.features import ScamFeatures
 
 # ── Logging ──────────────────────────────────────────────────────
 
@@ -65,6 +69,8 @@ async def lifespan(app: FastAPI):
     except RuntimeError as e:
         logger.error(f"Failed to load models: {e}")
         raise
+    # Warm up scam detector (non-fatal if model file is missing)
+    get_detector()
     yield
     logger.info("Shutting down AI service")
 
@@ -453,3 +459,39 @@ async def verify_document(
         ocr_text=ocr_results,
         message=" ".join(messages) if messages else "Document quality is good."
     )
+
+
+@app.post(
+    "/api/v1/detect-scam",
+    response_model=ScamDetectionResponse,
+    responses={422: {"model": ErrorResponse}},
+    tags=["Scam Detection"],
+)
+async def detect_scam(request: ScamDetectionRequest):
+    """
+    Predict whether a user account is a scam/bot based on 7 behavioral signals.
+
+    The C# backend aggregates these signals from Redis and MongoDB then calls
+    this endpoint. Returns a scam probability, risk level, list of triggered
+    rule names, and a recommended moderation action.
+
+    Risk levels:
+      low      (< 0.40)  → no action needed
+      medium   (0.40-0.65) → send warning to user
+      high     (0.65-0.85) → shadow ban
+      critical (>= 0.85)  → ban account
+    """
+    features = ScamFeatures.from_dict(request.model_dump())
+
+    detector = get_detector()
+    result = detector.predict(features)
+
+    logger.info(
+        "Scam detection | prob=%.3f risk=%s rules=%s recommendation=%s",
+        result["scamProbability"],
+        result["riskLevel"],
+        result["triggeredRules"],
+        result["recommendation"],
+    )
+
+    return ScamDetectionResponse(**result)

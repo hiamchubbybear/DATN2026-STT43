@@ -82,8 +82,9 @@ public static class DependencyInjection
         services.AddScoped<IFileService, FileService>();
         services.AddScoped<IFraudDetectionService, FraudDetection.FraudDetectionService>();
         services.AddScoped<IContentModerationService, Moderation.ContentModerationService>();
-        
+
         services.AddHttpClient<IAiVerificationService, AiVerification.AiVerificationService>();
+        services.AddHttpClient<IScamDetectionService, ScamDetection.ScamDetectionApiService>();
         services.AddSingleton<IEncryptionService, EncryptionService>();
 
         return services;

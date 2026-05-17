@@ -2,7 +2,8 @@
 
 .DS_Store
 Thumbs.db
-
+appSettings.Develop.json
+appSettings.json
 .vs/
 *.user
 *.suo

@@ -74,3 +74,27 @@ class DocumentVerifyResponse(BaseModel):
     brightness_score: float = 0.0
     ocr_text: List[str] = []
     message: str = ""
+
+
+# ── Scam Detection ────────────────────────────────────────────────────────────
+
+class ScamDetectionRequest(BaseModel):
+    """
+    Behavioral feature vector sent by the C# backend.
+    Field names are camelCase to match System.Text.Json defaults.
+    """
+    swipesPerHour: float = Field(0.0, description="Average hourly swipe rate (last 24 h)")
+    spamLinkCount: int = Field(0, description="Total spam links sent (all time)")
+    reportCount: int = Field(0, description="Total reports received from other users")
+    profileCompleteness: float = Field(0.0, ge=0.0, le=1.0, description="Fraction of profile fields filled (0–1)")
+    hasProfilePhoto: bool = Field(False, description="Has at least one profile photo")
+    isFaceVerified: bool = Field(False, description="Passed biometric identity verification")
+    bioHasContact: bool = Field(False, description="Bio contains phone/social contact info")
+
+
+class ScamDetectionResponse(BaseModel):
+    """Scam prediction result returned to the C# backend."""
+    scamProbability: float = Field(description="Probability of being a scam account (0.0–1.0)")
+    riskLevel: str = Field(description="low | medium | high | critical")
+    triggeredRules: List[str] = Field(default_factory=list, description="Rule names whose thresholds were exceeded")
+    recommendation: str = Field(description="none | warn | shadow_ban | ban")
