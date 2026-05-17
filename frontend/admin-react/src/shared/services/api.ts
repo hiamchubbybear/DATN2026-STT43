@@ -101,6 +101,23 @@ export const adminApi = {
 
   getBroadcasts: () =>
     api.get('/admin/broadcasts'),
+
+  getUserScamScore: (userId: string) =>
+    api.get(`/admin/users/${userId}/scam-score`),
+
+  getAllUserScamScores: () =>
+    api.get('/admin/users/scam-scores'),
+
+  simulateScamScore: (features: {
+    swipesPerHour: number;
+    spamLinkCount: number;
+    reportCount: number;
+    profileCompleteness: number;
+    hasProfilePhoto: boolean;
+    isFaceVerified: boolean;
+    bioHasContact: boolean;
+  }) =>
+    api.post('/admin/scam/simulate', features),
 };
 
 export default api;

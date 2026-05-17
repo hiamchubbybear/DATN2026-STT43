@@ -19,9 +19,44 @@ export default function ReportsPage() {
   const [banReason, setBanReason] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // AI Shield Modal State
+  const [showShieldModal, setShowShieldModal] = useState(false);
+  const [shieldLoading, setShieldLoading] = useState(false);
+  const [shieldRows, setShieldRows] = useState<any[]>([]);
+  const [shieldError, setShieldError] = useState<string | null>(null);
+  const [shieldFilter, setShieldFilter] = useState('');
+
   // Notification State
   const [notifyTitle, setNotifyTitle] = useState('Safety Warning');
   const [notifyContent, setNotifyContent] = useState('');
+
+  // ML Sandbox State
+  const [shieldTab, setShieldTab] = useState<'AUDIT' | 'SANDBOX'>('AUDIT');
+  const [sandboxLoading, setSandboxLoading] = useState(false);
+  const [sandboxError, setSandboxError] = useState<string | null>(null);
+  const [sandboxResult, setSandboxResult] = useState<any>(null);
+  const [sandboxInputs, setSandboxInputs] = useState({
+    swipesPerHour: 10,
+    spamLinkCount: 0,
+    reportCount: 0,
+    profileCompleteness: 0.8,
+    hasProfilePhoto: true,
+    isFaceVerified: false,
+    bioHasContact: false,
+  });
+
+  const handleRunSimulation = async () => {
+    setSandboxLoading(true);
+    setSandboxError(null);
+    try {
+      const res = await (adminApi as any).simulateScamScore(sandboxInputs);
+      setSandboxResult(res.data);
+    } catch (err: any) {
+      setSandboxError('Failed to execute model simulation. Check backend logs.');
+    } finally {
+      setSandboxLoading(false);
+    }
+  };
 
   useEffect(() => {
     fetchReports();
@@ -107,6 +142,31 @@ export default function ReportsPage() {
         fetchReports();
     } catch (e) {
         alert('Error dismissing report');
+    }
+  };
+
+  const openShieldModal = async () => {
+    setShieldRows([]);
+    setShieldError(null);
+    setShieldFilter('');
+    setShowShieldModal(true);
+    setShieldLoading(true);
+    try {
+      const res = await adminApi.getAllUserScamScores();
+      setShieldRows(res.data || []);
+    } catch (e: any) {
+      setShieldError('Failed to load scam scores. Ensure the ML service is running.');
+    } finally {
+      setShieldLoading(false);
+    }
+  };
+
+  const riskColor = (level: string) => {
+    switch (level?.toLowerCase()) {
+      case 'critical': return { bg: 'bg-red-100', text: 'text-red-700', dot: 'bg-red-500', badge: 'bg-red-100 text-red-700' };
+      case 'high':     return { bg: 'bg-orange-100', text: 'text-orange-700', dot: 'bg-orange-500', badge: 'bg-orange-100 text-orange-700' };
+      case 'medium':   return { bg: 'bg-amber-100', text: 'text-amber-700', dot: 'bg-amber-500', badge: 'bg-amber-100 text-amber-700' };
+      default:         return { bg: 'bg-emerald-100', text: 'text-emerald-700', dot: 'bg-emerald-500', badge: 'bg-emerald-100 text-emerald-700' };
     }
   };
 
@@ -462,17 +522,417 @@ export default function ReportsPage() {
         </div>
       )}
 
-      <section className="rounded-[24px] border-2 border-dashed border-slate-200 bg-white p-6 md:flex md:items-center md:justify-between group hover:border-[#EE3F57]/30 transition-colors">
+      <section
+        className="rounded-[24px] border-2 border-dashed border-slate-200 bg-white p-6 md:flex md:items-center md:justify-between group hover:border-[#EE3F57]/30 transition-colors cursor-pointer"
+        onClick={openShieldModal}
+      >
         <div className="flex items-center gap-4">
           <div className="h-12 w-12 rounded-2xl bg-[#EE3F57] flex items-center justify-center shadow-lg shadow-rose-100">
             <img src={heartIcon} alt="Shield" className="h-5 w-5 brightness-0 invert" />
           </div>
           <div>
             <h4 className="font-black text-slate-800 tracking-tight">AI Content Shield Active</h4>
-            <p className="text-xs text-slate-400 font-medium">Automatic image scanning and toxicity detection is currently active.</p>
+            <p className="text-xs text-slate-400 font-medium">Click to scan a specific user's ML scam risk score and behavioral features.</p>
           </div>
         </div>
+        <div className="mt-4 md:mt-0">
+          <span className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-[#EE3F57]/10 text-[#EE3F57] text-xs font-black uppercase tracking-widest">
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+            Scan User
+          </span>
+        </div>
       </section>
+
+      {/* AI Content Shield Modal */}
+      {showShieldModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
+          <div className="relative flex flex-col w-full max-w-5xl h-[85vh] bg-white rounded-[32px] shadow-2xl overflow-hidden border border-slate-100">
+
+            {/* Header */}
+            <div className="px-8 py-5 bg-gradient-to-r from-[#EE3F57] to-[#f27121] text-white flex items-center justify-between flex-shrink-0">
+              <div className="flex items-center gap-4">
+                <div className="h-10 w-10 rounded-2xl bg-white/20 flex items-center justify-center backdrop-blur-md">
+                  <img src={heartIcon} alt="Shield" className="h-5 w-5 brightness-0 invert" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black tracking-tight">AI Content Shield — XGBoost System</h3>
+                  <p className="text-xs text-white/70">Anti-Scam Automated Moderation Engine</p>
+                </div>
+              </div>
+              <button onClick={() => setShowShieldModal(false)} className="h-9 w-9 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/30 transition">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+
+            {/* Sub-tabs Selection */}
+            <div className="px-8 bg-slate-50 border-b border-slate-100 flex gap-6 flex-shrink-0">
+              <button
+                onClick={() => setShieldTab('AUDIT')}
+                className={`py-3.5 text-xs font-black uppercase tracking-wider transition border-b-2 ${shieldTab === 'AUDIT' ? 'border-[#EE3F57] text-[#EE3F57]' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
+              >
+                Live Audit Table
+              </button>
+              <button
+                onClick={() => setShieldTab('SANDBOX')}
+                className={`py-3.5 text-xs font-black uppercase tracking-wider transition border-b-2 ${shieldTab === 'SANDBOX' ? 'border-[#EE3F57] text-[#EE3F57]' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
+              >
+                ML Prediction Sandbox
+              </button>
+            </div>
+
+            {/* Content Switcher */}
+            {shieldTab === 'AUDIT' ? (
+              <>
+                {/* Filter bar */}
+                <div className="px-6 py-3 border-b border-slate-100 bg-slate-50/30 flex-shrink-0 flex items-center gap-3">
+                  <div className="relative flex-1">
+                    <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <input
+                      type="text"
+                      placeholder="Filter users by name or email..."
+                      value={shieldFilter}
+                      onChange={e => setShieldFilter(e.target.value)}
+                      className="w-full pl-9 pr-4 py-2 text-sm rounded-xl border border-slate-200 outline-none focus:border-[#EE3F57] focus:ring-4 focus:ring-[#EE3F57]/10 transition"
+                    />
+                  </div>
+                  <span className="text-xs font-bold text-slate-400 whitespace-nowrap">
+                    {shieldRows.filter(r =>
+                      !shieldFilter || r.displayName?.toLowerCase().includes(shieldFilter.toLowerCase()) || r.email?.toLowerCase().includes(shieldFilter.toLowerCase())
+                    ).length} users
+                  </span>
+                </div>
+
+                {/* Table body */}
+                <div className="flex-1 overflow-y-auto">
+                  {shieldLoading && (
+                    <div className="flex flex-col items-center justify-center py-20 text-slate-400">
+                      <svg className="w-10 h-10 animate-spin mb-3 text-[#EE3F57]" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/></svg>
+                      <p className="text-sm font-bold">Scanning all database users...</p>
+                    </div>
+                  )}
+
+                  {shieldError && !shieldLoading && (
+                    <div className="flex items-center justify-center py-20">
+                      <p className="text-sm text-red-500 font-medium">{shieldError}</p>
+                    </div>
+                  )}
+
+                  {!shieldLoading && !shieldError && shieldRows.length > 0 && (() => {
+                    const filtered = shieldRows.filter(r =>
+                      !shieldFilter ||
+                      r.displayName?.toLowerCase().includes(shieldFilter.toLowerCase()) ||
+                      r.email?.toLowerCase().includes(shieldFilter.toLowerCase())
+                    );
+                    return (
+                      <table className="w-full border-separate border-spacing-y-0">
+                        <thead className="sticky top-0 z-10 bg-slate-50">
+                          <tr className="text-left text-[10px] font-black uppercase tracking-[0.18em] text-slate-400 border-b border-slate-100">
+                            <th className="px-6 py-3">User</th>
+                            <th className="px-3 py-3 text-center">Score</th>
+                            <th className="px-3 py-3 text-center">Risk</th>
+                            <th className="px-3 py-3 text-center">Swipes/hr</th>
+                            <th className="px-3 py-3 text-center">Spam Links</th>
+                            <th className="px-3 py-3 text-center">Reports</th>
+                            <th className="px-3 py-3 text-center">Completeness</th>
+                            <th className="px-3 py-3 text-center">Photo</th>
+                            <th className="px-3 py-3 text-center">Verified</th>
+                            <th className="px-3 py-3 text-center">Bio Contact</th>
+                            <th className="px-3 py-3 text-center">Rec. Action</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filtered.map((row: any, idx: number) => {
+                            const risk = riskColor(row.prediction?.riskLevel ?? 'low');
+                            const prob = Math.round((row.prediction?.scamProbability ?? 0) * 100);
+                            const f = row.features ?? {};
+                            return (
+                              <tr key={row.userId} className={`border-b border-slate-50 hover:bg-slate-50/50 transition-colors ${idx % 2 === 0 ? '' : 'bg-slate-50/20'}`}>
+                                {/* User */}
+                                <td className="px-6 py-3">
+                                  <div className="flex items-center gap-3 min-w-[160px]">
+                                    {row.avatar
+                                      ? <img src={row.avatar} alt={row.displayName} className="h-8 w-8 rounded-full object-cover border border-slate-100 flex-shrink-0"/>
+                                      : <div className="h-8 w-8 rounded-full bg-rose-50 border border-rose-100 flex items-center justify-center font-black text-xs text-[#EE3F57] flex-shrink-0">{(row.displayName||'U').substring(0,2).toUpperCase()}</div>
+                                    }
+                                    <div className="min-w-0">
+                                      <p className="text-xs font-bold text-slate-800 truncate max-w-[110px]">{row.displayName}</p>
+                                      <p className="text-[10px] text-slate-400 truncate max-w-[110px]">{row.email}</p>
+                                    </div>
+                                  </div>
+                                </td>
+                                {/* Score bar */}
+                                <td className="px-3 py-3 text-center">
+                                  <div className="flex flex-col items-center gap-1 min-w-[56px]">
+                                    <span className={`text-xs font-black ${risk.text}`}>{prob}%</span>
+                                    <div className="w-12 h-1.5 rounded-full bg-slate-200 overflow-hidden">
+                                      <div className={`h-full rounded-full ${risk.dot}`} style={{width:`${prob}%`}}/>
+                                    </div>
+                                  </div>
+                                </td>
+                                {/* Risk badge */}
+                                <td className="px-3 py-3 text-center">
+                                  <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase ${risk.badge}`}>{row.prediction?.riskLevel ?? 'N/A'}</span>
+                                </td>
+                                {/* Swipes/hr */}
+                                <td className="px-3 py-3 text-center">
+                                  <span className={`text-xs font-bold ${f.swipesPerHour > 80 ? 'text-red-500' : 'text-slate-600'}`}>{(f.swipesPerHour ?? 0).toFixed(0)}</span>
+                                </td>
+                                {/* Spam links */}
+                                <td className="px-3 py-3 text-center">
+                                  <span className={`text-xs font-bold ${f.spamLinkCount > 2 ? 'text-red-500' : 'text-slate-600'}`}>{f.spamLinkCount ?? 0}</span>
+                                </td>
+                                {/* Reports */}
+                                <td className="px-3 py-3 text-center">
+                                  <span className={`text-xs font-bold ${f.reportCount >= 2 ? 'text-red-500' : 'text-slate-600'}`}>{f.reportCount ?? 0}</span>
+                                </td>
+                                {/* Completeness */}
+                                <td className="px-3 py-3 text-center">
+                                  <span className={`text-xs font-bold ${(f.profileCompleteness ?? 0) < 0.3 ? 'text-red-500' : 'text-slate-600'}`}>{Math.round((f.profileCompleteness ?? 0) * 100)}%</span>
+                                </td>
+                                {/* Photo */}
+                                <td className="px-3 py-3 text-center">
+                                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${f.hasProfilePhoto ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-600'}`}>{f.hasProfilePhoto ? 'YES' : 'NO'}</span>
+                                </td>
+                                {/* Verified */}
+                                <td className="px-3 py-3 text-center">
+                                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${f.isFaceVerified ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>{f.isFaceVerified ? 'YES' : 'NO'}</span>
+                                </td>
+                                {/* Bio Contact */}
+                                <td className="px-3 py-3 text-center">
+                                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${f.bioHasContact ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-700'}`}>{f.bioHasContact ? 'YES' : 'NO'}</span>
+                                </td>
+                                {/* Recommendation */}
+                                <td className="px-3 py-3 text-center">
+                                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase ${risk.badge}`}>{row.prediction?.recommendation ?? '—'}</span>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    );
+                  })()}
+                </div>
+              </>
+            ) : (
+              /* ML PREDICTION SANDBOX WORKSPACE */
+              <div className="flex-1 overflow-y-auto p-8 bg-slate-50/50">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-full items-start">
+                  
+                  {/* Left Column - Input Features Controls */}
+                  <div className="lg:col-span-7 bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex flex-col gap-6">
+                    <div>
+                      <h4 className="text-sm font-black text-slate-800 uppercase tracking-wider">Configure Input Feature Vector</h4>
+                      <p className="text-xs text-slate-400 mt-1">Adjust user behavioral and profile parameters to feed into the model</p>
+                    </div>
+
+                    <div className="space-y-4">
+                      {/* Swipes Per Hour Slider */}
+                      <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                        <div className="flex justify-between items-center mb-1">
+                          <label className="text-xs font-bold text-slate-600">Swipes Per Hour</label>
+                          <span className="text-xs font-black text-slate-800">{sandboxInputs.swipesPerHour} swipes/hr</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0"
+                          max="500"
+                          value={sandboxInputs.swipesPerHour}
+                          onChange={e => setSandboxInputs(prev => ({ ...prev, swipesPerHour: parseInt(e.target.value) }))}
+                          className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#EE3F57]"
+                        />
+                      </div>
+
+                      {/* Spam Link Count Slider */}
+                      <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                        <div className="flex justify-between items-center mb-1">
+                          <label className="text-xs font-bold text-slate-600">Spam Link Detections</label>
+                          <span className="text-xs font-black text-slate-800">{sandboxInputs.spamLinkCount} flags</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0"
+                          max="20"
+                          value={sandboxInputs.spamLinkCount}
+                          onChange={e => setSandboxInputs(prev => ({ ...prev, spamLinkCount: parseInt(e.target.value) }))}
+                          className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#EE3F57]"
+                        />
+                      </div>
+
+                      {/* Report Count Slider */}
+                      <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                        <div className="flex justify-between items-center mb-1">
+                          <label className="text-xs font-bold text-slate-600">Reports Received</label>
+                          <span className="text-xs font-black text-slate-800">{sandboxInputs.reportCount} reports</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0"
+                          max="20"
+                          value={sandboxInputs.reportCount}
+                          onChange={e => setSandboxInputs(prev => ({ ...prev, reportCount: parseInt(e.target.value) }))}
+                          className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#EE3F57]"
+                        />
+                      </div>
+
+                      {/* Profile Completeness Slider */}
+                      <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                        <div className="flex justify-between items-center mb-1">
+                          <label className="text-xs font-bold text-slate-600">Profile Completeness</label>
+                          <span className="text-xs font-black text-slate-800">{Math.round(sandboxInputs.profileCompleteness * 100)}% Complete</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          value={sandboxInputs.profileCompleteness * 100}
+                          onChange={e => setSandboxInputs(prev => ({ ...prev, profileCompleteness: parseFloat(e.target.value) / 100 }))}
+                          className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#EE3F57]"
+                        />
+                      </div>
+
+                      {/* Checkboxes grid */}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <label className="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-100 cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={sandboxInputs.hasProfilePhoto}
+                            onChange={e => setSandboxInputs(prev => ({ ...prev, hasProfilePhoto: e.target.checked }))}
+                            className="rounded-lg text-[#EE3F57] focus:ring-[#EE3F57] h-5 w-5 border-slate-300"
+                          />
+                          <span className="text-xs font-bold text-slate-600">Has Photo</span>
+                        </label>
+
+                        <label className="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-100 cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={sandboxInputs.isFaceVerified}
+                            onChange={e => setSandboxInputs(prev => ({ ...prev, isFaceVerified: e.target.checked }))}
+                            className="rounded-lg text-[#EE3F57] focus:ring-[#EE3F57] h-5 w-5 border-slate-300"
+                          />
+                          <span className="text-xs font-bold text-slate-600">Face Verified</span>
+                        </label>
+
+                        <label className="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-100 cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={sandboxInputs.bioHasContact}
+                            onChange={e => setSandboxInputs(prev => ({ ...prev, bioHasContact: e.target.checked }))}
+                            className="rounded-lg text-[#EE3F57] focus:ring-[#EE3F57] h-5 w-5 border-slate-300"
+                          />
+                          <span className="text-xs font-bold text-slate-600">Bio Has Contact</span>
+                        </label>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={handleRunSimulation}
+                      disabled={sandboxLoading}
+                      className="w-full bg-[#EE3F57] text-white py-4 rounded-2xl font-black text-sm hover:bg-[#d63249] transition shadow-lg shadow-rose-100 flex items-center justify-center gap-2"
+                    >
+                      {sandboxLoading ? (
+                        <>
+                          <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/></svg>
+                          Processing Inference...
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                          Run XGBoost Inference
+                        </>
+                      )}
+                    </button>
+
+                    {sandboxError && (
+                      <p className="text-xs font-bold text-red-500 text-center">{sandboxError}</p>
+                    )}
+                  </div>
+
+                  {/* Right Column - Inference Result Card */}
+                  <div className="lg:col-span-5 flex flex-col gap-6">
+                    {sandboxResult ? (() => {
+                      const res = sandboxResult.prediction || {};
+                      const prob = Math.round((res.scamProbability ?? 0) * 100);
+                      const risk = riskColor(res.riskLevel ?? 'low');
+
+                      return (
+                        <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex flex-col items-center gap-6 text-center animate-fadeIn">
+                          <div>
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-500 text-[10px] font-black uppercase tracking-wider">
+                              Real-Time Inference Result
+                            </span>
+                          </div>
+
+                          {/* Interactive Speedometer Indicator */}
+                          <div className="relative flex items-center justify-center">
+                            <div className="w-40 h-40 rounded-full border-8 border-slate-100 flex flex-col items-center justify-center relative">
+                              <span className={`text-4xl font-black tracking-tight ${risk.text}`}>{prob}%</span>
+                              <span className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Scam Score</span>
+                              {/* Filled ring indicator */}
+                              <div
+                                className={`absolute inset-[-8px] rounded-full border-8 border-transparent transition-all duration-1000`}
+                                style={{
+                                  borderColor: prob > 75 ? '#ef4444' : prob > 50 ? '#f97316' : prob > 25 ? '#f59e0b' : '#10b981',
+                                  clipPath: `polygon(50% 50%, -50% -50%, ${prob > 25 ? '150%' : '50%'} ${prob > 75 ? '150%' : '-50%'}, 150% 150%, -50% 150%)`
+                                }}
+                              />
+                            </div>
+                          </div>
+
+                          {/* Risk Badges */}
+                          <div className="grid grid-cols-2 gap-4 w-full">
+                            <div className={`p-4 rounded-2xl border text-center ${risk.bg} ${risk.text} border-transparent`}>
+                              <p className="text-[10px] font-black uppercase opacity-60">Risk Level</p>
+                              <p className="text-base font-black tracking-tight uppercase mt-1">{res.riskLevel ?? 'LOW'}</p>
+                            </div>
+                            <div className={`p-4 rounded-2xl border text-center ${risk.bg} ${risk.text} border-transparent`}>
+                              <p className="text-[10px] font-black uppercase opacity-60">Rec. Action</p>
+                              <p className="text-base font-black tracking-tight uppercase mt-1">{res.recommendation ?? 'NONE'}</p>
+                            </div>
+                          </div>
+
+                          {/* Triggered rules lists */}
+                          <div className="w-full text-left bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                            <p className="text-[10px] font-black uppercase text-slate-400 mb-2.5 tracking-wider">Triggered Alert Rules ({res.triggeredRules?.length || 0})</p>
+                            {res.triggeredRules?.length > 0 ? (
+                              <div className="flex flex-wrap gap-1.5">
+                                {res.triggeredRules.map((rule: string) => (
+                                  <span key={rule} className="px-2 py-0.5 rounded bg-red-100 text-red-600 font-bold text-[9px] uppercase tracking-wider border border-red-200">
+                                    {rule.replace(/_/g, ' ')}
+                                  </span>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="text-xs font-bold text-slate-400 italic">No suspicious flags triggered. Safe account.</p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })() : (
+                      <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm text-center flex flex-col items-center justify-center min-h-[360px] text-slate-400">
+                        <svg className="w-12 h-12 stroke-current mb-3 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
+                        <p className="text-sm font-black uppercase tracking-wider text-slate-500">Awaiting Simulation</p>
+                        <p className="text-xs text-slate-400 mt-1 max-w-[200px] mx-auto">Set up your feature vector on the left and click run to predict</p>
+                      </div>
+                    )}
+                  </div>
+
+                </div>
+              </div>
+            )}
+
+            {/* Footer */}
+            <div className="flex items-center justify-between px-8 py-4 border-t border-slate-100 bg-slate-50/50 flex-shrink-0">
+              <p className="text-[10px] text-slate-400 font-medium">Powered by XGBoost ML · Auto-Moderate Threshold set to 75% probability</p>
+              <button onClick={() => setShowShieldModal(false)} className="px-5 py-2 rounded-2xl bg-[#EE3F57] text-white text-sm font-black hover:bg-[#d63249] transition">
+                Close Modal
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
+
