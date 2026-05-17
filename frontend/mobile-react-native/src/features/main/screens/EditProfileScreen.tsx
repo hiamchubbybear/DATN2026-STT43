@@ -74,11 +74,11 @@ export const EditProfileScreen = () => {
       setLocationName(profile?.locationName || '');
       setInterestedIn(profile?.interestedIn || '');
       
-      // Map gender enum to string
+      // Map gender enum (could be number or string from API)
       const genderVal = profile?.basicInfo?.gender;
-      if (genderVal === 1) setGender('Male');
-      else if (genderVal === 2) setGender('Female');
-      else if (genderVal === 3) setGender('Other');
+      if (genderVal === 1 || genderVal === 'Male') setGender('Male');
+      else if (genderVal === 2 || genderVal === 'Female') setGender('Female');
+      else if (genderVal === 3 || genderVal === 'Other') setGender('Other');
       else setGender('');
 
       setDob(profile?.basicInfo?.dob || '');
@@ -116,10 +116,14 @@ export const EditProfileScreen = () => {
           if (gender === 'Male') genderBioEnum = 1;
           else if (gender === 'Female') genderBioEnum = 2;
           
+          let interestedInEnum = 3;
+          if (interestedIn === 'Male') interestedInEnum = 1;
+          else if (interestedIn === 'Female') interestedInEnum = 2;
+
           await profileService.updateBio({ 
             bio, 
             gender: genderBioEnum as any, 
-            interestedIn 
+            interestedIn: interestedInEnum as any 
           });
           break;
         case 'background':
@@ -165,6 +169,7 @@ export const EditProfileScreen = () => {
   const handleSelect = (option: string) => {
     switch (modalType) {
       case 'gender': setGender(option); setModalVisible(false); break;
+      case 'interestedIn': setInterestedIn(option); setModalVisible(false); break;
       case 'education': setEducation(option); setModalVisible(false); break;
       case 'drinking': setDrinking(option); setModalVisible(false); break;
       case 'smoking': setSmoking(option); setModalVisible(false); break;
@@ -181,6 +186,7 @@ export const EditProfileScreen = () => {
   const getSelectedValues = () => {
     switch (modalType) {
       case 'gender': return gender;
+      case 'interestedIn': return interestedIn;
       case 'education': return education;
       case 'drinking': return drinking;
       case 'smoking': return smoking;
@@ -265,6 +271,8 @@ export const EditProfileScreen = () => {
               {activeModal === 'bio' && (
                 <BioSection 
                   bio={bio} setBio={setBio}
+                  interestedIn={interestedIn}
+                  onOpenModal={openModal}
                   onSave={() => handleSaveSection('bio')}
                   isSaving={savingSection === 'bio'}
                 />

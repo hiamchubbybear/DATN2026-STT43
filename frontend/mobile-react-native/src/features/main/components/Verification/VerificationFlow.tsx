@@ -5,6 +5,7 @@ import * as ImagePicker from 'expo-image-picker';
 import LivenessCamera from './LivenessCamera';
 import LivenessChallenge from './LivenessChallenge';
 import { verificationService } from '../../../../services/api/verificationService';
+import { useNavigation } from '@react-navigation/native';
 
 enum Step {
   Intro = 1,
@@ -16,6 +17,7 @@ enum Step {
 }
 
 const VerificationFlow: React.FC = () => {
+  const navigation = useNavigation();
   const [currentStep, setCurrentStep] = useState<Step>(Step.Intro);
   const [idNumber, setIdNumber] = useState('');
   const [fullName, setFullName] = useState('');
@@ -158,7 +160,7 @@ const VerificationFlow: React.FC = () => {
             <Text style={styles.description}>
               Your verification has been submitted successfully. We'll notify you once it's approved!
             </Text>
-            <TouchableOpacity style={styles.mainButton} onPress={() => { /* Navigate back */ }}>
+            <TouchableOpacity style={styles.mainButton} onPress={() => navigation.goBack()}>
               <Text style={styles.mainButtonText}>Back to Profile</Text>
             </TouchableOpacity>
           </View>

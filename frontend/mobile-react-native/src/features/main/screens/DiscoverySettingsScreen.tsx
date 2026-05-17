@@ -52,10 +52,8 @@ export const DiscoverySettingsScreen = () => {
   const handleSave = async () => {
     try {
       setSaving(true);
-      const currentProfile = await profileService.getMyProfile();
       
-      await profileService.updateProfile({
-        ...currentProfile,
+      await profileService.updatePreferences({
         minAgePreference: ageRange[0],
         maxAgePreference: ageRange[1],
         maxDistanceKm: maxDistance,

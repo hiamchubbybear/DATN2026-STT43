@@ -7,7 +7,9 @@ import {
   ScrollView, 
   Image, 
   ActivityIndicator, 
-  Dimensions 
+  Dimensions,
+  Modal,
+  TouchableWithoutFeedback
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -16,6 +18,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { profileService } from '../../../services/api/profileService';
 import { useToast } from '../../../shared/components/ToastProvider';
 import { Logger } from '../../../shared/utils/logger';
+import { ImagePreviewModal } from '../../../shared/components/ImagePreviewModal';
 import Svg, { Path } from 'react-native-svg';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -40,6 +43,9 @@ export const EditGalleryScreen = () => {
   const [photos, setPhotos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [optionsVisible, setOptionsVisible] = useState(false);
+  const [previewVisible, setPreviewVisible] = useState(false);
+  const [selectedPhoto, setSelectedPhoto] = useState<any>(null);
 
   useEffect(() => {
     fetchPhotos();
@@ -147,6 +153,22 @@ export const EditGalleryScreen = () => {
     }
   };
 
+  const handlePhotoPress = (photo: any) => {
+    setSelectedPhoto(photo);
+    setOptionsVisible(true);
+  };
+
+  const handleActionSetPrimary = async () => {
+    if (!selectedPhoto) return;
+    setOptionsVisible(false);
+    await handleSetPrimary(selectedPhoto.id);
+  };
+
+  const handleActionView = () => {
+    setOptionsVisible(false);
+    setPreviewVisible(true);
+  };
+
   // Show existing photos + one empty slot for adding more (up to 9)
   const slots = Array.from({ length: Math.min(photos.length + 1, 9) }, (_, i) => i);
 
@@ -184,7 +206,7 @@ export const EditGalleryScreen = () => {
                     <TouchableOpacity 
                       activeOpacity={0.9} 
                       style={styles.flex}
-                      onPress={() => handleSetPrimary(photo.id)}
+                      onPress={() => handlePhotoPress(photo)}
                     >
                       <Image source={{ uri: photo.url }} style={[styles.photoImage, photo.isPrimary && styles.primaryPhotoBorder]} />
                     </TouchableOpacity>
@@ -232,6 +254,63 @@ export const EditGalleryScreen = () => {
           </View>
         )}
       </ScrollView>
+
+      {/* Options Modal */}
+      <Modal
+        visible={optionsVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setOptionsVisible(false)}
+      >
+        <TouchableWithoutFeedback onPress={() => setOptionsVisible(false)}>
+          <View style={styles.modalOverlay}>
+            <TouchableWithoutFeedback>
+              <View style={styles.optionsContainer}>
+                <View style={styles.optionsHeader}>
+                  <View style={styles.optionsHandle} />
+                  <Text style={styles.optionsTitle}>Photo Options</Text>
+                </View>
+                
+                <TouchableOpacity style={styles.optionItem} onPress={handleActionView}>
+                  <View style={[styles.optionIcon, { backgroundColor: '#F3F4F6' }]}>
+                    <Ionicons name="eye-outline" size={22} color="#4B5563" />
+                  </View>
+                  <Text style={styles.optionText}>View Photo</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={styles.optionItem} 
+                  onPress={handleActionSetPrimary}
+                  disabled={selectedPhoto?.isPrimary}
+                >
+                  <View style={[styles.optionIcon, { backgroundColor: '#FFF1F2' }]}>
+                    <Ionicons name="star-outline" size={22} color="#F43F5E" />
+                  </View>
+                  <Text style={[styles.optionText, selectedPhoto?.isPrimary && styles.disabledText]}>
+                    Set as Primary Photo
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={[styles.optionItem, { marginTop: 8 }]} 
+                  onPress={() => setOptionsVisible(false)}
+                >
+                  <Text style={[styles.optionText, { color: '#9CA3AF', width: '100%', textAlign: 'center', marginLeft: 0 }]}>
+                    Cancel
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
+
+      {/* Image Preview Modal */}
+      <ImagePreviewModal 
+        visible={previewVisible}
+        imageUrl={selectedPhoto?.url}
+        onClose={() => setPreviewVisible(false)}
+      />
     </SafeAreaView>
   );
 };
@@ -384,5 +463,57 @@ const styles = StyleSheet.create({
   savingText: {
     color: '#F43F5E',
     fontWeight: '600',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  optionsContainer: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 20,
+    paddingBottom: 40,
+    paddingTop: 12,
+  },
+  optionsHeader: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  optionsHandle: {
+    width: 40,
+    height: 4,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 2,
+    marginBottom: 12,
+  },
+  optionsTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  optionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  optionIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
+  optionText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#374151',
+  },
+  disabledText: {
+    color: '#D1D5DB',
   }
 });

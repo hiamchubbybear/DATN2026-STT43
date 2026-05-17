@@ -72,14 +72,14 @@ public class FraudDetectionService : IFraudDetectionService
             var minKey = $"fast_swipe:min:{userId}:{now:yyyyMMddHHmm}";
             long minCount = await db.StringIncrementAsync(minKey);
             if (minCount == 1) await db.KeyExpireAsync(minKey, TimeSpan.FromMinutes(2));
-            if (minCount > 120) return true;
+            if (minCount > 300) return true;
 
             // 2. Burst check (Very fast: 10 swipes in 3 seconds)
             // Using a simple bucketed approach for performance
             var burstKey = $"fast_swipe:burst:{userId}:{now.Ticks / (TimeSpan.TicksPerSecond * 3)}";
             long burstCount = await db.StringIncrementAsync(burstKey);
             if (burstCount == 1) await db.KeyExpireAsync(burstKey, TimeSpan.FromSeconds(5));
-            if (burstCount > 10) return true;
+            if (burstCount > 30) return true;
 
             return false;
         }

@@ -3,7 +3,9 @@ using MediatR;
 
 namespace DoAnTotNghiep.Application.Users.Profile;
 
-public class ProfileHandlers(IUserProfileRepository profileRepository) : 
+public class ProfileHandlers(
+    IUserProfileRepository profileRepository,
+    IUserVerificationRepository verificationRepository) : 
     IRequestHandler<GetMyProfileQuery, UserProfileDto>,
     IRequestHandler<UpdateBioCommand, bool>,
     IRequestHandler<UpdateLocationCommand, bool>,
@@ -20,6 +22,8 @@ public class ProfileHandlers(IUserProfileRepository profileRepository) :
         var profile = await profileRepository.GetByUserIdAsync(request.UserId);
         if (profile == null) return null;
 
+        var verification = await verificationRepository.GetLatestByUserIdAsync(request.UserId);
+
         return new UserProfileDto(
             request.UserId,
             new BasicInfoDto(profile.BasicInfo.DisplayName, profile.BasicInfo.Dob, profile.BasicInfo.Gender, profile.BasicInfo.Languages),
@@ -35,7 +39,8 @@ public class ProfileHandlers(IUserProfileRepository profileRepository) :
             profile.MinAgePreference, 
             profile.MaxAgePreference, 
             profile.MaxDistanceKm,
-            profile.IsIdentityVerified);
+            profile.IsIdentityVerified,
+            verification != null ? (int)verification.Status : null);
     }
 
     public async Task<UserProfileDto> Handle(GetMyProfileQuery request, CancellationToken cancellationToken)
@@ -47,6 +52,8 @@ public class ProfileHandlers(IUserProfileRepository profileRepository) :
             await profileRepository.CreateAsync(profile);
         }
 
+        var verification = await verificationRepository.GetLatestByUserIdAsync(request.UserId);
+
         return new UserProfileDto(
             request.UserId,
             new BasicInfoDto(profile.BasicInfo.DisplayName, profile.BasicInfo.Dob, profile.BasicInfo.Gender, profile.BasicInfo.Languages),
@@ -62,7 +69,8 @@ public class ProfileHandlers(IUserProfileRepository profileRepository) :
             profile.MinAgePreference, 
             profile.MaxAgePreference, 
             profile.MaxDistanceKm,
-            profile.IsIdentityVerified);
+            profile.IsIdentityVerified,
+            verification != null ? (int)verification.Status : null);
     }
 
     private async Task<UserProfile> EnsureProfileExists(Guid userId)

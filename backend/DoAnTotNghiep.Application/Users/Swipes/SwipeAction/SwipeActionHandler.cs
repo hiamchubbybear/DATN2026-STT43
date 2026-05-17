@@ -30,6 +30,7 @@ public class SwipeActionHandler : IRequestHandler<SwipeActionCommand, SwipeActio
     private readonly DoAnTotNghiep.Domain.Notifications.INotificationRepository _notificationRepository;
     private readonly IMetricsService _metrics;
     private readonly IFraudDetectionService _fraudDetectionService;
+    private readonly ISeenUserService _seenUserService;
     private readonly ILogger<SwipeActionHandler> _logger;
 
     public SwipeActionHandler(
@@ -43,6 +44,7 @@ public class SwipeActionHandler : IRequestHandler<SwipeActionCommand, SwipeActio
         DoAnTotNghiep.Domain.Notifications.INotificationRepository notificationRepository,
         IMetricsService metrics,
         IFraudDetectionService fraudDetectionService,
+        ISeenUserService seenUserService,
         ILogger<SwipeActionHandler> logger)
     {
         _swipeRepository = swipeRepository;
@@ -55,6 +57,7 @@ public class SwipeActionHandler : IRequestHandler<SwipeActionCommand, SwipeActio
         _notificationRepository = notificationRepository;
         _metrics = metrics;
         _fraudDetectionService = fraudDetectionService;
+        _seenUserService = seenUserService;
         _logger = logger;
     }
 
@@ -98,7 +101,7 @@ public class SwipeActionHandler : IRequestHandler<SwipeActionCommand, SwipeActio
             var profile = await _userProfileRepository.GetByUserIdAsync(currentUserId);
             if (profile != null && profile.Status == UserStatus.Active)
             {
-                profile.ShadowBan();
+                // profile.ShadowBan(); // Disabled for testing/dev
                 await _userProfileRepository.UpdateAsync(profile);
 
                 // Save persistent notification
@@ -142,6 +145,7 @@ public class SwipeActionHandler : IRequestHandler<SwipeActionCommand, SwipeActio
         // 2. Save Swipe
         var swipe = new UserSwipe(currentUserId, request.TargetId, request.Type);
         await _swipeRepository.AddAsync(swipe);
+        await _seenUserService.MarkSeenAsync(currentUserId, request.TargetId);
         _metrics.RecordSwipeAction(request.Type.ToString());
 
         // 3. Remove from cache feed

@@ -1,5 +1,6 @@
 import React from 'react';
-import { Text, TextInput, StyleSheet, View } from 'react-native';
+import { Text, TextInput, StyleSheet, View, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { EditProfileSection } from '../EditProfileSection';
 
 import { useTranslation } from 'react-i18next';
@@ -9,9 +10,11 @@ interface BioSectionProps {
   setBio: (val: string) => void;
   onSave: () => void;
   isSaving: boolean;
+  interestedIn: string;
+  onOpenModal: (type: string, title: string, options: (string | { label: string; value: string })[]) => void;
 }
 
-export const BioSection = ({ bio, setBio, onSave, isSaving }: BioSectionProps) => {
+export const BioSection = ({ bio, setBio, onSave, isSaving, interestedIn, onOpenModal }: BioSectionProps) => {
   const { t } = useTranslation();
   return (
     <EditProfileSection title={t('profile_edit.about_me')} onSave={onSave} isSaving={isSaving}>
@@ -25,6 +28,21 @@ export const BioSection = ({ bio, setBio, onSave, isSaving }: BioSectionProps) =
         multiline
         numberOfLines={4}
       />
+
+      <Text style={styles.label}>{t('profile_edit.interested_in')}</Text>
+      <TouchableOpacity 
+        style={styles.selector} 
+        onPress={() => onOpenModal('interestedIn', t('profile_edit.select_interested_in'), [
+          { label: t('discover.men'), value: 'Male' },
+          { label: t('discover.women'), value: 'Female' },
+          { label: t('common.everyone'), value: 'Other' }
+        ])}
+      >
+        <Text style={interestedIn ? styles.selectorText : styles.placeholderText}>
+          {interestedIn === 'Male' ? t('discover.men') : interestedIn === 'Female' ? t('discover.women') : interestedIn === 'Other' ? t('common.everyone') : t('profile_edit.select_interested_in')}
+        </Text>
+        <Ionicons name="chevron-down" size={20} color="#9CA3AF" />
+      </TouchableOpacity>
     </EditProfileSection>
   );
 };
@@ -50,5 +68,25 @@ const styles = StyleSheet.create({
     height: 120,
     paddingTop: 12,
     textAlignVertical: 'top',
+  },
+  selector: {
+    height: 52,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: '#F3F4F6',
+    marginTop: 8,
+  },
+  selectorText: {
+    fontSize: 16,
+    color: '#111827',
+  },
+  placeholderText: {
+    fontSize: 16,
+    color: '#9CA3AF',
   },
 });

@@ -74,12 +74,24 @@ public class UserProfileRepository : IUserProfileRepository
         // Use Ne (Not Equal) true to include users where IsIncognito field might be missing (null)
         filters.Add(builder.Ne(x => x.IsIncognito, true));
 
-        // 2. Gender preference filter (ALWAYS apply this, never relax gender)
+        // 2. Gender preference filter (Reciprocal filtering)
         var effectiveGenderPref = genderPreference ?? me.LookingFor;
+        
+        // Filter candidates based on MY preference
         if (effectiveGenderPref != GenderPreference.Everyone && effectiveGenderPref != GenderPreference.None)
         {
             var targetGender = effectiveGenderPref == GenderPreference.Male ? Gender.Male : Gender.Female;
             filters.Add(builder.Eq(x => x.BasicInfo.Gender, targetGender));
+        }
+
+        // Filter candidates based on THEIR preference (they must be looking for ME)
+        if (me.Gender != Gender.Other)
+        {
+            var myGenderPref = me.Gender == Gender.Male ? GenderPreference.Male : GenderPreference.Female;
+            filters.Add(builder.Or(
+                builder.Eq(x => x.LookingFor, myGenderPref),
+                builder.Eq(x => x.LookingFor, GenderPreference.Everyone)
+            ));
         }
 
         // 3. Age preference filter

@@ -9,6 +9,7 @@ namespace DoAnTotNghiep.Application.Users.Recommendation
         string? ThumbnailUrl,
         double DistanceKm,
         double Score,
-        bool IsIdentityVerified
+        bool IsIdentityVerified,
+        List<string> Photos = null
         );
 }

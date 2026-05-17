@@ -24,7 +24,8 @@ public record UserProfileDto(
     int MinAgePreference, 
     int MaxAgePreference, 
     int MaxDistanceKm,
-    bool IsIdentityVerified);
+    bool IsIdentityVerified,
+    int? VerificationStatus = null);
 
 public record GetMyProfileQuery(Guid UserId) : IRequest<UserProfileDto>;
 public record GetUserProfileQuery(Guid UserId) : IRequest<UserProfileDto?>;

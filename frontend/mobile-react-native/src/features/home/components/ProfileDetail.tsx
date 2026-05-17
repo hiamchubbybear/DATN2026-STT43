@@ -18,6 +18,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../../app/navigation/RootNavigator';
 import { chatService } from '../../../services/api/chatService';
 import { useTranslation } from 'react-i18next';
+import { ImagePreviewModal } from '../../../shared/components/ImagePreviewModal';
 
 const { width, height } = Dimensions.get('window');
 
@@ -34,6 +35,8 @@ export const ProfileDetail = ({ profile, onClose, onLike, onDislike }: ProfileDe
   const navigation = useNavigation<NavigationProp>();
   const { t } = useTranslation();
   const [isMessaging, setIsMessaging] = React.useState(false);
+  const [previewVisible, setPreviewVisible] = React.useState(false);
+  const [selectedImage, setSelectedImage] = React.useState<string | null>(null);
   const scrollY = React.useRef(new Animated.Value(0)).current;
 
   const handleMessage = async () => {
@@ -55,6 +58,11 @@ export const ProfileDetail = ({ profile, onClose, onLike, onDislike }: ProfileDe
     } finally {
       setIsMessaging(false);
     }
+  };
+
+  const handleImagePreview = (url: string) => {
+    setSelectedImage(url);
+    setPreviewVisible(true);
   };
 
   if (!profile) return null;
@@ -123,11 +131,17 @@ export const ProfileDetail = ({ profile, onClose, onLike, onDislike }: ProfileDe
       >
         {/* Main Photo */}
         <View style={styles.imageContainer}>
-          <Image 
-            source={{ uri: profile.photos[0] }} 
+          <TouchableOpacity 
+            activeOpacity={0.9} 
+            onPress={() => handleImagePreview(profile.photos[0])}
             style={styles.mainImage}
-            contentFit="cover"
-          />
+          >
+            <Image 
+              source={{ uri: profile.photos[0] }} 
+              style={styles.mainImage}
+              contentFit="cover"
+            />
+          </TouchableOpacity>
           
           <LinearGradient
             colors={['transparent', 'rgba(255,255,255,1)']}
@@ -203,18 +217,25 @@ export const ProfileDetail = ({ profile, onClose, onLike, onDislike }: ProfileDe
               </TouchableOpacity>
             </View>
             <View style={styles.galleryGrid}>
-              <View style={styles.galleryMain}>
+              <TouchableOpacity 
+                style={styles.galleryMain} 
+                onPress={() => profile.photos[1] && handleImagePreview(profile.photos[1])}
+              >
                 {profile.photos[1] && <Image source={{ uri: profile.photos[1] }} style={styles.galleryImage} contentFit="cover" />}
-              </View>
+              </TouchableOpacity>
               <View style={styles.gallerySide}>
                  {profile.photos.slice(2, 4).map((url, i) => (
-                   <Image key={i} source={{ uri: url }} style={styles.galleryImageSmall} contentFit="cover" />
+                   <TouchableOpacity key={i} style={styles.galleryImageSmall} onPress={() => handleImagePreview(url)}>
+                     <Image source={{ uri: url }} style={styles.galleryImageSmall} contentFit="cover" />
+                   </TouchableOpacity>
                  ))}
               </View>
             </View>
             <View style={styles.galleryBottom}>
                {profile.photos.slice(4, 7).map((url, i) => (
-                   <Image key={i} source={{ uri: url }} style={styles.galleryImageSquare} contentFit="cover" />
+                   <TouchableOpacity key={i} style={styles.galleryImageSquare} onPress={() => handleImagePreview(url)}>
+                     <Image source={{ uri: url }} style={styles.galleryImageSquare} contentFit="cover" />
+                   </TouchableOpacity>
                ))}
             </View>
           </View>
@@ -235,6 +256,12 @@ export const ProfileDetail = ({ profile, onClose, onLike, onDislike }: ProfileDe
             <IconStar size={30} color="#9b5de5" />
          </TouchableOpacity>
       </View>
+
+      <ImagePreviewModal 
+        visible={previewVisible}
+        imageUrl={selectedImage}
+        onClose={() => setPreviewVisible(false)}
+      />
     </View>
   );
 };

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { Animated, StyleSheet, Text, View, Dimensions, Platform, PanResponder } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path, Circle, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { registerToastHandler, type ToastOptions, type ToastType } from '../services/toast';
 
@@ -55,6 +56,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const panY = useRef(new Animated.Value(0)).current;
   const scale = useRef(new Animated.Value(0.9)).current;
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const insets = useSafeAreaInsets();
 
   const panX = useRef(new Animated.Value(0)).current;
 
@@ -149,6 +151,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           style={[
             styles.toastWrapper, 
             { 
+              top: Math.max(insets.top, 20),
               opacity, 
               transform: [
                 { translateY: combinedTranslateY }, 
@@ -187,7 +190,6 @@ export const useToast = () => {
 const styles = StyleSheet.create({
   toastWrapper: {
     position: 'absolute',
-    top: Platform.OS === 'ios' ? 60 : 40, // Higher top margin for Notch/Dynamic Island
     left: 20,
     right: 20,
     zIndex: 999999,

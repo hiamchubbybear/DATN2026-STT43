@@ -10,6 +10,7 @@ import { calculateCompletion } from '../../../shared/utils/profileUtils';
 import { useTranslation } from 'react-i18next';
 import { Logger } from '../../../shared/utils/logger';
 import { normalizeFont, radius, spacing, scale } from '../../../shared/utils/responsive';
+import { ImagePreviewModal } from '../../../shared/components/ImagePreviewModal';
 
 const { height } = Dimensions.get('window');
 const defaultAvatar = require('../../../../assets/images/anh2.jpg');
@@ -35,6 +36,8 @@ export const ProfileMainScreen = () => {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [showAllPhotos, setShowAllPhotos] = React.useState(false);
+  const [previewVisible, setPreviewVisible] = React.useState(false);
+  const [selectedImage, setSelectedImage] = React.useState<string | null>(null);
   
   const scrollY = React.useRef(new Animated.Value(0)).current;
 
@@ -91,6 +94,11 @@ export const ProfileMainScreen = () => {
     if (val === 2) return t('discover.women');
     if (val === 3) return t('common.other', 'Other');
     return val || t('common.not_set', 'Not set');
+  };
+
+  const handleImagePreview = (url: string) => {
+    setSelectedImage(url);
+    setPreviewVisible(true);
   };
 
   return (
@@ -183,13 +191,17 @@ export const ProfileMainScreen = () => {
           <RefreshControl refreshing={loading} onRefresh={loadProfile} colors={['#F43F5E']} tintColor="#F43F5E" />
         }
       >
-        <View style={styles.hero}>
+        <TouchableOpacity 
+          activeOpacity={0.9} 
+          style={styles.hero}
+          onPress={() => photos[0]?.url && handleImagePreview(photos[0].url)}
+        >
           <Image
             source={photos[0]?.url ? { uri: photos[0].url } : defaultAvatar}
             style={styles.heroImage}
             resizeMode="cover"
           />
-        </View>
+        </TouchableOpacity>
 
         <View style={styles.card}>
           <View style={styles.nameRow}>
@@ -227,6 +239,12 @@ export const ProfileMainScreen = () => {
                   t('verification.already_verified_message', 'Your account has been successfully verified. You now have a blue badge!'),
                   [{ text: 'OK' }]
                 );
+              } else if (profile.verificationStatus === 0) {
+                Alert.alert(
+                  t('verification.pending_title', 'Verification Pending'),
+                  t('verification.pending_message', 'Your identity verification is currently being reviewed. Please wait for the process to complete.'),
+                  [{ text: 'OK' }]
+                );
               } else {
                 navigation.navigate('IdentityVerification' as any);
               }
@@ -241,8 +259,19 @@ export const ProfileMainScreen = () => {
             </View>
             <View style={{ flex: 1, marginLeft: 12 }}>
               <Text style={styles.verificationTitle}>{t('verification.title')}</Text>
-              <Text style={[styles.verificationStatus, profile.isIdentityVerified && { color: '#10B981' }]}>
-                {profile.isIdentityVerified ? t('verification.status.approved') : t('verification.status.pending')}
+              <Text style={[
+                styles.verificationStatus, 
+                profile.isIdentityVerified && { color: '#10B981' },
+                profile.verificationStatus === 0 && { color: '#F59E0B' },
+                profile.verificationStatus === 2 && { color: '#EF4444' }
+              ]}>
+                {profile.isIdentityVerified 
+                  ? t('verification.status.approved') 
+                  : profile.verificationStatus === 0 
+                    ? t('verification.status.pending') 
+                    : profile.verificationStatus === 2 
+                      ? t('verification.status.rejected', 'Rejected - Try Again')
+                      : t('verification.status.unverified', 'Not Verified')}
               </Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color="#D1D5DB" />
@@ -309,8 +338,11 @@ export const ProfileMainScreen = () => {
                       <TouchableOpacity 
                         key={photo.id || index} 
                         style={styles.galleryItem}
-                        onPress={() => isLastOfThree ? setShowAllPhotos(true) : null}
-                        activeOpacity={isLastOfThree ? 0.7 : 1}
+                        onPress={() => {
+                          if (isLastOfThree) setShowAllPhotos(true);
+                          else handleImagePreview(photo.url);
+                        }}
+                        activeOpacity={0.7}
                       >
                         <Image source={{ uri: photo.url }} style={styles.photoImg} resizeMode="cover" />
                         {isLastOfThree && (
@@ -332,6 +364,12 @@ export const ProfileMainScreen = () => {
           </View>
         </View>
       </Animated.ScrollView>
+
+      <ImagePreviewModal 
+        visible={previewVisible}
+        imageUrl={selectedImage}
+        onClose={() => setPreviewVisible(false)}
+      />
     </View>
   );
 };

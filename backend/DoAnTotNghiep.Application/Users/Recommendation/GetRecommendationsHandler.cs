@@ -19,6 +19,7 @@ namespace DoAnTotNghiep.Application.Users.Recommendation
         private readonly ICacheService _cache;
         private readonly IRecommendationScoringService _scoring;
         private readonly IGeoService _geo;
+        private readonly ISwipeRepository _swipeRepo;
 
         public GetRecommendationsHandler(
             IUserProfileRepository profileRepo,
@@ -26,7 +27,8 @@ namespace DoAnTotNghiep.Application.Users.Recommendation
             ISeenUserService seen,
             ICacheService cache,
             IRecommendationScoringService scoring,
-            IGeoService geo)
+            IGeoService geo,
+            ISwipeRepository swipeRepo)
         {
             _repo = profileRepo;
             _current = current;
@@ -34,6 +36,7 @@ namespace DoAnTotNghiep.Application.Users.Recommendation
             _cache = cache;
             _scoring = scoring;
             _geo = geo;
+            _swipeRepo = swipeRepo;
         }
 
         public async Task<RecommendationResponse> Handle(
@@ -48,6 +51,11 @@ namespace DoAnTotNghiep.Application.Users.Recommendation
 
             // Get excluded IDs (swiped/seen)
             var seenIds = await _seen.GetAllAsync(userId);
+            var swipedIds = await _swipeRepo.GetSwipedTargetIdsAsync(userId);
+            
+            // Merge both lists
+            var excludedIds = new HashSet<Guid>(seenIds);
+            foreach (var id in swipedIds) excludedIds.Add(id);
 
             // Check Cache
             var cached = await _cache.GetAsync<RecommendationResponse>(cacheKey);
@@ -55,7 +63,7 @@ namespace DoAnTotNghiep.Application.Users.Recommendation
             {
                 // Filter out already seen users from cache
                 var filteredResults = cached.Items
-                    .Where(x => !seenIds.Contains(x.UserId))
+                    .Where(x => !excludedIds.Contains(x.UserId))
                     .ToList();
 
                 if (filteredResults.Count >= request.Take / 2) // If still have enough items
@@ -71,7 +79,7 @@ namespace DoAnTotNghiep.Application.Users.Recommendation
             // 1. Primary Fetch: Strict filters
             var candidates = await _repo.GetCandidatesAsync(
                 me,
-                seenIds.ToList(),
+                excludedIds.ToList(),
                 0,
                 request.Take * 5
             );
@@ -81,7 +89,7 @@ namespace DoAnTotNghiep.Application.Users.Recommendation
             {
                 candidates = await _repo.GetCandidatesAsync(
                     me,
-                    seenIds.ToList(),
+                    excludedIds.ToList(),
                     0,
                     request.Take * 5,
                     relaxFilters: true
@@ -100,10 +108,16 @@ namespace DoAnTotNghiep.Application.Users.Recommendation
                 if (ct.IsCancellationRequested)
                     break;
 
-                // Double check distance (DB filter might be loose)
-                var distance = _geo.CalculateDistance(me, c);
-                if (distance > me.MaxDistanceKm)
-                    continue;
+                // Double check distance (DB filter might be loose or skipped if me.Location is null)
+                var distance = 0.0;
+                var hasLocation = me.Latitude != 0 && c.Latitude != 0;
+                
+                if (hasLocation)
+                {
+                    distance = _geo.CalculateDistance(me, c);
+                    if (distance > me.MaxDistanceKm)
+                        continue;
+                }
 
                 var score = _scoring.CalculateScore(me, c, distance);
 
@@ -113,10 +127,11 @@ namespace DoAnTotNghiep.Application.Users.Recommendation
                     c.BasicInfo.Age,
                     c.Bio ?? "",
                     c.LocationName ?? "",
-                    c.Photos.FirstOrDefault(p => p.IsPrimary)?.ThumbnailUrl ?? c.Photos.FirstOrDefault(p => p.IsPrimary)?.Url,
+                    c.Photos.FirstOrDefault(p => p.IsPrimary)?.Url,
                     Math.Round(distance, 1),
                     Math.Round(score, 2),
-                    c.IsIdentityVerified
+                    c.IsIdentityVerified,
+                    c.Photos.OrderBy(p => p.Order).Select(p => p.Url).ToList()
                 ));
 
                 if (results.Count >= request.Take * 3)
