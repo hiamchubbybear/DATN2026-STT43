@@ -8,6 +8,8 @@ export default function NotificationsPage() {
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(false);
   const [broadcasts, setBroadcasts] = useState<any[]>([]);
+  const [showLogsModal, setShowLogsModal] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const fetchBroadcasts = async () => {
     try {
@@ -41,6 +43,11 @@ export default function NotificationsPage() {
       setLoading(false);
     }
   };
+
+  const filteredBroadcasts = broadcasts.filter((campaign) =>
+    campaign.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    campaign.content?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="space-y-6">
@@ -151,7 +158,7 @@ export default function NotificationsPage() {
                 No campaign history found.
               </div>
             ) : (
-              broadcasts.map((campaign: any) => (
+              broadcasts.slice(0, 5).map((campaign: any) => (
                 <div key={campaign.id} className="rounded-xl border border-slate-200 bg-white px-4 py-3">
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                     <div className="flex items-start gap-3">
@@ -172,7 +179,14 @@ export default function NotificationsPage() {
             )}
           </div>
 
-          <button type="button" className="mt-4 text-fluid-sm font-semibold text-[#EE3F57] hover:underline">
+          <button
+            type="button"
+            onClick={() => {
+              setSearchTerm('');
+              setShowLogsModal(true);
+            }}
+            className="mt-4 text-fluid-sm font-semibold text-[#EE3F57] hover:underline"
+          >
             View All Notification Logs
           </button>
         </article>
@@ -196,6 +210,120 @@ export default function NotificationsPage() {
           </div>
         </div>
       </section>
+
+      {/* View All Notification Logs Modal */}
+      {showLogsModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm animate-fade-in">
+          <div className="relative flex flex-col w-full max-w-2xl max-h-[85vh] bg-white rounded-2xl shadow-2xl border border-slate-100 animate-zoom-in">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+              <div>
+                <h3 className="text-fluid-lg font-bold text-slate-800">Notification Logs</h3>
+                <p className="text-fluid-xs text-slate-500">History of all broadcast campaigns sent to users</p>
+              </div>
+              <button
+                onClick={() => setShowLogsModal(false)}
+                className="flex items-center justify-center w-8 h-8 rounded-full text-slate-400 hover:bg-slate-50 hover:text-slate-600 transition"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Filter Search Input */}
+            <div className="px-6 py-3 border-b border-slate-50 bg-slate-50/50">
+              <div className="relative flex items-center w-full">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="absolute left-3 w-4 h-4 text-slate-400">
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+                <input
+                  type="text"
+                  placeholder="Search logs by title or content..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2 text-fluid-sm bg-white rounded-xl border border-slate-200 outline-none focus:border-[#EE3F57] focus:ring-4 focus:ring-[#EE3F57]/10 transition"
+                />
+                {searchTerm && (
+                  <button
+                    onClick={() => setSearchTerm('')}
+                    className="absolute right-3 text-fluid-xs text-slate-400 hover:text-slate-600"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+              {filteredBroadcasts.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-slate-400">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-12 h-12 mb-3 text-slate-300">
+                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+                  </svg>
+                  <p className="text-fluid-sm">No notification logs found matching search.</p>
+                </div>
+              ) : (
+                filteredBroadcasts.map((campaign: any) => (
+                  <div key={campaign.id} className="p-4 rounded-xl border border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm transition">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="flex items-start gap-3">
+                        <span className="mt-1 inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[#EE3F57]/10 text-[#EE3F57]">
+                          <img src={notificationIcon} alt="Campaign" className="h-4 w-4 object-contain" />
+                        </span>
+                        <div>
+                          <p className="font-semibold text-slate-800">{campaign.title}</p>
+                          <p className="mt-1 text-fluid-sm text-slate-600 leading-relaxed">{campaign.content}</p>
+                          
+                          <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-fluid-xs text-slate-500 font-medium">
+                            <span className="flex items-center gap-1">
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 text-slate-400">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                                <circle cx="9" cy="7" r="4" />
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                              </svg>
+                              Reached: <strong className="text-slate-700">{campaign.sentCount}</strong> users
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 text-slate-400">
+                                <circle cx="12" cy="12" r="10" />
+                                <polyline points="12 6 12 12 16 14" />
+                              </svg>
+                              Sent: {new Date(campaign.createdAt).toLocaleString('vi-VN')}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <span className="w-fit rounded-full px-3 py-1 text-xs font-semibold bg-emerald-100 text-emerald-700 self-start sm:self-auto">
+                        COMPLETED
+                      </span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex items-center justify-between px-6 py-4 border-t border-slate-100 bg-slate-50/50 rounded-b-2xl">
+              <span className="text-fluid-xs text-slate-500">
+                Showing {filteredBroadcasts.length} of {broadcasts.length} logs
+              </span>
+              <button
+                onClick={() => setShowLogsModal(false)}
+                className="px-4 py-2 text-fluid-sm font-semibold text-white bg-[#EE3F57] hover:bg-[#d63249] rounded-xl shadow-sm transition"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
