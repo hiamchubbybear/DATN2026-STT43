@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.SignalR;
 using DoAnTotNghiep.Web.Hubs;
 using MediatR;
 using DoAnTotNghiep.Application.Users.Reports;
+using System.Linq;
 
 namespace DoAnTotNghiep.Web.Controller;
 
@@ -90,7 +91,51 @@ public class AdminController : ControllerBase
     public async Task<IActionResult> GetReports()
     {
         var reports = await _context.UserReports.Find(_ => true).SortByDescending(r => r.CreatedAt).ToListAsync();
-        return Ok(reports);
+
+        // Collect all distinct User IDs (Reporters and Targets)
+        var userIds = reports.Select(r => r.ReporterId)
+            .Concat(reports.Select(r => r.TargetUserId))
+            .Distinct()
+            .ToList();
+
+        // Fetch profiles and user accounts
+        var profiles = await _context.UserProfiles.Find(p => userIds.Contains(p.UserId)).ToListAsync();
+        var accounts = await _context.UserAccounts.Find(u => userIds.Contains(u.Id)).ToListAsync();
+
+        var profileMap = profiles.ToDictionary(p => p.UserId);
+        var accountMap = accounts.ToDictionary(a => a.Id);
+
+        var enriched = reports.Select(r => {
+            profileMap.TryGetValue(r.ReporterId, out var reporterProfile);
+            accountMap.TryGetValue(r.ReporterId, out var reporterAccount);
+
+            profileMap.TryGetValue(r.TargetUserId, out var targetProfile);
+            accountMap.TryGetValue(r.TargetUserId, out var targetAccount);
+
+            return new {
+                r.Id,
+                r.ReporterId,
+                ReporterName = reporterProfile?.BasicInfo?.DisplayName ?? "Unknown User",
+                ReporterEmail = reporterAccount?.Email ?? "No Email",
+                ReporterAvatar = reporterProfile?.Photos?.OrderBy(x => x.Order).FirstOrDefault()?.Url,
+
+                r.TargetUserId,
+                TargetUserName = targetProfile?.BasicInfo?.DisplayName ?? "Unknown User",
+                TargetUserEmail = targetAccount?.Email ?? "No Email",
+                TargetUserAvatar = targetProfile?.Photos?.OrderBy(x => x.Order).FirstOrDefault()?.Url,
+
+                r.Reason,
+                r.Description,
+                r.EvidencePhotos,
+                r.CreatedAt,
+                r.Status,
+                r.AdminFeedback,
+                r.ActionTaken,
+                r.ResolvedAt
+            };
+        });
+
+        return Ok(enriched);
     }
 
     [HttpPost("users")]
@@ -181,8 +226,15 @@ public class AdminController : ControllerBase
         var user = await _context.UserAccounts.Find(u => u.Id == v.UserId).FirstOrDefaultAsync();
         if (user != null)
         {
-            user.MarkAsVerified();
+            user.MarkAsIdentityVerified();
             await _context.UserAccounts.ReplaceOneAsync(u => u.Id == user.Id, user);
+        }
+
+        var profile = await _context.UserProfiles.Find(p => p.UserId == v.UserId).FirstOrDefaultAsync();
+        if (profile != null)
+        {
+            profile.MarkAsIdentityVerified();
+            await _context.UserProfiles.ReplaceOneAsync(p => p.UserId == profile.UserId, profile);
         }
 
         var adminId = GetAdminId();
@@ -275,6 +327,15 @@ public class AdminController : ControllerBase
         var broadcast = new BroadcastNotification(request.Title, request.Content, "All", GetAdminId(), (int)totalUsers);
         await _context.BroadcastNotifications.InsertOneAsync(broadcast);
 
+        // Also save to all users' local notifications lists
+        var users = await _context.UserAccounts.Find(_ => true).ToListAsync();
+        if (users != null && users.Any())
+        {
+            var notifs = users.Select(u => DoAnTotNghiep.Domain.Notifications.Notification.Create(
+                u.Id, request.Title, request.Content, "broadcast")).ToList();
+            await _context.Notifications.InsertManyAsync(notifs);
+        }
+
         // Actually send push notification via Firebase
         await _notificationService.BroadcastNotificationAsync(request.Title, request.Content);
 
@@ -296,6 +357,16 @@ public class AdminController : ControllerBase
         });
 
         return Ok(new { sentTo = totalUsers, status = "Push & SignalR Sent" });
+    }
+
+    [HttpGet("broadcasts")]
+    public async Task<IActionResult> GetBroadcastHistory()
+    {
+        var broadcasts = await _context.BroadcastNotifications
+            .Find(_ => true)
+            .SortByDescending(b => b.CreatedAt)
+            .ToListAsync();
+        return Ok(broadcasts);
     }
 
     [HttpPost("users/{userId}/push")]
@@ -408,9 +479,15 @@ public class AdminController : ControllerBase
         try 
         {
             var logPath = Path.Combine(AppContext.BaseDirectory, "logs");
+            if (!Directory.Exists(logPath))
+            {
+                logPath = Path.Combine(Directory.GetCurrentDirectory(), "logs");
+            }
+
             if (!Directory.Exists(logPath)) return Ok(new string[] { "Log directory not found" });
 
             var logFile = Directory.GetFiles(logPath, "mixer-*.log")
+                .Concat(Directory.GetFiles(logPath, "app-*.log"))
                 .OrderByDescending(f => f)
                 .FirstOrDefault();
 

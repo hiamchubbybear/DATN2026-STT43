@@ -12,6 +12,8 @@ import { spacing, radius, normalizeFont, scale } from '../../../shared/utils/res
 import { useAuthStore } from '../../../store/authStore';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
+import { profileService } from '../../../services/api/profileService';
+import { ActivityIndicator } from 'react-native';
 
 export const DiscoverySettingScreen = ({ navigation }: any) => {
   const { setProfileStatus } = useAuthStore();
@@ -19,11 +21,32 @@ export const DiscoverySettingScreen = ({ navigation }: any) => {
   const [distance, setDistance] = useState(50);
   const [ageRange, setAgeRange] = useState([18, 35]);
   const [showMe, setShowMe] = useState(t('discover.everyone'));
+  const [saving, setSaving] = useState(false);
 
-  const handleFinish = () => {
-    // In a real app, we'd save these to the backend/store
-    // For now, we'll just set profile as completed to enter the app
-    setProfileStatus(true);
+  const handleFinish = async () => {
+    try {
+      setSaving(true);
+      // Map showMe label to GenderPreference value:
+      // Male = 1, Female = 2, Everyone = 3
+      let lookingForVal = 3;
+      if (showMe === t('discover.men')) {
+        lookingForVal = 1;
+      } else if (showMe === t('discover.women')) {
+        lookingForVal = 2;
+      }
+
+      await profileService.updatePreferences({
+        minAgePreference: ageRange[0],
+        maxAgePreference: ageRange[1],
+        maxDistanceKm: distance,
+        lookingFor: lookingForVal,
+      });
+    } catch (error) {
+      console.error('Failed to save onboarding preferences:', error);
+    } finally {
+      setSaving(false);
+      setProfileStatus(true);
+    }
   };
 
   return (
@@ -103,8 +126,16 @@ export const DiscoverySettingScreen = ({ navigation }: any) => {
         </ScrollView>
 
         <View style={styles.footer}>
-          <TouchableOpacity style={styles.button} onPress={handleFinish}>
-            <Text style={styles.buttonText}>{t('setup.enter_app')}</Text>
+          <TouchableOpacity 
+            style={[styles.button, saving && { opacity: 0.8 }]} 
+            onPress={handleFinish}
+            disabled={saving}
+          >
+            {saving ? (
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            ) : (
+              <Text style={styles.buttonText}>{t('setup.enter_app')}</Text>
+            )}
           </TouchableOpacity>
         </View>
       </View>

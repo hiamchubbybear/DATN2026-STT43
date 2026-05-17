@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { adminApi } from '../../shared/services/api';
-import userIcon from '../../assets/user.png';
 import heartIcon from '../../assets/heart.png';
 
 export default function ReportsPage() {
@@ -198,18 +197,32 @@ export default function ReportsPage() {
                   <tr key={row.id} className="bg-slate-50/50 hover:bg-slate-50 transition-colors group">
                     <td className="rounded-l-[20px] px-4 py-4">
                         <div className="flex items-center gap-3">
-                            <div className="h-9 w-9 rounded-full bg-white border border-slate-100 flex items-center justify-center font-bold text-[10px] text-slate-500 shadow-sm">
-                                {row.reporterId.substring(0, 2).toUpperCase()}
+                            {row.reporterAvatar ? (
+                                <img src={row.reporterAvatar} alt="Reporter" className="h-9 w-9 rounded-full object-cover border border-slate-100 shadow-sm" />
+                            ) : (
+                                <div className="h-9 w-9 rounded-full bg-rose-50 border border-rose-100 flex items-center justify-center font-black text-xs text-[#EE3F57] shadow-sm">
+                                    {(row.reporterName || 'U').substring(0, 2).toUpperCase()}
+                                </div>
+                            )}
+                            <div className="flex flex-col min-w-0">
+                                <span className="text-xs font-bold text-slate-800 truncate max-w-[120px]">{row.reporterName || 'Unknown User'}</span>
+                                <span className="text-[10px] text-slate-400 truncate max-w-[120px]" title={row.reporterEmail}>{row.reporterEmail || 'No Email'}</span>
                             </div>
-                            <span className="text-xs font-mono text-slate-500 truncate w-24">{row.reporterId}</span>
                         </div>
                     </td>
                     <td className="px-4 py-4">
                         <div className="flex items-center gap-3">
-                            <div className="h-9 w-9 rounded-full bg-white border border-slate-100 flex items-center justify-center shadow-sm">
-                                <img src={userIcon} alt="Target" className="h-4 w-4 opacity-40" />
+                            {row.targetUserAvatar ? (
+                                <img src={row.targetUserAvatar} alt="Target" className="h-9 w-9 rounded-full object-cover border border-slate-100 shadow-sm" />
+                            ) : (
+                                <div className="h-9 w-9 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center font-bold text-xs text-slate-600 shadow-sm">
+                                    {(row.targetUserName || 'U').substring(0, 2).toUpperCase()}
+                                </div>
+                            )}
+                            <div className="flex flex-col min-w-0">
+                                <span className="text-xs font-bold text-slate-800 truncate max-w-[120px]">{row.targetUserName || 'Unknown User'}</span>
+                                <span className="text-[10px] text-slate-400 truncate max-w-[120px]" title={row.targetUserEmail}>{row.targetUserEmail || 'No Email'}</span>
                             </div>
-                            <span className="text-xs font-mono text-slate-500 truncate w-24">{row.targetUserId}</span>
                         </div>
                     </td>
                     <td className="px-4 py-4">
@@ -281,14 +294,36 @@ export default function ReportsPage() {
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-8 space-y-8">
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="p-5 bg-slate-50 rounded-[24px] border border-slate-100">
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Reporter</p>
-                            <p className="font-mono text-xs text-slate-700 truncate">{selectedReport.reporterId}</p>
+                    <div className="grid grid-cols-2 gap-6">
+                        <div className="p-5 bg-slate-50 rounded-[24px] border border-slate-100 flex items-start gap-4">
+                            {selectedReport.reporterAvatar ? (
+                                <img src={selectedReport.reporterAvatar} alt="Reporter" className="h-12 w-12 rounded-full object-cover border-2 border-white shadow-md" />
+                            ) : (
+                                <div className="h-12 w-12 rounded-full bg-rose-50 border border-rose-100 flex items-center justify-center font-black text-sm text-[#EE3F57] shadow-sm">
+                                    {(selectedReport.reporterName || 'U').substring(0, 2).toUpperCase()}
+                                </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Reporter</p>
+                                <p className="font-bold text-slate-800 text-sm truncate">{selectedReport.reporterName || 'Unknown User'}</p>
+                                <p className="text-xs text-slate-500 truncate mb-1">{selectedReport.reporterEmail || 'No Email'}</p>
+                                <p className="font-mono text-[9px] text-slate-400 truncate" title={selectedReport.reporterId}>ID: {selectedReport.reporterId}</p>
+                            </div>
                         </div>
-                        <div className="p-5 bg-slate-50 rounded-[24px] border border-slate-100">
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Target User</p>
-                            <p className="font-mono text-xs text-slate-700 truncate">{selectedReport.targetUserId}</p>
+                        <div className="p-5 bg-slate-50 rounded-[24px] border border-slate-100 flex items-start gap-4">
+                            {selectedReport.targetUserAvatar ? (
+                                <img src={selectedReport.targetUserAvatar} alt="Target" className="h-12 w-12 rounded-full object-cover border-2 border-white shadow-md" />
+                            ) : (
+                                <div className="h-12 w-12 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center font-black text-sm text-slate-600 shadow-sm">
+                                    {(selectedReport.targetUserName || 'U').substring(0, 2).toUpperCase()}
+                                </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Target User</p>
+                                <p className="font-bold text-slate-800 text-sm truncate">{selectedReport.targetUserName || 'Unknown User'}</p>
+                                <p className="text-xs text-slate-500 truncate mb-1">{selectedReport.targetUserEmail || 'No Email'}</p>
+                                <p className="font-mono text-[9px] text-slate-400 truncate" title={selectedReport.targetUserId}>ID: {selectedReport.targetUserId}</p>
+                            </div>
                         </div>
                     </div>
 

@@ -35,8 +35,8 @@ export default function EmailSignUpDetailsScreen() {
 
     if (password !== confirmPassword) {
       showToast({
-        title: t('auth.password_mismatch'),
-        message: t('auth.password_mismatch_desc'),
+        title: t('auth.passwords_do_not_match', 'Mật khẩu không khớp'),
+        message: t('auth.passwords_do_not_match_desc', 'Mật khẩu xác nhận phải trùng khớp với mật khẩu đã nhập.'),
         type: 'error'
       });
       return;
@@ -142,7 +142,7 @@ export default function EmailSignUpDetailsScreen() {
               </Svg>
               <TextInput
                 style={styles.input}
-                placeholder={t('auth.confirmPassword')}
+                placeholder={t('auth.confirm_password', 'Xác nhận mật khẩu')}
                 placeholderTextColor="#9CA3AF"
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
@@ -153,6 +153,7 @@ export default function EmailSignUpDetailsScreen() {
                 <Ionicons name={showConfirmPassword ? "eye-off-outline" : "eye-outline"} size={20} color="#6B7280" />
               </TouchableOpacity>
             </View>
+
             <TouchableOpacity 
               style={[styles.button, (!email || !password || !confirmPassword || loading) && styles.buttonDisabled]} 
               onPress={handleSignUp}
@@ -248,6 +249,7 @@ const styles = StyleSheet.create({
     borderRadius: radius(16),
     alignItems: 'center',
     justifyContent: 'center',
+    marginTop: spacing(28),
     shadowColor: '#F43F5E',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,

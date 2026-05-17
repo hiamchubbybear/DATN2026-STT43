@@ -6,4 +6,6 @@ public interface ISessionRepository
     Task<Session?> GetByRefreshToken(string refreshToken);
     Task UpdateSession(Session session);
     Task<List<string>> GetFcmTokensByUserId(Guid userId);
+    Task<List<Session>> GetActiveSessionsByUserId(Guid userId);
+    Task<List<string>> GetAllActiveFcmTokens();
 }

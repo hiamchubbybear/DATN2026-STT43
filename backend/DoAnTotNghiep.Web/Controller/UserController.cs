@@ -240,6 +240,21 @@ public class UserController : ControllerBase
         await _mediator.Send(new SetPrimaryPhotoCommand(photoId));
         return Ok(ApiResponse<string>.Succeeded(string.Empty, "Primary photo set successfully"));
     }
+
+    [Authorize]
+    [HttpPost("me/fcm-token")]
+    public async Task<IActionResult> UpdateFcmToken([FromBody] UpdateFcmTokenRequest request)
+    {
+        var command = new Application.Users.Commands.UpdateFcmTokenCommand(GetUserId(), request.FcmToken);
+        var result = await _mediator.Send(command);
+        if (!result) return BadRequest(ApiResponse<string>.Failed("Failed to update FCM token"));
+        return Ok(ApiResponse<string>.Succeeded(string.Empty, "FCM token updated successfully"));
+    }
+}
+
+public class UpdateFcmTokenRequest
+{
+    public string FcmToken { get; set; } = null!;
 }
 
 public class SubmitAppReviewRequest

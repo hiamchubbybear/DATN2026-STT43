@@ -39,4 +39,19 @@ public class UserSessionRepository : ISessionRepository
             .ToListAsync();
         return sessions.Select(x => x.FcmToken!).Distinct().ToList();
     }
+
+    public async Task<List<Session>> GetActiveSessionsByUserId(Guid userId)
+    {
+        return await _sessions
+            .Find(x => x.UserId == userId && !x.IsRevoked)
+            .ToListAsync();
+    }
+
+    public async Task<List<string>> GetAllActiveFcmTokens()
+    {
+        var sessions = await _sessions
+            .Find(x => !x.IsRevoked && !string.IsNullOrEmpty(x.FcmToken))
+            .ToListAsync();
+        return sessions.Select(x => x.FcmToken!).Distinct().ToList();
+    }
 }

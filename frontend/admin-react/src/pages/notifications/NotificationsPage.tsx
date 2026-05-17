@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { adminApi } from '../../shared/services/api';
 import notificationIcon from '../../assets/notification.png';
 import monthlyActiveIcon from '../../assets/Monthly-Active.png';
@@ -7,6 +7,20 @@ export default function NotificationsPage() {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(false);
+  const [broadcasts, setBroadcasts] = useState<any[]>([]);
+
+  const fetchBroadcasts = async () => {
+    try {
+      const res = await adminApi.getBroadcasts();
+      setBroadcasts(res.data || []);
+    } catch (e) {
+      console.error('Failed to fetch broadcasts:', e);
+    }
+  };
+
+  useEffect(() => {
+    fetchBroadcasts();
+  }, []);
 
   const handleLaunch = async () => {
     if (!title || !content) {
@@ -20,6 +34,7 @@ export default function NotificationsPage() {
       alert('Đã gửi thông báo đến toàn bộ người dùng');
       setTitle('');
       setContent('');
+      fetchBroadcasts(); // Reload history
     } catch (e) {
       alert('Gửi thông báo thất bại');
     } finally {
@@ -130,50 +145,31 @@ export default function NotificationsPage() {
         <article className="rounded-2xl bg-white p-5 shadow-[0_16px_34px_-24px_rgba(0,0,0,0.16)] xl:col-span-3">
           <h3 className="text-fluid-base font-semibold text-slate-800">Campaign History</h3>
 
-          <div className="mt-4 space-y-3">
-            {[
-              {
-                title: 'Weekend Match Boost',
-                status: 'COMPLETED',
-                description: 'Special campaign for high-intent users with profile recommendations.',
-                reached: 'Reached 84,200 users',
-                meta: 'Target: Active Segment • Sent 09:30 AM',
-                statusClass: 'bg-emerald-100 text-emerald-700',
-              },
-              {
-                title: 'Profile Completion Reminder',
-                status: 'SCHEDULED',
-                description: 'Automated reminder for users with less than 60% profile completion.',
-                reached: 'Estimated reach: 29,500 users',
-                meta: 'Target: Incomplete Profiles • Tomorrow 08:00 AM',
-                statusClass: 'bg-sky-100 text-sky-700',
-              },
-              {
-                title: 'Safety Guideline Update',
-                status: 'COMPLETED',
-                description: 'Policy update for safer conversations and verified account usage.',
-                reached: 'Reached 112,340 users',
-                meta: 'Target: All Users • Sent 06:00 PM',
-                statusClass: 'bg-emerald-100 text-emerald-700',
-              },
-            ].map((campaign) => (
-              <div key={campaign.title} className="rounded-xl border border-slate-200 bg-white px-4 py-3">
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                  <div className="flex items-start gap-3">
-                    <span className="mt-1 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[#EE3F57]/10">
-                      <img src={notificationIcon} alt="Campaign" className="h-4 w-4 object-contain" />
-                    </span>
-                    <div>
-                      <p className="font-semibold text-slate-800">{campaign.title}</p>
-                      <p className="mt-1 text-fluid-sm text-slate-500">{campaign.description}</p>
-                      <p className="mt-2 text-fluid-sm font-medium text-slate-700">{campaign.reached}</p>
-                      <p className="text-fluid-xs text-slate-400">{campaign.meta}</p>
-                    </div>
-                  </div>
-                  <span className={`w-fit rounded-full px-3 py-1 text-xs font-semibold ${campaign.statusClass}`}>{campaign.status}</span>
-                </div>
+          <div className="mt-4 space-y-3 max-h-[450px] overflow-y-auto pr-1">
+            {broadcasts.length === 0 ? (
+              <div className="text-center py-8 text-slate-400 text-fluid-sm">
+                No campaign history found.
               </div>
-            ))}
+            ) : (
+              broadcasts.map((campaign: any) => (
+                <div key={campaign.id} className="rounded-xl border border-slate-200 bg-white px-4 py-3">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="flex items-start gap-3">
+                      <span className="mt-1 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[#EE3F57]/10">
+                        <img src={notificationIcon} alt="Campaign" className="h-4 w-4 object-contain" />
+                      </span>
+                      <div>
+                        <p className="font-semibold text-slate-800">{campaign.title}</p>
+                        <p className="mt-1 text-fluid-sm text-slate-500">{campaign.content}</p>
+                        <p className="mt-2 text-fluid-sm font-medium text-slate-700">Reached {campaign.sentCount} users</p>
+                        <p className="text-fluid-xs text-slate-400">Target: {campaign.targetPlatform || 'All'} • Sent at {new Date(campaign.createdAt).toLocaleString('vi-VN')}</p>
+                      </div>
+                    </div>
+                    <span className="w-fit rounded-full px-3 py-1 text-xs font-semibold bg-emerald-100 text-emerald-700">COMPLETED</span>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
 
           <button type="button" className="mt-4 text-fluid-sm font-semibold text-[#EE3F57] hover:underline">

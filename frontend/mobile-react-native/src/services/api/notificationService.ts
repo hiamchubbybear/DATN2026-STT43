@@ -29,5 +29,9 @@ export const notificationService = {
     const res = await apiClient.post('/api/notifications/read-all');
     return res.data;
   },
+  updateFcmToken: async (fcmToken: string): Promise<any> => {
+    const res = await apiClient.post('/api/users/me/fcm-token', { fcmToken });
+    return res.data;
+  },
 };
 

@@ -37,11 +37,11 @@ public class FraudDetectionService : IFraudDetectionService
         }
 
         // 3. Mass messaging detection (Rate limiting)
-        try 
+        try
         {
             var db = _redis.GetDatabase();
             var key = $"mass_msg:{userId}:{DateTime.UtcNow:yyyyMMddHH}"; // Hourly key
-            
+
             long count = await db.StringIncrementAsync(key);
             if (count == 1)
             {
@@ -63,11 +63,11 @@ public class FraudDetectionService : IFraudDetectionService
 
     public async Task<bool> IsSwipingTooFastAsync(Guid userId, CancellationToken ct = default)
     {
-        try 
+        try
         {
             var db = _redis.GetDatabase();
             var now = DateTime.UtcNow;
-            
+
             // 1. Minute-level check (Stricter: 120/min)
             var minKey = $"fast_swipe:min:{userId}:{now:yyyyMMddHHmm}";
             long minCount = await db.StringIncrementAsync(minKey);
@@ -76,7 +76,7 @@ public class FraudDetectionService : IFraudDetectionService
 
             // 2. Burst check (Very fast: 10 swipes in 3 seconds)
             // Using a simple bucketed approach for performance
-            var burstKey = $"fast_swipe:burst:{userId}:{now.Ticks / (TimeSpan.TicksPerSecond * 3)}";
+                var burstKey = $"fast_swipe:burst:{userId}:{now.Ticks / (TimeSpan.TicksPerSecond * 3)}";
             long burstCount = await db.StringIncrementAsync(burstKey);
             if (burstCount == 1) await db.KeyExpireAsync(burstKey, TimeSpan.FromSeconds(5));
             if (burstCount > 30) return true;
@@ -92,11 +92,11 @@ public class FraudDetectionService : IFraudDetectionService
 
     public async Task<bool> HasSuspiciousDevicePatternAsync(Guid userId, string currentDeviceId, CancellationToken ct = default)
     {
-        try 
+        try
         {
             var db = _redis.GetDatabase();
             var key = $"user_devices:{userId}";
-            
+
             await db.SetAddAsync(key, currentDeviceId);
             await db.KeyExpireAsync(key, TimeSpan.FromDays(7));
 

@@ -98,6 +98,9 @@ export const adminApi = {
 
   broadcast: (title: string, content: string) =>
     api.post('/admin/broadcast', { title, content }),
+
+  getBroadcasts: () =>
+    api.get('/admin/broadcasts'),
 };
 
 export default api;

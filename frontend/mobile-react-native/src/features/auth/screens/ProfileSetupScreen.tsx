@@ -70,7 +70,7 @@ export default function ProfileSetupScreen() {
   const [interests, setInterests] = useState<string[]>([]);
   const [freeTimePrefer, setFreeTimePrefer] = useState<string[]>([]);
   const [dateStyle, setDateStyle] = useState<string[]>([]);
-  const [languages, setLanguages] = useState<string[]>(['Vietnamese']);
+  const [languages, setLanguages] = useState<string[]>(['vietnamese']);
   const [photos, setPhotos] = useState<string[]>([]);
 
   const handleNext = async () => {
@@ -192,7 +192,7 @@ export default function ProfileSetupScreen() {
         interests,
         freeTimePrefer,
         dateStyle,
-        languages: languages.length > 0 ? languages : ['English'],
+        languages: languages.length > 0 ? languages : ['english'],
       });
 
       // 2. Upload Photos sequentially
@@ -526,17 +526,17 @@ export default function ProfileSetupScreen() {
         );
       case 10:
         const langList = [
-          { label: t('common.choices.lang_vi'), value: 'Vietnamese' },
-          { label: t('common.choices.lang_en'), value: 'English' },
-          { label: t('common.choices.lang_ko'), value: 'Korean' },
-          { label: t('common.choices.lang_ja'), value: 'Japanese' },
-          { label: t('common.choices.lang_zh'), value: 'Chinese' },
-          { label: t('common.choices.lang_fr'), value: 'French' },
-          { label: t('common.choices.lang_es'), value: 'Spanish' },
-          { label: t('common.choices.lang_de'), value: 'German' },
-          { label: t('common.choices.lang_it'), value: 'Italian' },
-          { label: t('common.choices.lang_ru'), value: 'Russian' },
-          { label: t('common.choices.lang_th'), value: 'Thai' }
+          { label: t('common.choices.lang_vi'), value: 'vietnamese' },
+          { label: t('common.choices.lang_en'), value: 'english' },
+          { label: t('common.choices.lang_ko'), value: 'korean' },
+          { label: t('common.choices.lang_ja'), value: 'japanese' },
+          { label: t('common.choices.lang_zh'), value: 'chinese' },
+          { label: t('common.choices.lang_fr'), value: 'french' },
+          { label: t('common.choices.lang_es'), value: 'spanish' },
+          { label: t('common.choices.lang_de'), value: 'german' },
+          { label: t('common.choices.lang_it'), value: 'italian' },
+          { label: t('common.choices.lang_ru'), value: 'russian' },
+          { label: t('common.choices.lang_th'), value: 'thai' }
         ];
         return (
           <>

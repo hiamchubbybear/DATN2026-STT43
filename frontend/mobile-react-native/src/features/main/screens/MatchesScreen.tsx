@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { StyleSheet, Text, View, Image, TouchableOpacity, SectionList, RefreshControl, ActivityIndicator } from 'react-native';
+import { StyleSheet, Text, View, Image, TouchableOpacity, SectionList, RefreshControl, ActivityIndicator, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -8,11 +8,14 @@ import { RootStackParamList } from '../../../app/navigation/RootNavigator';
 import { apiClient } from '../../../services/api/apiClient';
 import { normalizeFont, radius, scale, spacing, verticalScale } from '../../../shared/utils/responsive';
 import { useTranslation } from 'react-i18next';
-
-import { swipeService } from '../../../services/api/swipeService';
+import { swipeService, SwipeType } from '../../../services/api/swipeService';
+import { useSwipeAction, useMyProfile } from '../../../services/api/useSwipe';
 import { Logger } from '../../../shared/utils/logger';
 import { useNotificationStore } from '../../../store/notificationStore';
 import { useFocusEffect } from '@react-navigation/native';
+import { IconHeart } from '../../../shared/components/icons/IconHeart';
+import { IconClose } from '../../../shared/components/icons/IconClose';
+import { MatchModal } from '../../home/components/MatchModal';
 
 const defaultAvatar = require('../../../../assets/images/anh2.jpg');
 
@@ -22,6 +25,14 @@ export const MatchesScreen = () => {
   const [matches, setMatches] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [refreshing, setRefreshing] = React.useState(false);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [matchData, setMatchData] = useState<{ isVisible: boolean; user: any | null }>({
+    isVisible: false,
+    user: null,
+  });
+
+  const swipeAction = useSwipeAction();
+  const { data: myProfile } = useMyProfile();
 
   const fetchData = React.useCallback(async (showLoading = true) => {
     if (showLoading) setLoading(true);
@@ -40,7 +51,7 @@ export const MatchesScreen = () => {
   useFocusEffect(
     React.useCallback(() => {
       setHasUnreadMatches(false);
-      fetchData(false); // Refetch data silently when focused
+      fetchData(false);
     }, [setHasUnreadMatches, fetchData])
   );
 
@@ -89,7 +100,7 @@ export const MatchesScreen = () => {
         }
         return { title: key, data: rows };
       });
-  }, [matches]);
+  }, [matches, t]);
 
   const renderItem = React.useCallback(({ item }: { item: any[] }) => (
     <View style={styles.row}>
@@ -98,21 +109,7 @@ export const MatchesScreen = () => {
           key={match.userId} 
           style={styles.card}
           activeOpacity={0.9}
-          onPress={async () => {
-            try {
-              const response = await apiClient.get(`/api/chat/conversation/${match.userId}`);
-              if (response.data?.success) {
-                navigation.navigate('ChatRoom', {
-                  conversationId: response.data.data,
-                  receiverId: match.userId,
-                  receiverName: match.displayName,
-                  receiverAvatar: match.avatarUrl
-                });
-              }
-            } catch (err) {
-              Logger.error('Failed to navigate to chat', err);
-            }
-          }}
+          onPress={() => setSelectedUser(match)}
         >
           <Image 
             source={match.avatarUrl ? { uri: match.avatarUrl } : defaultAvatar} 
@@ -139,7 +136,7 @@ export const MatchesScreen = () => {
       ))}
       {item.length === 1 ? <View style={styles.cardPlaceholder} /> : null}
     </View>
-  ), [navigation]);
+  ), []);
 
   const renderSectionHeader = React.useCallback(({ section }: { section: { title: string } }) => (
     <Text style={styles.sectionLabel}>{section.title}</Text>
@@ -186,6 +183,111 @@ export const MatchesScreen = () => {
           <View style={styles.bottomSpacer} />
         }
       />
+
+      <Modal
+        visible={!!selectedUser}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setSelectedUser(null)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.optionModalContent}>
+            {selectedUser && (
+              <>
+                <Image 
+                  source={selectedUser.avatarUrl ? { uri: selectedUser.avatarUrl } : defaultAvatar} 
+                  style={styles.modalAvatar} 
+                />
+                <View style={styles.modalTitleContainer}>
+                  <Text style={styles.modalName}>{selectedUser.displayName}</Text>
+                  {selectedUser.isIdentityVerified && (
+                    <Ionicons name="checkmark-circle" size={18} color="#3B82F6" style={{ marginLeft: 4 }} />
+                  )}
+                </View>
+                <Text style={styles.modalSubtitle}>{t('matches.like_back_prompt', 'Do you want to like them back?')}</Text>
+                
+                <View style={styles.modalActions}>
+                  <TouchableOpacity 
+                    style={[styles.modalActionButton, { backgroundColor: '#F3F4F6' }]}
+                    onPress={() => {
+                      swipeAction.mutate({ targetId: selectedUser.userId, type: SwipeType.Dislike });
+                      setSelectedUser(null);
+                      fetchData(false);
+                    }}
+                  >
+                    <IconClose size={24} color="#F97316" />
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity 
+                    style={[styles.modalActionButton, { backgroundColor: '#F43F5E' }]}
+                    onPress={() => {
+                      swipeAction.mutate(
+                        { targetId: selectedUser.userId, type: SwipeType.Like },
+                        {
+                          onSuccess: (data) => {
+                            if (data.isMatch) {
+                              setMatchData({ isVisible: true, user: selectedUser });
+                            }
+                            setSelectedUser(null);
+                            fetchData(false);
+                          }
+                        }
+                      );
+                    }}
+                  >
+                    <IconHeart size={28} color="#fff" />
+                  </TouchableOpacity>
+                </View>
+                
+                <TouchableOpacity 
+                  style={styles.modalCancelButton}
+                  onPress={() => setSelectedUser(null)}
+                >
+                  <Text style={styles.modalCancelText}>{t('common.cancel', 'Cancel')}</Text>
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
+
+      {myProfile && matchData.user && (
+        <MatchModal
+          isVisible={matchData.isVisible}
+          currentUser={{
+            name: myProfile.basicInfo?.displayName || t('common.me', 'Me'),
+            avatar: myProfile.photos?.[0]?.url || '',
+          }}
+          matchedUser={{
+            name: matchData.user.displayName,
+            avatar: matchData.user.avatarUrl || '',
+          }}
+          onClose={() => setMatchData({ isVisible: false, user: null })}
+          onSayHello={async () => {
+            const matchedUserId = matchData.user?.userId;
+            const matchedUserName = matchData.user?.displayName;
+            const matchedUserAvatar = matchData.user?.avatarUrl;
+            
+            setMatchData({ isVisible: false, user: null });
+            
+            if (matchedUserId) {
+              try {
+                const response = await apiClient.get(`/api/chat/conversation/${matchedUserId}`);
+                if (response.data?.success) {
+                  navigation.navigate('ChatRoom', {
+                    conversationId: response.data.data,
+                    receiverId: matchedUserId,
+                    receiverName: matchedUserName || t('common.user', 'User'),
+                    receiverAvatar: matchedUserAvatar,
+                  });
+                }
+              } catch (error) {
+                Logger.error('Failed to start conversation:', error);
+              }
+            }
+          }}
+        />
+      )}
     </SafeAreaView>
   );
 };
@@ -205,7 +307,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: spacing(24),
   },
-  title: { fontSize: normalizeFont(32), fontWeight: '800', color: '#111111' },
+  title: { fontSize: normalizeFont(28), fontWeight: '800', color: '#111827' },
   subtitle: { marginTop: spacing(8), fontSize: normalizeFont(14), color: '#71717A', maxWidth: scale(260), lineHeight: verticalScale(20) },
   filterBtn: {
     marginTop: spacing(8),
@@ -292,5 +394,75 @@ const styles = StyleSheet.create({
     height: verticalScale(84),
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing(20),
+  },
+  optionModalContent: {
+    width: '100%',
+    maxWidth: 320,
+    backgroundColor: '#fff',
+    borderRadius: radius(24),
+    padding: spacing(24),
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.1,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  modalAvatar: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    marginBottom: spacing(16),
+  },
+  modalTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing(8),
+  },
+  modalName: {
+    fontSize: normalizeFont(20),
+    fontWeight: 'bold',
+    color: '#111827',
+  },
+  modalSubtitle: {
+    fontSize: normalizeFont(14),
+    color: '#6B7280',
+    marginBottom: spacing(24),
+    textAlign: 'center',
+  },
+  modalActions: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: spacing(20),
+    width: '100%',
+    marginBottom: spacing(20),
+  },
+  modalActionButton: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  modalCancelButton: {
+    paddingVertical: spacing(8),
+    paddingHorizontal: spacing(24),
+  },
+  modalCancelText: {
+    color: '#6B7280',
+    fontSize: normalizeFont(16),
+    fontWeight: '600',
   },
 });

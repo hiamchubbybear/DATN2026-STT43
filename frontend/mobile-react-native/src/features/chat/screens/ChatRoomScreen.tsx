@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TextInput, TouchableOpacity, FlatList, KeyboardAvoidingView, Platform, StyleSheet, SafeAreaView, Modal, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, FlatList, KeyboardAvoidingView, Platform, StyleSheet, Modal, Alert, Keyboard } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../../app/navigation/RootNavigator';
@@ -66,9 +67,45 @@ const SingleCheckIcon = ({ color }: { color: string }) => (
   </Svg>
 );
 
+const getUserIdFromToken = (token: string | null) => {
+  if (!token) return null;
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    let base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    while (base64.length % 4) {
+      base64 += '=';
+    }
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+    let str = '';
+    for (let i = 0; i < base64.length; i += 4) {
+      const o1 = chars.indexOf(base64.charAt(i));
+      const o2 = chars.indexOf(base64.charAt(i + 1));
+      const o3 = chars.indexOf(base64.charAt(i + 2));
+      const o4 = chars.indexOf(base64.charAt(i + 3));
+      const bits = (o1 << 18) | (o2 << 12) | (o3 << 6) | o4;
+      const c1 = (bits >> 16) & 0xff;
+      const c2 = (bits >> 8) & 0xff;
+      const c3 = bits & 0xff;
+      if (o3 === 64) {
+        str += String.fromCharCode(c1);
+      } else if (o4 === 64) {
+        str += String.fromCharCode(c1, c2);
+      } else {
+        str += String.fromCharCode(c1, c2, c3);
+      }
+    }
+    const payload = JSON.parse(str);
+    return payload.sub || payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'];
+  } catch (error) {
+    console.error('Failed to decode JWT token for userId:', error);
+    return null;
+  }
+};
+
 export const ChatRoomScreen: React.FC<Props> = ({ route, navigation }) => {
   const { conversationId, receiverId, receiverName, receiverAvatar } = route.params;
-  const { user } = useAuthStore();
+  const { user, accessToken } = useAuthStore();
   const { showToast } = useToast();
   const messages = useChatStore((state) => state.messages[conversationId]) || EMPTY_ARRAY;
   const addMessage = useChatStore((state) => state.addMessage);
@@ -77,6 +114,25 @@ export const ChatRoomScreen: React.FC<Props> = ({ route, navigation }) => {
   const [isMenuVisible, setIsMenuVisible] = useState(false);
   const [isReportModalVisible, setIsReportModalVisible] = useState(false);
   const flatListRef = useRef<FlatList>(null);
+
+  const insets = useSafeAreaInsets();
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+
+  useEffect(() => {
+    const showListener = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      () => setIsKeyboardVisible(true)
+    );
+    const hideListener = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => setIsKeyboardVisible(false)
+    );
+
+    return () => {
+      showListener.remove();
+      hideListener.remove();
+    };
+  }, []);
 
   useEffect(() => {
     chatSignalRService.startConnection();
@@ -115,10 +171,13 @@ export const ChatRoomScreen: React.FC<Props> = ({ route, navigation }) => {
     const currentText = inputText;
     setInputText('');
 
+    const tokenUserId = getUserIdFromToken(accessToken);
+    const currentUserId = tokenUserId || user?.id || '';
+
     addMessage(conversationId, {
       id: reqId,
       conversationId,
-      senderId: user?.id || 'me',
+      senderId: currentUserId || 'me',
       payload: currentText,
       timestamp: new Date().toISOString(),
       isDelivered: false,
@@ -182,7 +241,9 @@ export const ChatRoomScreen: React.FC<Props> = ({ route, navigation }) => {
   };
 
   const renderMessage = ({ item, index }: { item: any, index: number }) => {
-    const isMe = item.senderId === user?.id || item.senderId === 'me';
+    const tokenUserId = getUserIdFromToken(accessToken);
+    const currentUserId = tokenUserId || user?.id || '';
+    const isMe = (item.senderId && currentUserId && item.senderId.toLowerCase() === currentUserId.toLowerCase()) || item.senderId === 'me';
     const displayMessages = [...messages].reverse();
     
     // With inverted, displayMessages is [newest, ..., oldest]
@@ -294,7 +355,8 @@ export const ChatRoomScreen: React.FC<Props> = ({ route, navigation }) => {
 
       <KeyboardAvoidingView 
         style={styles.keyboardView} 
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
       >
         <FlatList
           ref={flatListRef}
@@ -306,7 +368,7 @@ export const ChatRoomScreen: React.FC<Props> = ({ route, navigation }) => {
           showsVerticalScrollIndicator={false}
         />
 
-        <View style={styles.inputAreaWrapper}>
+        <View style={[styles.inputAreaWrapper, { paddingBottom: isKeyboardVisible ? 12 : (insets.bottom > 0 ? insets.bottom : 12) }]}>
           <View style={styles.inputContainer}>
             <TextInput
               style={styles.input}
@@ -518,7 +580,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingHorizontal: 20,
     paddingVertical: 12,
-    paddingBottom: Platform.OS === 'ios' ? 20 : 12,
     alignItems: 'flex-end',
     backgroundColor: '#FFFFFF',
   },

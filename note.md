@@ -1,2 +1,4 @@
-đã thích rồi nhưng vẫn hiển thị lại user đó trên discovery
-còn quá nhiều user không hiển thị dù cho chưa quẹt lần nào 
+thông báo chưa gửi được
+xem noti da gui
+lưu  của các notification không dc
+

@@ -270,6 +270,7 @@ const styles = StyleSheet.create({
     borderRadius: radius(16),
     alignItems: 'center',
     justifyContent: 'center',
+    marginTop: spacing(28),
     shadowColor: '#EE3F57',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.25,

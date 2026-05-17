@@ -70,20 +70,19 @@ export default function ForgotPasswordVerifyScreen() {
     const value = code[index] || '';
 
     return (
-      <TouchableOpacity 
+      <View 
         key={index}
-        activeOpacity={1}
-        onPress={handlePress}
         style={[
           styles.codeBox,
           isFilled && styles.codeBoxFilled,
           isFocused && styles.codeBoxFocused,
         ]}
+        pointerEvents="none"
       >
         <Text style={[styles.codeText, isFilled && styles.codeTextFilled]}>
           {value}
         </Text>
-      </TouchableOpacity>
+      </View>
     );
   };
 
@@ -104,7 +103,11 @@ export default function ForgotPasswordVerifyScreen() {
             {t('auth.verify_reset_desc')}
           </Text>
 
-          <View style={styles.codeContainer}>
+          <TouchableOpacity 
+            style={styles.codeContainer} 
+            onPress={handlePress}
+            activeOpacity={1}
+          >
             <TextInput
               ref={inputRef}
               value={code}
@@ -113,10 +116,11 @@ export default function ForgotPasswordVerifyScreen() {
               autoCapitalize="characters"
               autoCorrect={false}
               style={styles.hiddenInput}
+              pointerEvents="none"
               caretHidden
             />
             {[0, 1, 2, 3, 4, 5].map(renderDot)}
-          </View>
+          </TouchableOpacity>
         </View>
 
         <TouchableOpacity 
@@ -172,6 +176,7 @@ const styles = StyleSheet.create({
     lineHeight: verticalScale(22),
   },
   codeContainer: {
+    position: 'relative',
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
@@ -205,9 +210,12 @@ const styles = StyleSheet.create({
   },
   hiddenInput: {
     position: 'absolute',
-    width: 1,
-    height: 1,
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
     opacity: 0,
+    zIndex: 10,
   },
   row: {
     flexDirection: 'row',

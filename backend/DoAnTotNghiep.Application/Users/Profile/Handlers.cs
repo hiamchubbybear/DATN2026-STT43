@@ -39,6 +39,7 @@ public class ProfileHandlers(
             profile.MinAgePreference, 
             profile.MaxAgePreference, 
             profile.MaxDistanceKm,
+            profile.LookingFor,
             profile.IsIdentityVerified,
             verification != null ? (int)verification.Status : null);
     }
@@ -69,6 +70,7 @@ public class ProfileHandlers(
             profile.MinAgePreference, 
             profile.MaxAgePreference, 
             profile.MaxDistanceKm,
+            profile.LookingFor,
             profile.IsIdentityVerified,
             verification != null ? (int)verification.Status : null);
     }

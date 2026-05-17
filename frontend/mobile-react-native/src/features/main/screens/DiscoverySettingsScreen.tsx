@@ -131,9 +131,9 @@ export const DiscoverySettingsScreen = () => {
           <Text style={styles.label}>{t('discover_settings.looking_for')}</Text>
           <View style={styles.genderContainer}>
             {[
-              { id: 1, label: t('common.men') },
-              { id: 2, label: t('common.women') },
-              { id: 3, label: t('common.everyone') }
+              { id: 1, label: t('discover.men') },
+              { id: 2, label: t('discover.women') },
+              { id: 3, label: t('discover.everyone') }
             ].map((item) => (
               <TouchableOpacity
                 key={item.id}

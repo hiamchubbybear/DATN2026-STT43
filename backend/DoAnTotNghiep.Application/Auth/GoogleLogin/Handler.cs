@@ -60,6 +60,22 @@ public class GoogleLoginHandler : IRequestHandler<GoogleLoginCommand, AuthRespon
         }
         else
         {
+            if (user.IsBanned)
+            {
+                if (user.BannedUntil.HasValue && user.BannedUntil.Value <= DateTime.UtcNow)
+                {
+                    user.Unban();
+                    await _userRepository.UpdateAsync(user);
+                }
+                else
+                {
+                    var msg = "Tài khoản của bạn đã bị khóa." + 
+                              (user.BannedUntil.HasValue ? $" Đến: {user.BannedUntil.Value.ToLocalTime():dd/MM/yyyy HH:mm}." : "") + 
+                              (string.IsNullOrEmpty(user.BanReason) ? "" : $" Lý do: {user.BanReason}");
+                    throw new ForbiddenException(msg);
+                }
+            }
+
             if (user.Provider != AuthProvider.Google)
             {
                 // Account merging: user registered locally, now logging in with Google.

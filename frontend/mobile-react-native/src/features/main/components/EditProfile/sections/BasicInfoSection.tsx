@@ -10,6 +10,7 @@ interface BasicInfoSectionProps {
   dob: string;
   setDob: (val: string) => void;
   gender: string;
+  interestedIn: string;
   languages: string[];
   onOpenModal: (type: string, title: string, options: (string | { label: string; value: string })[]) => void;
   onSave: () => void;
@@ -22,6 +23,7 @@ export const BasicInfoSection = ({
   dob,
   setDob,
   gender,
+  interestedIn,
   languages,
   onOpenModal,
   onSave,
@@ -57,8 +59,23 @@ export const BasicInfoSection = ({
           { label: t('common.other'), value: 'Other' }
         ])}
       >
-        <Text style={gender ? styles.selectorText : styles.placeholderText}>
+        <Text style={[gender ? styles.selectorText : styles.placeholderText, { flex: 1, marginRight: 10 }]}>
           {gender === 'Male' ? t('discover.men') : gender === 'Female' ? t('discover.women') : gender === 'Other' ? t('common.other') : t('profile_edit.select_gender')}
+        </Text>
+        <Ionicons name="chevron-down" size={20} color="#9CA3AF" />
+      </TouchableOpacity>
+
+      <Text style={styles.label}>{t('profile_edit.interested_in')}</Text>
+      <TouchableOpacity 
+        style={styles.selector} 
+        onPress={() => onOpenModal('interestedIn', t('profile_edit.select_interested_in'), [
+          { label: t('discover.men'), value: 'Male' },
+          { label: t('discover.women'), value: 'Female' },
+          { label: t('discover.everyone'), value: 'Other' }
+        ])}
+      >
+        <Text style={[interestedIn ? styles.selectorText : styles.placeholderText, { flex: 1, marginRight: 10 }]}>
+          {interestedIn === 'Male' ? t('discover.men') : interestedIn === 'Female' ? t('discover.women') : interestedIn === 'Other' ? t('discover.everyone') : t('profile_edit.select_interested_in')}
         </Text>
         <Ionicons name="chevron-down" size={20} color="#9CA3AF" />
       </TouchableOpacity>
@@ -67,34 +84,34 @@ export const BasicInfoSection = ({
       <TouchableOpacity 
         style={styles.selector} 
         onPress={() => onOpenModal('languages', t('profile_edit.select_languages'), [
-          { label: t('common.choices.lang_vi'), value: 'Vietnamese' },
-          { label: t('common.choices.lang_en'), value: 'English' },
-          { label: t('common.choices.lang_ko'), value: 'Korean' },
-          { label: t('common.choices.lang_ja'), value: 'Japanese' },
-          { label: t('common.choices.lang_zh'), value: 'Chinese' },
-          { label: t('common.choices.lang_fr'), value: 'French' },
-          { label: t('common.choices.lang_es'), value: 'Spanish' },
-          { label: t('common.choices.lang_de'), value: 'German' },
-          { label: t('common.choices.lang_it'), value: 'Italian' },
-          { label: t('common.choices.lang_ru'), value: 'Russian' },
-          { label: t('common.choices.lang_th'), value: 'Thai' }
+          { label: t('common.choices.lang_vi'), value: 'vietnamese' },
+          { label: t('common.choices.lang_en'), value: 'english' },
+          { label: t('common.choices.lang_ko'), value: 'korean' },
+          { label: t('common.choices.lang_ja'), value: 'japanese' },
+          { label: t('common.choices.lang_zh'), value: 'chinese' },
+          { label: t('common.choices.lang_fr'), value: 'french' },
+          { label: t('common.choices.lang_es'), value: 'spanish' },
+          { label: t('common.choices.lang_de'), value: 'german' },
+          { label: t('common.choices.lang_it'), value: 'italian' },
+          { label: t('common.choices.lang_ru'), value: 'russian' },
+          { label: t('common.choices.lang_th'), value: 'thai' }
         ])}
       >
-        <Text style={languages.length > 0 ? styles.selectorText : styles.placeholderText}>
+        <Text style={[languages.length > 0 ? styles.selectorText : styles.placeholderText, { flex: 1, marginRight: 10 }]}>
           {languages.length > 0 
             ? languages.map(l => {
-                switch(l) {
-                  case 'Vietnamese': return t('common.choices.lang_vi');
-                  case 'English': return t('common.choices.lang_en');
-                  case 'Korean': return t('common.choices.lang_ko');
-                  case 'Japanese': return t('common.choices.lang_ja');
-                  case 'Chinese': return t('common.choices.lang_zh');
-                  case 'French': return t('common.choices.lang_fr');
-                  case 'Spanish': return t('common.choices.lang_es');
-                  case 'German': return t('common.choices.lang_de');
-                  case 'Italian': return t('common.choices.lang_it');
-                  case 'Russian': return t('common.choices.lang_ru');
-                  case 'Thai': return t('common.choices.lang_th');
+                switch(l.toLowerCase()) {
+                  case 'vietnamese': return t('common.choices.lang_vi');
+                  case 'english': return t('common.choices.lang_en');
+                  case 'korean': return t('common.choices.lang_ko');
+                  case 'japanese': return t('common.choices.lang_ja');
+                  case 'chinese': return t('common.choices.lang_zh');
+                  case 'french': return t('common.choices.lang_fr');
+                  case 'spanish': return t('common.choices.lang_es');
+                  case 'german': return t('common.choices.lang_de');
+                  case 'italian': return t('common.choices.lang_it');
+                  case 'russian': return t('common.choices.lang_ru');
+                  case 'thai': return t('common.choices.lang_th');
                   default: return l;
                 }
               }).join(', ') 
@@ -125,10 +142,11 @@ const styles = StyleSheet.create({
     borderColor: '#F3F4F6',
   },
   selector: {
-    height: 52,
+    minHeight: 52,
     backgroundColor: '#F9FAFB',
     borderRadius: 12,
     paddingHorizontal: 16,
+    paddingVertical: 12,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',

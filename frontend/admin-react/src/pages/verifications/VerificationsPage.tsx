@@ -22,6 +22,7 @@ export default function VerificationsPage() {
           await adminApi.approveVerification(id);
           alert('Approved successfully');
           setList(list.filter(x => x.id !== id));
+          setSelectedVerification(null);
       } catch (e) {
           alert('Failed to approve verification');
       }

@@ -5,61 +5,77 @@ using MediatR;
 
 namespace DoAnTotNghiep.Application.Users.Commands.Login
 {
-    public class LoginCommandHandler : IRequestHandler<LoginCommand, AuthResponse>
+public class LoginCommandHandler : IRequestHandler<LoginCommand, AuthResponse>
+{
+    private readonly IUserRepository _repo;
+    private readonly ISessionRepository _sessionRepo;
+    private readonly IJwtService _jwt;
+    private readonly IPasswordHasher _hasher;
+    private readonly IUserProfileRepository _profileRepo;
+
+    public LoginCommandHandler(IUserRepository repo, ISessionRepository sessionRepo, IJwtService jwt, IPasswordHasher hasher, IUserProfileRepository profileRepo)
     {
-        private readonly IUserRepository _repo;
-        private readonly ISessionRepository _sessionRepo;
-        private readonly IJwtService _jwt;
-        private readonly IPasswordHasher _hasher;
-        private readonly IUserProfileRepository _profileRepo;
-
-        public LoginCommandHandler(IUserRepository repo, ISessionRepository sessionRepo, IJwtService jwt, IPasswordHasher hasher, IUserProfileRepository profileRepo)
-        {
-            _repo = repo;
-            _sessionRepo = sessionRepo;
-            _jwt = jwt;
-            _hasher = hasher;
-            _profileRepo = profileRepo;
-        }
-
-        public async Task<AuthResponse> Handle(LoginCommand request, CancellationToken cancellationToken)
-        {
-            var user = await _repo.GetByEmail(request.Email);
-            if (user == null)
-            {
-                throw new NotFoundException("User not found");
-            }
-
-            if (!_hasher.Verify(request.Password, user.HashPassword))
-            {
-                throw new ConflictException("Invalid password");
-            }
-
-            var accessToken = _jwt.GenerateAccessToken(user);
-            var refreshToken = _jwt.GenerateRefreshToken();
-
-            var profile = await _profileRepo.GetByUserIdAsync(user.Id);
-
-            var session = new Session(
-                user.Id,
-                request.DeviceId,
-                request.DeviceName,
-                request.IpAddress,
-                request.Platform,
-                request.AppVersion,
-                request.FcmToken,
-                refreshToken
-            );
-            await _sessionRepo.CreateSession(session);
-
-            return new AuthResponse
-            {
-                AccessToken = accessToken,
-                RefreshToken = refreshToken.Token,
-                IsProfileCompleted = profile != null,
-                UserId = user.Id,
-                Email = user.Email
-            };
-        }
+        _repo = repo;
+        _sessionRepo = sessionRepo;
+        _jwt = jwt;
+        _hasher = hasher;
+        _profileRepo = profileRepo;
     }
+
+    public async Task<AuthResponse> Handle(LoginCommand request, CancellationToken cancellationToken)
+    {
+        var user = await _repo.GetByEmail(request.Email);
+        if (user == null)
+        {
+            throw new NotFoundException("User not found");
+        }
+
+        if (!_hasher.Verify(request.Password, user.HashPassword))
+        {
+            throw new ConflictException("Invalid password");
+        }
+
+        if (user.IsBanned)
+        {
+            if (user.BannedUntil.HasValue && user.BannedUntil.Value <= DateTime.UtcNow)
+            {
+                user.Unban();
+                await _repo.UpdateAsync(user);
+            }
+            else
+            {
+                var msg = "Tài khoản của bạn đã bị khóa." +
+                            (user.BannedUntil.HasValue ? $" Đến: {user.BannedUntil.Value.ToLocalTime():dd/MM/yyyy HH:mm}." : "") +
+                            (string.IsNullOrEmpty(user.BanReason) ? "" : $" Lý do: {user.BanReason}");
+                throw new ForbiddenException(msg);
+            }
+        }
+
+        var accessToken = _jwt.GenerateAccessToken(user);
+        var refreshToken = _jwt.GenerateRefreshToken();
+
+        var profile = await _profileRepo.GetByUserIdAsync(user.Id);
+
+        var session = new Session(
+            user.Id,
+            request.DeviceId,
+            request.DeviceName,
+            request.IpAddress,
+            request.Platform,
+            request.AppVersion,
+            request.FcmToken,
+            refreshToken
+        );
+        await _sessionRepo.CreateSession(session);
+
+        return new AuthResponse
+        {
+            AccessToken = accessToken,
+            RefreshToken = refreshToken.Token,
+            IsProfileCompleted = profile != null,
+            UserId = user.Id,
+            Email = user.Email
+        };
+    }
+}
 }

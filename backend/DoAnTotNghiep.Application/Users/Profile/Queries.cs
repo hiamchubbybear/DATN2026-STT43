@@ -24,6 +24,7 @@ public record UserProfileDto(
     int MinAgePreference, 
     int MaxAgePreference, 
     int MaxDistanceKm,
+    GenderPreference LookingFor,
     bool IsIdentityVerified,
     int? VerificationStatus = null);
 

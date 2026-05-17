@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Image, Alert, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Image, Alert, ActivityIndicator, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import LivenessCamera from './LivenessCamera';
 import LivenessChallenge from './LivenessChallenge';
 import { verificationService } from '../../../../services/api/verificationService';
+import { profileService } from '../../../../services/api/profileService';
 import { useNavigation } from '@react-navigation/native';
 
 enum Step {
@@ -19,13 +20,24 @@ enum Step {
 const VerificationFlow: React.FC = () => {
   const navigation = useNavigation();
   const [currentStep, setCurrentStep] = useState<Step>(Step.Intro);
-  const [idNumber, setIdNumber] = useState('');
-  const [fullName, setFullName] = useState('');
+  const [profile, setProfile] = useState<any>(null);
   const [frontImage, setFrontImage] = useState<any>(null);
   const [backImage, setBackImage] = useState<any>(null);
   const [selfieImage, setSelfieImage] = useState<any>(null);
   const [showCamera, setShowCamera] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const data = await profileService.getMyProfile();
+        setProfile(data);
+      } catch (error) {
+        console.log('Failed to fetch profile in verification flow', error);
+      }
+    };
+    fetchProfile();
+  }, []);
 
   const pickImage = async (type: 'front' | 'back') => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -49,10 +61,11 @@ const VerificationFlow: React.FC = () => {
 
   const submitData = async (selfieUri: string) => {
     setIsLoading(true);
+    const userFullName = profile?.basicInfo?.displayName || 'User Profile';
     try {
       await verificationService.submitVerification({
         idNumber: '123456789', // Placeholder
-        fullName: 'Nguyen Van A', // Placeholder
+        fullName: userFullName, // Dynamic real display name of the user from their profile
         frontImage,
         backImage,
         selfieImage: { uri: selfieUri },
@@ -265,6 +278,35 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     resizeMode: 'cover',
+  },
+  formContainer: {
+    width: '100%',
+    marginTop: 20,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#2f3542',
+    marginBottom: 8,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ced6e0',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    height: 48,
+    backgroundColor: '#f9f9f9',
+  },
+  inputIcon: {
+    marginRight: 8,
+  },
+  input: {
+    flex: 1,
+    height: '100%',
+    fontSize: 15,
+    color: '#2f3542',
   },
 });
 

@@ -33,12 +33,15 @@ namespace DoAnTotNghiep.Application.Users.Swipes.GetMatches
 
         public async Task<List<MatchDto>> Handle(GetMatchesQuery request, CancellationToken cancellationToken)
         {
-            var matches = await _swipeRepository.GetMatchesAsync(request.UserId);
+            var likesMe = await _swipeRepository.GetLikesMeAsync(request.UserId);
             var result = new List<MatchDto>();
+            var seenIds = new HashSet<Guid>();
 
-            foreach (var match in matches)
+            foreach (var swipe in likesMe)
             {
-                var otherUserId = match.UserOneId == request.UserId ? match.UserTwoId : match.UserOneId;
+                var otherUserId = swipe.ActorId;
+                if (!seenIds.Add(otherUserId)) continue;
+
                 var profile = await _profileRepository.GetByUserIdAsync(otherUserId);
                 
                 if (profile != null)
@@ -47,7 +50,7 @@ namespace DoAnTotNghiep.Application.Users.Swipes.GetMatches
                         otherUserId,
                         profile.BasicInfo.DisplayName,
                         profile.Photos.FirstOrDefault(p => p.IsPrimary)?.Url ?? "",
-                        match.MatchedAt,
+                        swipe.CreatedAt,
                         profile.IsIdentityVerified
                     ));
                 }

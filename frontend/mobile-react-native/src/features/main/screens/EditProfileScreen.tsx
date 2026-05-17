@@ -109,21 +109,26 @@ export const EditProfileScreen = () => {
           if (gender === 'Male') genderEnum = 1;
           else if (gender === 'Female') genderEnum = 2;
 
+          let interestedInEnum = 3;
+          if (interestedIn === 'Male') interestedInEnum = 1;
+          else if (interestedIn === 'Female') interestedInEnum = 2;
+
           await profileService.updateBasicInfo({ displayName, dob, gender: genderEnum as any, languages });
+          await profileService.updateBio({ bio, gender: genderEnum as any, interestedIn: interestedInEnum as any });
           break;
         case 'bio':
           let genderBioEnum = 3;
           if (gender === 'Male') genderBioEnum = 1;
           else if (gender === 'Female') genderBioEnum = 2;
           
-          let interestedInEnum = 3;
-          if (interestedIn === 'Male') interestedInEnum = 1;
-          else if (interestedIn === 'Female') interestedInEnum = 2;
+          let interestedInBioEnum = 3;
+          if (interestedIn === 'Male') interestedInBioEnum = 1;
+          else if (interestedIn === 'Female') interestedInBioEnum = 2;
 
           await profileService.updateBio({ 
             bio, 
             gender: genderBioEnum as any, 
-            interestedIn: interestedInEnum as any 
+            interestedIn: interestedInBioEnum as any 
           });
           break;
         case 'background':
@@ -263,6 +268,7 @@ export const EditProfileScreen = () => {
                   displayName={displayName} setDisplayName={setDisplayName}
                   dob={dob} setDob={setDob}
                   gender={gender} languages={languages}
+                  interestedIn={interestedIn}
                   onOpenModal={openModal}
                   onSave={() => handleSaveSection('basicInfo')}
                   isSaving={savingSection === 'basicInfo'}
@@ -271,8 +277,6 @@ export const EditProfileScreen = () => {
               {activeModal === 'bio' && (
                 <BioSection 
                   bio={bio} setBio={setBio}
-                  interestedIn={interestedIn}
-                  onOpenModal={openModal}
                   onSave={() => handleSaveSection('bio')}
                   isSaving={savingSection === 'bio'}
                 />

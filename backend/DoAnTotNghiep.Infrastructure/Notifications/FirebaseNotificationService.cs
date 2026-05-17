@@ -117,14 +117,20 @@ public class FirebaseNotificationService : INotificationService
     {
         try
         {
-            var payload = new
+            var message = new Dictionary<string, object>
             {
-                to = expoToken,
-                title = title,
-                body = body,
-                data = data,
-                sound = "default"
+                { "to", expoToken },
+                { "title", title },
+                { "body", body },
+                { "sound", "default" }
             };
+
+            if (data != null && data.Any())
+            {
+                message.Add("data", data);
+            }
+
+            var payload = new[] { message };
 
             var response = await _httpClient.PostAsJsonAsync("https://exp.host/--/api/v2/push/send", payload);
             if (response.IsSuccessStatusCode)
@@ -148,7 +154,11 @@ public class FirebaseNotificationService : INotificationService
     public async Task SendPushToUserAsync(Guid userId, string title, string body, Dictionary<string, string>? data = null)
     {
         var tokens = await _sessionRepository.GetFcmTokensByUserId(userId);
-        if (tokens == null || !tokens.Any()) return;
+        if (tokens == null || !tokens.Any())
+        {
+            _logger.LogWarning("[Push] No active push notification tokens found for user {UserId}. Notification '{Title}' not sent.", userId, title);
+            return;
+        }
 
         foreach (var token in tokens)
             await SendPushNotificationAsync(token, title, body, data);
@@ -156,18 +166,53 @@ public class FirebaseNotificationService : INotificationService
 
     public async Task BroadcastNotificationAsync(string title, string body, Dictionary<string, string>? data = null)
     {
-        if (_messaging == null) return;
-
-        await _messaging.SendAsync(new Message
+        // 1. Send push to all active user tokens (handles Expo & registered device tokens)
+        try
         {
-            Topic = "all",
-            Notification = new Notification { Title = title, Body = body },
-            Android = new AndroidConfig 
-            { 
-                Notification = new AndroidNotification { Icon = "ic_launcher", Color = "#EE3F57" } 
-            },
-            Data = data
-        });
-        _metrics.RecordNotificationSent("push_broadcast");
+            var tokens = await _sessionRepository.GetAllActiveFcmTokens();
+            if (tokens != null && tokens.Any())
+            {
+                _logger.LogInformation("[Push] Broadcasting notification to {Count} active device tokens.", tokens.Count);
+                foreach (var token in tokens)
+                {
+                    await SendPushNotificationAsync(token, title, body, data);
+                }
+            }
+            else
+            {
+                _logger.LogWarning("[Push] Broadcast: No active device tokens found in the sessions database.");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[Push] Error broadcasting to active device tokens");
+        }
+
+        // 2. Standard FCM Topic Broadcast (if initialized)
+        if (_messaging == null)
+        {
+            _logger.LogWarning("[FCM] FCM messaging instance is not initialized. Skipping standard topic broadcast.");
+            return;
+        }
+
+        try
+        {
+            await _messaging.SendAsync(new Message
+            {
+                Topic = "all",
+                Notification = new Notification { Title = title, Body = body },
+                Android = new AndroidConfig 
+                { 
+                    Notification = new AndroidNotification { Icon = "ic_launcher", Color = "#EE3F57" } 
+                },
+                Data = data
+            });
+            _metrics.RecordNotificationSent("push_broadcast");
+            _logger.LogInformation("[FCM] Successfully sent broadcast message to topic 'all'.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[FCM] Error sending broadcast to topic 'all'");
+        }
     }
 }

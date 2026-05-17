@@ -50,13 +50,18 @@ export const SignUpScreen = () => {
                     </View>
                 </View>
 
-                <View style={styles.bottomLinks}>
-                    <TouchableOpacity>
-                        <Text style={styles.linkText}>{t('auth.terms_of_use')}</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity>
-                        <Text style={styles.linkText}>{t('auth.privacy_policy')}</Text>
-                    </TouchableOpacity>
+                <View style={styles.bottomLinksContainer}>
+                    <Text style={styles.legalText}>
+                        {t('auth.privacy_policy_prefix')}
+                        <Text style={styles.legalLink} onPress={() => navigation.navigate('PrivacyPolicy' as any)}>
+                            {t('auth.terms_of_use')}
+                        </Text>
+                        {t('auth.privacy_policy_and')}
+                        <Text style={styles.legalLink} onPress={() => navigation.navigate('PrivacyPolicy' as any)}>
+                            {t('auth.privacy_policy_link_text')}
+                        </Text>
+                        {t('auth.privacy_policy_suffix')}
+                    </Text>
                 </View>
             </View>
         </SafeAreaView>
@@ -155,15 +160,22 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         backgroundColor: '#FFFFFF',
     },
-    bottomLinks: {
-        flexDirection: 'row',
+    bottomLinksContainer: {
+        width: '100%',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: spacing(24),
+        paddingHorizontal: spacing(8),
+        marginTop: spacing(16),
     },
-    linkText: {
+    legalText: {
+        color: '#71717A',
+        fontSize: normalizeFont(12),
+        textAlign: 'center',
+        lineHeight: normalizeFont(12) * 1.5,
+    },
+    legalLink: {
         color: '#EF4444',
-        fontSize: normalizeFont(13),
-        fontWeight: '500',
+        fontWeight: '600',
+        textDecorationLine: 'underline',
     },
 });

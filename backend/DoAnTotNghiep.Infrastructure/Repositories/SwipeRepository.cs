@@ -52,6 +52,14 @@ public sealed class SwipeRepository : ISwipeRepository
             .SortByDescending(x => x.MatchedAt)
             .ToListAsync();
     }
+
+    public async Task<List<UserSwipe>> GetLikesMeAsync(Guid targetId)
+    {
+        // Find swipes where TargetId is me, and Type is Like (1) or SuperLike (3)
+        return await _swipes.Find(x => x.TargetId == targetId && (x.Type == SwipeType.Like || x.Type == SwipeType.SuperLike))
+            .SortByDescending(x => x.CreatedAt)
+            .ToListAsync();
+    }
     
     public async Task ClearSwipesAsync(Guid userId)
     {

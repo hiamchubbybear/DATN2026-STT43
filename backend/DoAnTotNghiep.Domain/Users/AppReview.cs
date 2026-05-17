@@ -12,7 +12,7 @@ public class AppReview : BaseEntity
     public string? AdminReply { get; private set; }
     public DateTime? RepliedAt { get; private set; }
 
-    private AppReview() { }
+    private AppReview() { Comment = string.Empty; }
 
     public AppReview(Guid userId, int rating, string comment)
     {

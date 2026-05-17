@@ -8,6 +8,8 @@ import { RootStackParamList } from '../../app/navigation/RootNavigator';
 import { useNotificationStore } from '../../store/notificationStore';
 import { notificationService } from '../../services/api/notificationService';
 import { swipeService } from '../../services/api/swipeService';
+import { useAuthStore } from '../../store/authStore';
+import { getFcmToken } from '../utils/notificationHelper';
 
 // Configure how notifications are handled when the app is in foreground
 Notifications.setNotificationHandler({
@@ -20,6 +22,7 @@ Notifications.setNotificationHandler({
 
 export const NotificationManager: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { isAuthenticated } = useAuthStore();
   const notificationListener = useRef<any>();
   const responseListener = useRef<any>();
   
@@ -57,6 +60,26 @@ export const NotificationManager: React.FC = () => {
   };
 
   useEffect(() => {
+    // Dynamically register/update push token on startup if authenticated
+    const registerPushToken = async () => {
+      if (isAuthenticated) {
+        try {
+          const token = await getFcmToken();
+          if (token) {
+            console.log('[NotificationManager] Registering push token with backend:', token);
+            await notificationService.updateFcmToken(token);
+            console.log('[NotificationManager] Push token registered successfully.');
+          } else {
+            console.log('[NotificationManager] Push token not available (permission denied or simulator issue)');
+          }
+        } catch (error) {
+          console.error('[NotificationManager] Error registering push token:', error);
+        }
+      }
+    };
+
+    registerPushToken();
+
     // Initial check
     checkUpdates();
 
@@ -112,7 +135,7 @@ export const NotificationManager: React.FC = () => {
       notificationListener.current?.remove();
       responseListener.current?.remove();
     };
-  }, [navigation]);
+  }, [navigation, isAuthenticated]);
 
   return null; 
 };

@@ -54,10 +54,7 @@ export const NotificationsMainScreen = () => {
     }, [setHasUnreadNotifications, refetch])
   );
 
-  const del = useMutation({
-    mutationFn: (id: string) => notificationService.delete(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['notifications'] }),
-  });
+
 
   const markRead = useMutation({
     mutationFn: (id: string) => notificationService.markAsRead(id),
@@ -103,12 +100,6 @@ export const NotificationsMainScreen = () => {
               style={[styles.listRow, !item.isRead && styles.unreadRow]}
               activeOpacity={0.85}
               onPress={() => !item.isRead && markRead.mutate(item.id)}
-              onLongPress={() =>
-                Alert.alert(t('notifications.delete_title'), t('notifications.delete_confirm'), [
-                  { text: t('common.cancel'), style: 'cancel' },
-                  { text: t('common.delete', 'Delete'), style: 'destructive', onPress: () => del.mutate(item.id) },
-                ])
-              }
             >
               <View style={styles.leading}>
                 <View style={[styles.alertIconWrap, { backgroundColor: toneConfig.bg }]}>
@@ -131,18 +122,6 @@ export const NotificationsMainScreen = () => {
  
               <View style={styles.listMeta}>
                 <Text style={styles.timeText}>{formatTime(item.createdAt, t)}</Text>
-                <TouchableOpacity
-                  onPress={() =>
-                    Alert.alert(t('notifications.delete_title'), t('notifications.delete_confirm'), [
-                      { text: t('common.cancel'), style: 'cancel' },
-                      { text: t('common.delete', 'Delete'), style: 'destructive', onPress: () => del.mutate(item.id) },
-                    ])
-                  }
-                  hitSlop={10}
-                  style={styles.trashBtn}
-                >
-                  <Ionicons name="trash-outline" size={normalizeFont(18)} color="#9CA3AF" />
-                </TouchableOpacity>
               </View>
             </TouchableOpacity>
           )})}
