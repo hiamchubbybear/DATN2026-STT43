@@ -38,6 +38,7 @@ public static class DependencyInjection
         services.AddScoped<IConversationRepository, ConversationRepository>();
         services.AddSingleton<IChatMessageQueue, ChatMessageQueue>();
         services.AddHostedService<ChatPersistenceBackgroundService>();
+        services.AddHostedService<FraudDetection.ScamDetectionBackgroundWorker>();
         services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();
         services.AddScoped<IEmailService, MailKitEmailService>();
         services.AddScoped<IGoogleAuthService, GoogleAuthService>();

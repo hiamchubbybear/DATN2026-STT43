@@ -584,6 +584,191 @@ public class AdminController : ControllerBase
 
         return Ok();
     }
+
+    [HttpGet("users/scam-scores")]
+    public async Task<IActionResult> GetAllUserScamScores(
+        [FromServices] DoAnTotNghiep.Application.Common.IFraudDetectionService fraudService,
+        [FromServices] DoAnTotNghiep.Domain.Users.IUserProfileRepository profileRepo)
+    {
+        var allProfiles = await profileRepo.ListAllAsync();
+
+        var userIds = allProfiles.Select(p => p.UserId).ToList();
+        var accounts = await _context.UserAccounts.Find(u => userIds.Contains(u.Id)).ToListAsync();
+        var accountMap = accounts.ToDictionary(a => a.Id);
+
+        var semaphore = new System.Threading.SemaphoreSlim(20);
+        var tasks = allProfiles.Select(async profile =>
+        {
+            await semaphore.WaitAsync();
+            try
+            {
+                var features = await fraudService.GetScamFeaturesAsync(profile.UserId);
+
+                // Safely attempt prediction — ML service may be offline
+                DoAnTotNghiep.Application.Common.ScamDetectionResultDto? result = null;
+                try { result = await fraudService.ScoreAndModerateUserAsync(profile.UserId); }
+                catch { /* ML offline: return features without prediction */ }
+
+                accountMap.TryGetValue(profile.UserId, out var account);
+                return (object)new
+                {
+                    userId           = profile.UserId,
+                    displayName      = profile.BasicInfo?.DisplayName ?? "Unknown",
+                    email            = account?.Email ?? "No Email",
+                    avatar           = profile.Photos?.OrderBy(x => x.Order).FirstOrDefault()?.Url,
+                    status           = profile.Status.ToString(),
+                    features = new
+                    {
+                        swipesPerHour       = features.SwipesPerHour,
+                        spamLinkCount       = features.SpamLinkCount,
+                        reportCount         = features.ReportCount,
+                        profileCompleteness = features.ProfileCompleteness,
+                        hasProfilePhoto     = features.HasProfilePhoto,
+                        isFaceVerified      = features.IsFaceVerified,
+                        bioHasContact       = features.BioHasContact
+                    },
+                    prediction = result == null ? null : (object)new
+                    {
+                        scamProbability = result.ScamProbability,
+                        riskLevel       = result.RiskLevel,
+                        recommendation  = result.Recommendation,
+                        triggeredRules  = result.TriggeredRules
+                    }
+                };
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"scam-scores: error for user {profile.UserId}: {ex.Message}");
+                return (object?)null;
+            }
+            finally
+            {
+                semaphore.Release();
+            }
+        });
+
+        var results = await System.Threading.Tasks.Task.WhenAll(tasks);
+        var sorted = results
+            .OfType<object>() // skip nulls from errored users
+            .OrderByDescending(r => {
+                dynamic d = r;
+                try { return (double)(d.prediction?.scamProbability ?? 0.0); } catch { return 0.0; }
+            })
+            .ToList();
+
+        return Ok(sorted);
+    }
+
+    [HttpGet("users/{userId}/scam-score")]
+    public async Task<IActionResult> GetUserScamScore(Guid userId,
+        [FromServices] DoAnTotNghiep.Application.Common.IFraudDetectionService fraudService)
+    {
+        var features = await fraudService.GetScamFeaturesAsync(userId);
+        DoAnTotNghiep.Application.Common.ScamDetectionResultDto? result = null;
+        try { result = await fraudService.ScoreAndModerateUserAsync(userId); } catch { }
+
+        return Ok(new
+        {
+            userId,
+            features = new
+            {
+                swipesPerHour           = features.SwipesPerHour,
+                spamLinkCount           = features.SpamLinkCount,
+                reportCount             = features.ReportCount,
+                profileCompleteness     = features.ProfileCompleteness,
+                hasProfilePhoto         = features.HasProfilePhoto,
+                isFaceVerified          = features.IsFaceVerified,
+                bioHasContact           = features.BioHasContact
+            },
+            prediction = result == null ? null : new
+            {
+                scamProbability  = result.ScamProbability,
+                riskLevel        = result.RiskLevel,
+                recommendation   = result.Recommendation,
+                triggeredRules   = result.TriggeredRules
+            }
+        });
+    }
+
+    [HttpPost("scam/simulate")]
+    public async Task<IActionResult> SimulateScamScore(
+        [FromBody] DoAnTotNghiep.Application.Common.ScamFeaturesDto features,
+        [FromServices] DoAnTotNghiep.Application.Common.IScamDetectionService scamService)
+    {
+        DoAnTotNghiep.Application.Common.ScamDetectionResultDto? result = null;
+        try
+        {
+            result = await scamService.PredictAsync(features);
+        }
+        catch { /* Python offline */ }
+
+        if (result == null)
+        {
+            double score = 0.0;
+
+            // Positive risk signals
+            if (features.SwipesPerHour > 200)      score += 0.30;
+            else if (features.SwipesPerHour > 80)  score += 0.15;
+            else if (features.SwipesPerHour > 40)  score += 0.05;
+
+            if (features.SpamLinkCount > 5)        score += 0.25;
+            else if (features.SpamLinkCount > 2)   score += 0.12;
+            else if (features.SpamLinkCount > 0)   score += 0.04;
+
+            if (features.ReportCount >= 5)         score += 0.25;
+            else if (features.ReportCount >= 2)    score += 0.12;
+            else if (features.ReportCount >= 1)    score += 0.05;
+
+            if (features.BioHasContact)            score += 0.10;
+            if (features.ProfileCompleteness < 0.2) score += 0.08;
+            else if (features.ProfileCompleteness < 0.4) score += 0.03;
+
+            // Trust signals
+            if (features.IsFaceVerified)  score -= 0.15;
+            if (features.HasProfilePhoto) score -= 0.05;
+
+            score = Math.Clamp(score, 0.0, 1.0);
+
+            string riskLevel = score switch
+            {
+                >= 0.75 => "critical",
+                >= 0.50 => "high",
+                >= 0.25 => "medium",
+                _       => "low"
+            };
+
+            string recommendation = score switch
+            {
+                >= 0.75 => "ban",
+                >= 0.50 => "shadow_ban",
+                >= 0.25 => "warn",
+                _       => "none"
+            };
+
+            var triggered = new List<string>();
+            if (features.SwipesPerHour > 80)        triggered.Add("swipe_speed_burst");
+            if (features.SpamLinkCount > 0)         triggered.Add("spam_links_sent");
+            if (features.ReportCount >= 2)          triggered.Add("multiple_reports");
+            if (features.BioHasContact)             triggered.Add("bio_contact_leak");
+            if (features.ProfileCompleteness < 0.3) triggered.Add("low_profile_completeness");
+            if (!features.IsFaceVerified)           triggered.Add("not_face_verified");
+
+            result = new DoAnTotNghiep.Application.Common.ScamDetectionResultDto
+            {
+                ScamProbability = Math.Round(score, 4),
+                RiskLevel       = riskLevel,
+                Recommendation  = recommendation,
+                TriggeredRules  = triggered
+            };
+        }
+
+        return Ok(new
+        {
+            features,
+            prediction = result
+        });
+    }
+
 }
 
 public class AdminCreateUserRequest
